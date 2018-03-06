@@ -4,3 +4,5 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 cd ~/src/github.com/atmiguel/CerealNotes
 go install
 CerealNotes
+
+Visit localhost:8080/monkeys
