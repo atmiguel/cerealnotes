@@ -1,8 +1,8 @@
 # CerealNotes
 
 Assuming your local environment is setup correctly with Golang standards, you can start your local server with the following commands:
-cd ~/src/github.com/atmiguel/CerealNotes
-go install
-CerealNotes
+* cd to this repo
+* go build
+* CerealNotes
 
-Visit localhost:8080/monkeys
+* Visit localhost:8080/monkeys
