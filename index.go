@@ -5,14 +5,22 @@ import (
     "log"
     "net/http"
     "os"
+    "strconv"
 )
 
+// get the current listening address or fail if input is not correct
 func determineListenAddress() (string, error) {
-  port := os.Getenv("PORT")
-  if port == "" {
+  portStr := os.Getenv("PORT")
+  
+  if portStr == "" {
     return "", fmt.Errorf("$PORT not set")
   }
-  return ":" + port, nil
+  
+  port, err := strconv.Atoi(portStr)
+  if err == nil {
+    return "", fmt.Errorf("$PORT not a valid integer")
+  }
+  return fmt.Sprintf(":%d", port), nil
 }
 
 func rootHandler(
@@ -39,7 +47,8 @@ func main() {
 
     // start server
     log.Printf("Listening on %s...\n", addr)
-    if err := http.ListenAndServe(addr, nil); err != nil {
+    err := http.ListenAndServe(addr, nil)
+    if err != nil {
         panic(err)
     }
 }
