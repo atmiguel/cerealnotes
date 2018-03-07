@@ -4,6 +4,7 @@ import (
     "fmt"
     "log"
     "net/http"
+    "os"
 )
 
 func determineListenAddress() (string, error) {
@@ -32,7 +33,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     // set handler
     http.HandleFunc("/", rootHandler)
 
