@@ -6,3 +6,9 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 * CerealNotes
 
 * Visit localhost:8080/monkeys
+
+#Heroku stuffs
+
+* install godep: github.com/tools/godep
+* install heroku cli tools: brew install heroku
+

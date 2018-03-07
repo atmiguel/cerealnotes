@@ -1,0 +1,2 @@
+run:
+  web: CerealNotes
