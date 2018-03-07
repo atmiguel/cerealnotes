@@ -6,6 +6,14 @@ import (
     "net/http"
 )
 
+func determineListenAddress() (string, error) {
+  port := os.Getenv("PORT")
+  if port == "" {
+    return "", fmt.Errorf("$PORT not set")
+  }
+  return ":" + port, nil
+}
+
 func rootHandler(
         responseWriter http.ResponseWriter,
         request *http.Request) {
@@ -20,9 +28,17 @@ func rootHandler(
 }
 
 func main() {
+    addr, err := determineListenAddress()
+    if err != nil {
+        log.Fatal(err)
+    }
+    
     // set handler
     http.HandleFunc("/", rootHandler)
 
     // start server
-    log.Fatal(http.ListenAndServe(":80", nil))
+    log.Printf("Listening on %s...\n", addr)
+    if err := http.ListenAndServe(addr, nil); err != nil {
+        panic(err)
+    }
 }
