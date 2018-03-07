@@ -1,7 +1,7 @@
 package main
 
 import (
-    "fmt"
+    "html/template"
     "log"
     "net/http"
 )
@@ -10,13 +10,9 @@ func rootHandler(
         responseWriter http.ResponseWriter,
         request *http.Request) {
 
-    var responseContent string = fmt.Sprintf(
-        "Hi there, I love %s!",
-        request.URL.Path[1:])
-
-    fmt.Fprintf(
-        responseWriter,
-        responseContent)
+    // TODO handle error
+    parsedTemplate, _ := template.ParseFiles("root.html")
+    parsedTemplate.Execute(responseWriter, nil)
 }
 
 func main() {
