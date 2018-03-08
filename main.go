@@ -46,7 +46,7 @@ func handleLoginOrSignupRequest(
         case http.MethodGet:
             parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
             if err != nil {
-                log.Fatal(err) // TODO is this right?
+                log.Fatal(err)
             }
 
             parsedTemplate.Execute(responseWriter, nil)
