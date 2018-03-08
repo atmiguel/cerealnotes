@@ -4,7 +4,7 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 
 `cd to this repo`
 
-`go install` 
+`go install`
 
 `CerealNotes`
 
