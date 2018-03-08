@@ -8,14 +8,15 @@ import (
     "os"
 )
 
+// get the current listening address or fail if input is not correct
 func determineListenPort() (string, error) {
-  port := os.Getenv("PORT")
+    port := os.Getenv("PORT")
 
-  if port == "" {
-    return "", fmt.Errorf("$PORT not set")
-  }
+    if port == "" {
+        return "", fmt.Errorf("$PORT not set")
+    }
 
-  return ":" + port, nil
+    return ":" + port, nil
 }
 
 func handleGetRootRequest(
