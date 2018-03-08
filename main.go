@@ -23,8 +23,11 @@ func handleGetRootRequest(
         responseWriter http.ResponseWriter,
         request *http.Request) {
 
-    // TODO handle error
-    parsedTemplate, _ := template.ParseFiles("root.tmpl")
+    parsedTemplate, err := template.ParseFiles("root.tmpl")
+    if err != nil {
+        log.Fatal(err)
+    }
+
     parsedTemplate.Execute(responseWriter, nil)
 }
 
