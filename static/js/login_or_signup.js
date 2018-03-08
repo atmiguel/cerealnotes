@@ -1,6 +1,10 @@
+var getInputField = function($form, field) {
+    return $form.find('[name="' + field + '"]');
+};
+
 var getInputFields = function($form, fields) {
     return fields.map(
-        field => $form.find('[name="' + field + '"]'));
+        field => getInputField($form, field));
 };
 
 var checkFormValidity = function($form, fields) {
@@ -34,28 +38,57 @@ var touchAllFields = function($form, fields) {
     });
 };
 
+var checkKeypressIsSpace = function(event) {
+    return event.which === 32;
+};
+
 $(function() {
-    // Signup Form
     var $signupForm = $('#signup-form');
+
     var submitHasBeenClicked = false;
 
+    var displayNameField = 'displayName';
+    var emailAddressField = 'emailAddress';
+    var passwordField = 'password';
+
     var fields = [
-        'displayName',
-        'emailAddress',
-        'password',
+        displayNameField,
+        emailAddressField,
+        passwordField,
     ];
 
     getInputFields($signupForm, fields).forEach($field => {
-        $field.on('input', () => {
+        var field = $field.attr('name');
+
+        // continuously update validation message after failed submission
+        $field.on('input', event => {
             if (submitHasBeenClicked) {
                 populateValidationMessage($field);
             }
         });
+
+        if (field !== passwordField) {
+            // restrict inital space character
+            $field.keypress((event) => {
+                var value = $field.val();
+                var trimmedValue = $.trim(value);
+
+                if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
+                    return false;
+                }
+            });
+
+            // remove trailing spaces on blur
+            $field.blur(() => {
+                var value = $field.val();
+                var trimmedValue = $.trim(value);
+
+                $field.val(trimmedValue);
+            });
+        }
     });
 
     $signupForm.find('button').click(function() {
-        submitHasBeenClicked = true;
-
 	if (checkFormValidity($signupForm, fields)) {
             $.post(
                 '/signup',
@@ -63,7 +96,10 @@ $(function() {
                 () => {
                     console.log('done');
                 });
-        } else {
+
+        } else if (!submitHasBeenClicked) {
+            submitHasBeenClicked = true;
+
             populateValidationMessages($signupForm, fields);
             touchAllFields($signupForm, fields);
         }
