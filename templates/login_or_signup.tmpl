@@ -5,7 +5,7 @@
         <meta charset="utf-8" />
         <meta
             name="description"
-            content="The best way to book club" />
+            content="A better way to book club" />
         <meta
             name="viewport"
             content="width=device-width, initial-scale=1" />
@@ -22,63 +22,71 @@
 
     <body>
         <div class="mui-container">
-            <h1>CerealNotes</h1>
+            <h1 class="mui--text-center">
+                CerealNotes
+            </h1>
 
-            <ul class="mui-tabs__bar mui-tabs__bar--justified">
-                <li class="mui--is-active">
-                    <a data-mui-toggle="tab" data-mui-controls="signup-form">
-                        Signup
-                    </a>
-                </li>
+            <div class="mui-row">
+                <div class="mui-col-sm-6 mui-col-md-4 mui-col-sm-offset-3 mui-col-md-offset-4">
+                    <ul class="mui-tabs__bar mui-tabs__bar--justified">
+                        <li class="mui--is-active">
+                            <a data-mui-toggle="tab" data-mui-controls="signup-form">
+                                Signup
+                            </a>
+                        </li>
 
-                <li>
-                    <a data-mui-toggle="tab" data-mui-controls="login-form">
-                        Login
-                    </a>
-                </li>
-            </ul>
+                        <li>
+                            <a data-mui-toggle="tab" data-mui-controls="login-form">
+                                Login
+                            </a>
+                        </li>
+                    </ul>
 
-            <div id="signup-form" class="mui-tabs__pane mui--is-active">
-                <div class="mui-form">
-                    <div class="mui-textfield mui-textfield--float-label">
-                        <input type="text" name="displayName" required />
-                        <label>Name</label>
-                        <span class="validation-message"></span>
+                    <br />
+
+                    <div id="signup-form" class="mui-tabs__pane mui--is-active">
+                        <div class="mui-form">
+                            <div class="mui-textfield mui-textfield--float-label">
+                                <input type="text" name="displayName" required />
+                                <label>Name</label>
+                                <span class="validation-message mui--text-accent-secondary"></span>
+                            </div>
+
+                            <div class="mui-textfield mui-textfield--float-label">
+                                <input type="email" name="emailAddress" required />
+                                <label>Email Address</label>
+                                <span class="validation-message mui--text-accent-secondary"></span>
+                            </div>
+
+                            <div class="mui-textfield mui-textfield--float-label">
+                                <input type="password" name="password" required />
+                                <label>Password</label>
+                                <span class="validation-message mui--text-accent-secondary"></span>
+                            </div>
+
+                            <button type="button" class="mui-btn mui-btn--primary">
+                                Submit
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="mui-textfield mui-textfield--float-label">
-                        <input type="email" name="emailAddress" required />
-                        <label>Email Address</label>
-                        <span class="validation-message"></span>
+                    <div id="login-form" class="mui-tabs__pane">
+                        <div class="mui-form">
+                            <div class="mui-textfield mui-textfield--float-label">
+                                <input type="email" required />
+                                <label>Email Address</label>
+                            </div>
+
+                            <div class="mui-textfield mui-textfield--float-label">
+                                <input type="password" required />
+                                <label>Password</label>
+                            </div>
+
+                            <button type="button" class="mui-btn mui-btn--primary">
+                                Submit
+                            </button>
+                        </div>
                     </div>
-
-                    <div class="mui-textfield mui-textfield--float-label">
-                        <input type="password" name="password" required />
-                        <label>Password</label>
-                        <span class="validation-message"></span>
-                    </div>
-
-                    <button type="button" class="mui-btn mui-btn--primary">
-                        Submit
-                    </button>
-                </div>
-            </div>
-
-            <div id="login-form" class="mui-tabs__pane">
-                <div class="mui-form">
-                    <div class="mui-textfield mui-textfield--float-label">
-                        <input type="email" required />
-                        <label>Email Address</label>
-                    </div>
-
-                    <div class="mui-textfield mui-textfield--float-label">
-                        <input type="password" required />
-                        <label>Password</label>
-                    </div>
-
-                    <button type="button" class="mui-btn mui-btn--primary">
-                        Submit
-                    </button>
                 </div>
             </div>
         </div>
