@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+    "html/template"
     "log"
     "net/http"
     "os"
@@ -10,25 +11,24 @@ import (
 // get the current listening address or fail if input is not correct
 func determineListenPort() (string, error) {
     port := os.Getenv("PORT")
-  
+
     if port == "" {
         return "", fmt.Errorf("$PORT not set")
     }
-  
+
     return ":" + port, nil
 }
 
-func rootHandler(
+func handleGetRootRequest(
         responseWriter http.ResponseWriter,
         request *http.Request) {
 
-    var responseContent string = fmt.Sprintf(
-        "Hi there, I love %s!",
-        request.URL.Path[1:])
+    parsedTemplate, err := template.ParseFiles("root.tmpl")
+    if err != nil {
+        log.Fatal(err)
+    }
 
-    fmt.Fprintf(
-        responseWriter,
-        responseContent)
+    parsedTemplate.Execute(responseWriter, nil)
 }
 
 func main() {
@@ -37,11 +37,11 @@ func main() {
         log.Fatal(err)
     }
 
-    // set handler
-    http.HandleFunc("/", rootHandler)
+    http.HandleFunc("/", handleGetRootRequest) // set router
 
     // start server
     log.Printf("Listening on %s...\n", port)
+
     if err := http.ListenAndServe(port, nil); err != nil {
         panic(err)
     }
