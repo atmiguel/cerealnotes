@@ -7,15 +7,16 @@ import (
 	"log"
 )
 
-func Connect(dbUrl string) (*sql.DB) {
+func Connect(dbUrl string) *sql.DB {
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Quickly test if the connection to the database worked.
 	if err := db.Ping(); err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 
 	return db
 }
