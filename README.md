@@ -10,7 +10,7 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 
 `CerealNotes`
 
-Visit localhost:8080/monkeys
+Visit localhost:8080/login-or-signup
 
 # Heroku stuffs
 

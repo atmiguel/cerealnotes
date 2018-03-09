@@ -1,0 +1,7 @@
+.validation-message {
+    font-size: 12px;
+}
+
+input:focus ~ .validation-message {
+    color: #000;
+}
