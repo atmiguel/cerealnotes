@@ -9,6 +9,7 @@ import (
     "net/http"
     "os"
     "strings"
+    "CerealNotes/cerealNotesDb"
 )
 
 // get the current listening address or fail if input is not correct
@@ -126,6 +127,10 @@ func main() {
                 staticDirectoryPaddedWithSlashes,
                 fileServer))
     }
+
+    db := cerealNotesDb.Connect(os.Getenv("DATABASE_URL"))
+
+    db.Ping()
 
     // templates
     http.HandleFunc("/login-or-signup", handleLoginOrSignupRequest)

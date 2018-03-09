@@ -2,5 +2,16 @@
 	"ImportPath": "CerealNotes",
 	"GoVersion": "go1.10",
 	"GodepVersion": "v80",
-	"Deps": []
+	"Deps": [
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-203-g88edab0",
+			"Rev": "88edab0803230a3898347e77b474f8c1820a1f20"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
+			"Comment": "go1.0-cutoff-203-g88edab0",
+			"Rev": "88edab0803230a3898347e77b474f8c1820a1f20"
+		}
+	]
 }

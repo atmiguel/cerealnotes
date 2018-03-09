@@ -46,3 +46,7 @@ Temporary Items
 
 
 # End of https://www.gitignore.io/api/go,osx
+
+### GoDep ###
+vendor
+GoDeps/Readme
