@@ -129,7 +129,6 @@ func main() {
     }
 
     db := cerealNotesDb.Connect(os.Getenv("DATABASE_URL"))
-
     db.Ping()
 
     // templates
