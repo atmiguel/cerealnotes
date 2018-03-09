@@ -22,10 +22,7 @@ func determineListenPort() (string, error) {
 	return ":" + port, nil
 }
 
-func respondWithMethodNotAllowed(
-	responseWriter http.ResponseWriter,
-	allowedMethods []string) {
-
+func respondWithMethodNotAllowed(responseWriter http.ResponseWriter, allowedMethods []string) {
 	statusCode := http.StatusMethodNotAllowed
 
 	responseWriter.Header().Set(
@@ -38,10 +35,7 @@ func respondWithMethodNotAllowed(
 		statusCode)
 }
 
-func handleLoginOrSignupRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request) {
-
+func handleLoginOrSignupRequest(responseWriter http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case http.MethodGet:
 		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
@@ -76,10 +70,7 @@ type UserId struct {
 	Value int `json:"value"`
 }
 
-func handleUserRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request) {
-
+func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request) {
 	type SignupForm struct {
 		DisplayName  string `json:"displayName"`
 		EmailAddress string `json:"emailAddress"`

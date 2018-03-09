@@ -4,12 +4,12 @@ var getInputField = function($form, field) {
 
 var getInputFields = function($form, fields) {
     return fields.map(
-        field => getInputField($form, field));
+        (field) => getInputField($form, field));
 };
 
 var checkFormValidity = function($form, fields) {
     return getInputFields($form, fields).every(
-        $field => $field.get(0).checkValidity());
+        ($field) => $field.get(0).checkValidity());
 };
 
 var getFormData = function($form, fields) {
@@ -17,7 +17,8 @@ var getFormData = function($form, fields) {
         (formData, $field) => {
             formData[$field.attr('name')] = $field.val();
             return formData;
-        }, {});
+        },
+        {});
 };
 
 var populateValidationMessage = function($field) {
@@ -29,13 +30,14 @@ var populateValidationMessage = function($field) {
 
 var populateValidationMessages = function($form, fields) {
     getInputFields($form, fields).forEach(
-        $field => populateValidationMessage($field));
+        ($field) => populateValidationMessage($field));
 };
 
 var touchAllFields = function($form, fields) {
-    getInputFields($form, fields).forEach($field => {
-        $field.focus().blur();
-    });
+    getInputFields($form, fields).forEach(
+        ($field) => {
+            $field.focus().blur();
+        });
 };
 
 var checkKeypressIsSpace = function(event) {
@@ -57,51 +59,61 @@ $(function() {
         passwordField,
     ];
 
-    getInputFields($signupForm, fields).forEach($field => {
-        var field = $field.attr('name');
+    getInputFields($signupForm, fields).forEach(
+        ($field) => {
+            var field = $field.attr('name');
 
-        // continuously update validation message after failed submission
-        $field.on('input', event => {
-            if (submitHasBeenClicked) {
-                populateValidationMessage($field);
+            // continuously update validation message after failed submission
+            $field.on(
+                'input',
+                (event) => {
+                    if (submitHasBeenClicked) {
+                        populateValidationMessage($field);
+                    }
+                });
+
+            if (field !== passwordField) {
+                // restrict initial space character
+                $field.keypress(
+                    (event) => {
+                        var value = $field.val();
+                        var trimmedValue = $.trim(value);
+
+                        if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
+                            return false; // cancels keypress event
+                        }
+                    });
+
+                // remove trailing spaces on blur
+                $field.blur(
+                    () => {
+                        var value = $field.val();
+                        var trimmedValue = $.trim(value);
+
+                        $field.val(trimmedValue);
+                    });
             }
         });
 
-        if (field !== passwordField) {
-            // restrict inital space character
-            $field.keypress((event) => {
-                var value = $field.val();
-                var trimmedValue = $.trim(value);
+    $signupForm.find('button').click(
+        () => {
+            if (checkFormValidity($signupForm, fields)) {
+                var formData = getFormData($signupForm, fields);
+                var jsonData = JSON.stringify(formData);
 
-                if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
-                    return false;
-                }
-            });
+                $.post(
+                    '/user',
+                    jsonData,
+                    (userId) => {
+                        alert('Created User with id: ' + userId.value);
+                    },
+                    'json');
 
-            // remove trailing spaces on blur
-            $field.blur(() => {
-                var value = $field.val();
-                var trimmedValue = $.trim(value);
+            } else if (!submitHasBeenClicked) {
+                submitHasBeenClicked = true;
 
-                $field.val(trimmedValue);
-            });
-        }
-    });
-
-    $signupForm.find('button').click(function() {
-	if (checkFormValidity($signupForm, fields)) {
-            var formData = getFormData($signupForm, fields);
-            var jsonData = JSON.stringify(formData);
-
-            $.post('/user', jsonData, userId => {
-                alert('Created User with id: ' + userId.value);
-            }, 'json');
-
-        } else if (!submitHasBeenClicked) {
-            submitHasBeenClicked = true;
-
-            populateValidationMessages($signupForm, fields);
-            touchAllFields($signupForm, fields);
-        }
-    });
+                populateValidationMessages($signupForm, fields);
+                touchAllFields($signupForm, fields);
+            }
+        });
 });
