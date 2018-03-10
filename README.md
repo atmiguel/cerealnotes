@@ -16,3 +16,7 @@ Visit localhost:8080/login-or-signup
 
 * install godep: `go get github.com/tools/godep`
 * install heroku cli tools: `brew install heroku`
+
+# Db stuffs
+
+* run first migration `heroku pg:psql < migrations/0000_createDbs.sql`

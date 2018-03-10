@@ -1,6 +1,7 @@
 package main
 
 import (
+	"CerealNotes/databaseutil"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -117,6 +118,14 @@ func main() {
 				staticDirectoryPaddedWithSlashes,
 				fileServer))
 	}
+
+	db, err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// temporary use of db variable
+	db.Ping()
 
 	// templates
 	http.HandleFunc("/login-or-signup", handleLoginOrSignupRequest)
