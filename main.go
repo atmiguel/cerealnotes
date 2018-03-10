@@ -68,8 +68,7 @@ func getRequestBody(request *http.Request) []byte {
 }
 
 type UserId struct {
-
-	Value int `json:"value"`
+	Value int64 `json:"value"`
 }
 
 func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request) {
@@ -97,7 +96,7 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 		}
 
 		// TODO create User
-		userId := UserId{Value: 1}
+		userId := UserId{Value: val}
 
 		responseWriter.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(responseWriter).Encode(userId); err != nil {
