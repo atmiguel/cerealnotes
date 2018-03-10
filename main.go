@@ -1,7 +1,7 @@
 package main
 
 import (
-	"CerealNotes/cerealNotesDb"
+	"CerealNotes/databaseutil"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -128,7 +128,12 @@ func main() {
 				fileServer))
 	}
 
-	db := cerealNotesDb.Connect(os.Getenv("DATABASE_URL"))
+	db, err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// temporary use of db variable
 	db.Ping()
 
 	// templates

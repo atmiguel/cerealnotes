@@ -1,24 +1,27 @@
-CREATE TABLE IF NOT EXISTS "Users"(
+-- Types
+CREATE TYPE notetype AS ENUM ('Predictions', 'Marginalia', 'Meta', 'Questions');
+
+-- Tables
+CREATE TABLE IF NOT EXISTS users(
 	id bigserial PRIMARY KEY,
-    "displayName" text NOT NULL,
-    "emailAddress" text UNIQUE NOT NULL,
-    password bytea NOT NULL,
-    "creationTime" timestamp NOT NULL
+	display_name text NOT NULL,
+	email_address text UNIQUE NOT NULL,
+	password bytea NOT NULL,
+	creation_time timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS "Publications"(
+CREATE TABLE IF NOT EXISTS publications(
 	id bigserial PRIMARY KEY,
-    "authorId" bigint references "Users"(id) NOT NULL,
-    "sequenceNumber" serial NOT NULL,
-	"creationTime" timestamp NOT NULL
+	author_id bigint references users(id) NOT NULL,
+	creationTime timestamp NOT NULL
 
 );
 
-CREATE TABLE IF NOT EXISTS "Notes"(
+CREATE TABLE IF NOT EXISTS notes(
 	id bigserial PRIMARY KEY,
-    "authorId" bigint references "Users"(id) NOT NULL,
-    "type" text,
-    "content" text NOT NULL,
-    "publicationId" bigint references "Publications"(id),
-    "creationTime" timestamp NOT NULL
+	author_id bigint references users(id) NOT NULL,
+	type notetype,
+	content text NOT NULL,
+	publication_id bigint references publications(id),
+	creation_time timestamp NOT NULL
 );
