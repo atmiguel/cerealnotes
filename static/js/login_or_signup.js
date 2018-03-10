@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 var getInputField = function($form, field) {
     return $form.find('[name="' + field + '"]');
 };
@@ -135,6 +134,3 @@ $(function() {
         }
     });
 });
-=======
-alert('loaded js');
->>>>>>> 2a8f5a4... Add static files (#4)
