@@ -59,6 +59,7 @@ func ValidateUser(
 	SELECT password FROM users WHERE email_address = $1
 	`
 
+	// TODO handle the scenario where there is nobody in the db
 	var hashFromDatabase []byte
 	err := db.QueryRow(sqlStatement, emailAddress).Scan(&hashFromDatabase)
 	if err != nil {

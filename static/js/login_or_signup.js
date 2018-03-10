@@ -123,9 +123,9 @@ $(function() {
             var formData = getFormData($loginForm, loginFields);
             var jsonData = JSON.stringify(formData);
 
-            $.post('/user', jsonData, userId => {
-                alert('Created User with id: ' + userId.value);
-            }, 'json');
+            $.post('/session', jsonData, userId => {
+                alert(userId);
+            }, 'text');
 
         } else if (!submitHasBeenClicked) {
             submitHasBeenClicked = true;

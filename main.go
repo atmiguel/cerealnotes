@@ -119,6 +119,43 @@ func handleUserRequest(
 	}
 }
 
+func handleSessionRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request) {
+
+	type LoginForm struct {
+		EmailAddress string `json:"emailAddress"`
+		Password     string `json:"password"`
+	}
+
+	switch request.Method {
+	case http.MethodPost:
+		var loginForm LoginForm
+		body := getRequestBody(request)
+
+		if err := json.Unmarshal(body, &loginForm); err != nil {
+			panic(err)
+		}
+
+		validated, err := databaseutil.ValidateUser(
+			loginForm.EmailAddress,
+			loginForm.Password)
+
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf("did we find the user + password combo in the table: %t", validated)
+		responseWriter.WriteHeader(http.StatusCreated)
+		responseWriter.Write([]byte(fmt.Sprintf("passward email combo was correct? %t", validated)))
+
+	default:
+		respondWithMethodNotAllowed(
+			responseWriter,
+			[]string{http.MethodPost})
+	}
+}
+
 func main() {
 	// SET ROUTER
 
@@ -146,6 +183,7 @@ func main() {
 
 	// forms
 	http.HandleFunc("/user", handleUserRequest)
+	http.HandleFunc("/session", handleSessionRequest)
 
 	// START SERVER
 	port, err := determineListenPort()
