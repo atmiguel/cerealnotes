@@ -51,12 +51,19 @@ func SaveNewUser(
 	return id, nil
 }
 
-func validateUser(
+func ValidateUser(
 	emailAddress string,
 	password string) (bool, error) {
 
-	// todo get from database
-	hashFromDatabase := []byte(emailAddress)
+	sqlStatement := `
+	SELECT password FROM users WHERE email_address = $1
+	`
+
+	var hashFromDatabase []byte
+	err := db.QueryRow(sqlStatement, emailAddress).Scan(&hashFromDatabase)
+	if err != nil {
+		return false, err
+	}
 
 	// Comparing the password with the hash
 	if err := bcrypt.CompareHashAndPassword(hashFromDatabase, []byte(password)); err != nil {
