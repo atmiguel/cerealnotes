@@ -1,7 +1,10 @@
 package main
 
 import (
+    "encoding/json"
+    "fmt"
     "html/template"
+    "io/ioutil"
     "log"
     "net/http"
     "os"
@@ -54,6 +57,58 @@ func handleLoginOrSignupRequest(
     }
 }
 
+// TODO cleanup error cases
+func getRequestBody(request *http.Request) []byte {
+    body, err := ioutil.ReadAll(request.Body)
+    if err != nil {
+        panic(err)
+    }
+
+    if err := request.Body.Close(); err != nil {
+        panic(err)
+    }
+
+    return body
+}
+
+type UserId struct {
+    Value   int `json:"value"`
+}
+
+func handleUserRequest(
+        responseWriter http.ResponseWriter,
+        request *http.Request) {
+
+    type SignupForm struct {
+        DisplayName     string  `json:"displayName"`
+        EmailAddress    string  `json:"emailAddress"`
+        Password        string  `json:"password"`
+    }
+
+    switch request.Method {
+        case http.MethodPost:
+            var signupForm SignupForm
+            body := getRequestBody(request)
+
+            if err := json.Unmarshal(body, &signupForm); err != nil {
+                panic(err)
+            }
+
+            // TODO create User
+            userId := UserId{Value: 1}
+
+            responseWriter.WriteHeader(http.StatusCreated)
+            if err := json.NewEncoder(responseWriter).Encode(userId); err != nil {
+                panic(err)
+            }
+
+        default:
+            respondWithMethodNotAllowed(
+                responseWriter,
+                []string{http.MethodPost})
+    }
+}
+
 func main() {
     // SET ROUTER
 
@@ -73,6 +128,9 @@ func main() {
 
     // templates
     http.HandleFunc("/login-or-signup", handleLoginOrSignupRequest)
+
+    // forms
+    http.HandleFunc("/user", handleUserRequest)
 
     // START SERVER
     port, err := determineListenPort()

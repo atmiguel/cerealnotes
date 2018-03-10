@@ -90,12 +90,12 @@ $(function() {
 
     $signupForm.find('button').click(function() {
 	if (checkFormValidity($signupForm, fields)) {
-            $.post(
-                '/signup',
-                getFormData($signupForm, fields),
-                () => {
-                    console.log('done');
-                });
+            var formData = getFormData($signupForm, fields);
+            var jsonData = JSON.stringify(formData);
+
+            $.post('/user', jsonData, userId => {
+                alert('Created User with id: ' + userId.value);
+            }, 'json');
 
         } else if (!submitHasBeenClicked) {
             submitHasBeenClicked = true;
