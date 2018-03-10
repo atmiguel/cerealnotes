@@ -45,6 +45,7 @@ var checkKeypressIsSpace = function(event) {
 
 $(function() {
     var $signupForm = $('#signup-form');
+    var $loginForm = $('#login-form');
 
     var submitHasBeenClicked = false;
 
@@ -52,46 +53,57 @@ $(function() {
     var emailAddressField = 'emailAddress';
     var passwordField = 'password';
 
-    var fields = [
+    var signupFields = [
         displayNameField,
         emailAddressField,
         passwordField,
     ];
 
-    getInputFields($signupForm, fields).forEach($field => {
-        var field = $field.attr('name');
+    var loginFields = [
+        emailAddressField,
+        passwordField,
+    ];
 
-        // continuously update validation message after failed submission
-        $field.on('input', event => {
-            if (submitHasBeenClicked) {
-                populateValidationMessage($field);
-            }
-        });
 
-        if (field !== passwordField) {
-            // restrict inital space character
-            $field.keypress((event) => {
-                var value = $field.val();
-                var trimmedValue = $.trim(value);
+    var installFieldValidators = function(fields) {
+        getInputFields($signupForm, fields).forEach($field => {
+            var field = $field.attr('name');
 
-                if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
-                    return false;
+            // continuously update validation message after failed submission
+            $field.on('input', event => {
+                if (submitHasBeenClicked) {
+                    populateValidationMessage($field);
                 }
             });
 
-            // remove trailing spaces on blur
-            $field.blur(() => {
-                var value = $field.val();
-                var trimmedValue = $.trim(value);
+            if (field !== passwordField) {
+                // restrict inital space character
+                $field.keypress((event) => {
+                    var value = $field.val();
+                    var trimmedValue = $.trim(value);
 
-                $field.val(trimmedValue);
-            });
-        }
-    });
+                    if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
+                        return false;
+                    }
+                });
+
+                // remove trailing spaces on blur
+                $field.blur(() => {
+                    var value = $field.val();
+                    var trimmedValue = $.trim(value);
+
+                    $field.val(trimmedValue);
+                });
+            }
+        });
+    };
+
+    installFieldValidators(signupFields);
+    installFieldValidators(loginFields);
 
     $signupForm.find('button').click(function() {
-	if (checkFormValidity($signupForm, fields)) {
-            var formData = getFormData($signupForm, fields);
+    if (checkFormValidity($signupForm, signupFields)) {
+            var formData = getFormData($signupForm, signupFields);
             var jsonData = JSON.stringify(formData);
 
             $.post('/user', jsonData, userId => {
@@ -101,8 +113,25 @@ $(function() {
         } else if (!submitHasBeenClicked) {
             submitHasBeenClicked = true;
 
-            populateValidationMessages($signupForm, fields);
-            touchAllFields($signupForm, fields);
+            populateValidationMessages($signupForm, signupFields);
+            touchAllFields($signupForm, signupFields);
+        }
+    });
+
+    $loginForm.find('button').click(function() {
+    if (checkFormValidity($loginForm, loginFields)) {
+            var formData = getFormData($loginForm, loginFields);
+            var jsonData = JSON.stringify(formData);
+
+            $.post('/user', jsonData, userId => {
+                alert('Created User with id: ' + userId.value);
+            }, 'json');
+
+        } else if (!submitHasBeenClicked) {
+            submitHasBeenClicked = true;
+
+            populateValidationMessages($loginForm, loginFields);
+            touchAllFields($loginForm, loginFields);
         }
     });
 });
