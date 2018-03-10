@@ -45,6 +45,7 @@ Temporary Items
 .apdisk
 
 
-# End of https://www.gitignore.io/api/go,osxCerealNotes
+# End of https://www.gitignore.io/api/go,osx
 
-CerealNotes
+### GoDep ###
+GoDeps/Readme

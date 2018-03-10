@@ -4,14 +4,19 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 
 `cd to this repo`
 
-`go build`
+`export PORT=8080`
+
+`go install`
 
 `CerealNotes`
 
-Visit localhost:8080/monkeys
+Visit localhost:8080/login-or-signup
 
 # Heroku stuffs
 
-* install godep: github.com/tools/godep
-* install heroku cli tools: brew install heroku
+* install godep: `go get github.com/tools/godep`
+* install heroku cli tools: `brew install heroku`
 
+# Db stuffs
+
+* run first migration `heroku pg:psql < migrations/0000_createDbs.sql`
