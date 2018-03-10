@@ -4,12 +4,12 @@ var getInputField = function($form, field) {
 
 var getInputFields = function($form, fields) {
     return fields.map(
-        field => getInputField($form, field));
+        (field) => getInputField($form, field));
 };
 
 var checkFormValidity = function($form, fields) {
     return getInputFields($form, fields).every(
-        $field => $field.get(0).checkValidity());
+        ($field) => $field.get(0).checkValidity());
 };
 
 var getFormData = function($form, fields) {
@@ -17,7 +17,8 @@ var getFormData = function($form, fields) {
         (formData, $field) => {
             formData[$field.attr('name')] = $field.val();
             return formData;
-        }, {});
+        },
+        {});
 };
 
 var populateValidationMessage = function($field) {
@@ -29,13 +30,14 @@ var populateValidationMessage = function($field) {
 
 var populateValidationMessages = function($form, fields) {
     getInputFields($form, fields).forEach(
-        $field => populateValidationMessage($field));
+        ($field) => populateValidationMessage($field));
 };
 
 var touchAllFields = function($form, fields) {
-    getInputFields($form, fields).forEach($field => {
-        $field.focus().blur();
-    });
+    getInputFields($form, fields).forEach(
+        ($field) => {
+            $field.focus().blur();
+        });
 };
 
 var checkKeypressIsSpace = function(event) {
@@ -64,58 +66,68 @@ $(function() {
     ];
 
 
-    var installFieldValidators = function(fields) {
-        getInputFields($signupForm, fields).forEach($field => {
+    var installFieldValidators = function($form, fields) {
+        getInputFields($form, fields).forEach(
+          ($field) => {
             var field = $field.attr('name');
 
             // continuously update validation message after failed submission
-            $field.on('input', event => {
-                if (submitHasBeenClicked) {
-                    populateValidationMessage($field);
-                }
-            });
-
-            if (field !== passwordField) {
-                // restrict inital space character
-                $field.keypress((event) => {
-                    var value = $field.val();
-                    var trimmedValue = $.trim(value);
-
-                    if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
-                        return false;
+            $field.on(
+                'input',
+                (event) => {
+                    if (submitHasBeenClicked) {
+                        populateValidationMessage($field);
                     }
                 });
 
-                // remove trailing spaces on blur
-                $field.blur(() => {
-                    var value = $field.val();
-                    var trimmedValue = $.trim(value);
+            if (field !== passwordField) {
+                // restrict initial space character
+                $field.keypress(
+                    (event) => {
+                        var value = $field.val();
+                        var trimmedValue = $.trim(value);
 
-                    $field.val(trimmedValue);
-                });
+                        if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
+                            return false; // cancels keypress event
+                        }
+                    });
+
+                // remove trailing spaces on blur
+                $field.blur(
+                    () => {
+                        var value = $field.val();
+                        var trimmedValue = $.trim(value);
+
+                        $field.val(trimmedValue);
+                    });
             }
         });
     };
 
-    installFieldValidators(signupFields);
-    installFieldValidators(loginFields);
+    installFieldValidators($signupForm, signupFields);
+    installFieldValidators($loginForm, loginFields);
 
-    $signupForm.find('button').click(function() {
-    if (checkFormValidity($signupForm, signupFields)) {
-            var formData = getFormData($signupForm, signupFields);
-            var jsonData = JSON.stringify(formData);
+    $signupForm.find('button').click(
+        () => {
+            if (checkFormValidity($signupForm, signupFields)) {
+                var formData = getFormData($signupForm, signupFields);
+                var jsonData = JSON.stringify(formData);
 
-            $.post('/user', jsonData, userId => {
-                alert('Created User with id: ' + userId.value);
-            }, 'json');
+                $.post(
+                    '/user',
+                    jsonData,
+                    (userId) => {
+                        alert('Created User with id: ' + userId.value);
+                    },
+                    'json');
 
-        } else if (!submitHasBeenClicked) {
-            submitHasBeenClicked = true;
+            } else if (!submitHasBeenClicked) {
+                submitHasBeenClicked = true;
 
-            populateValidationMessages($signupForm, signupFields);
-            touchAllFields($signupForm, signupFields);
-        }
-    });
+                populateValidationMessages($signupForm, signupFields);
+                touchAllFields($signupForm, signupFields);
+            }
+        });
 
     $loginForm.find('button').click(function() {
     if (checkFormValidity($loginForm, loginFields)) {
@@ -133,4 +145,25 @@ $(function() {
             touchAllFields($loginForm, loginFields);
         }
     });
+    $loginForm.find('button').click(
+        () => {
+            if (checkFormValidity($loginForm, loginFields)) {
+                var formData = getFormData($loginForm, loginFields);
+                var jsonData = JSON.stringify(formData);
+                
+                $.post(
+                  '/session', 
+                  jsonData, 
+                  (response) => {
+                    alert(response);
+                   }, 
+                  'text');
+
+            } else if (!submitHasBeenClicked) {
+                submitHasBeenClicked = true;
+
+                populateValidationMessages($loginForm, loginFields);
+                touchAllFields($loginForm, loginFields);
+            }
+        });
 });
