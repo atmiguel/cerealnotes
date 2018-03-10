@@ -96,18 +96,17 @@ func handleUserRequest(
 			panic(err)
 		}
 
-
-		val, err := dbutil.SaveNewUser(
-						signupForm.DisplayName,
-						signupForm.EmailAddress,
-						signupForm.Password)
+		val, err := databaseutil.SaveNewUser(
+			signupForm.DisplayName,
+			signupForm.EmailAddress,
+			signupForm.Password)
 		if err != nil {
 			panic(err)
 		}
 
 		// TODO create User
-		userId := UserId {Value: val}
-		
+		userId := UserId{Value: val}
+
 		responseWriter.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(responseWriter).Encode(userId); err != nil {
 			panic(err)
@@ -119,8 +118,6 @@ func handleUserRequest(
 			[]string{http.MethodPost})
 	}
 }
-
-var dbutil databaseutil.Dbutil
 
 func main() {
 	// SET ROUTER
@@ -139,7 +136,7 @@ func main() {
 				fileServer))
 	}
 
-	err := dbutil.Connect(os.Getenv("DATABASE_URL"))
+	err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
