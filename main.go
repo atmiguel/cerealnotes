@@ -1,7 +1,7 @@
 package main
 
 import (
-	"CerealNotes/databaseutil"
+	"cerealnotes/databaseutil"
 	"encoding/json"
 	"fmt"
 	"html/template"
