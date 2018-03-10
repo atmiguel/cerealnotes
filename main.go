@@ -74,7 +74,7 @@ func getRequestBody(request *http.Request) []byte {
 }
 
 type UserId struct {
-	Value int `json:"value"`
+	Value int64 `json:"value"`
 }
 
 func handleUserRequest(
@@ -120,7 +120,7 @@ func handleUserRequest(
 	}
 }
 
-var dbutil *databaseutil.Dbutil = new(databaseutil.Dbutil)
+var dbutil databaseutil.Dbutil
 
 func main() {
 	// SET ROUTER

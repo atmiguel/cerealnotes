@@ -33,7 +33,7 @@ func (wrapper Dbutil) Connect(dbUrl string) (error) {
 func (wrapper Dbutil) SaveNewUser(
 	displayName string, 
 	emailAddress string, 
-	password string) (int, error) {
+	password string) (int64, error) {
 	
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -41,8 +41,9 @@ func (wrapper Dbutil) SaveNewUser(
 	}
 
 	sqlStatement := `
-	INSERT INTO users (display_name, email_address, password, creation_time)
-	VALUES ($1, $2, $3, $4)`
+		INSERT INTO users (display_name, email_address, password, creation_time)
+		VALUES ($1, $2, $3, $4)`
+
 	result, err := wrapper.db.Exec(sqlStatement, displayName, emailAddress, hash, time.Now().UTC())
 	if err != nil {
 		return -1, nil
@@ -54,7 +55,7 @@ func (wrapper Dbutil) SaveNewUser(
 	}
 
 	fmt.Sprintf("%d", id)
-	return 0, nil
+	return id, nil
 }
 
 func (wrapper Dbutil) validateUser(
