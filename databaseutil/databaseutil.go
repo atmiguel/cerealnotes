@@ -2,8 +2,8 @@ package databaseutil
 
 import (
 	"database/sql"
-	// Notice that we’re loading the driver anonymously, The driver registers itself as being available to the database/sql package.
 	"fmt"
+	// Notice that we’re loading the driver anonymously, The driver registers itself as being available to the database/sql package.
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -27,12 +27,9 @@ func Connect(dbUrl string) error {
 	return nil
 }
 
-func SaveNewUser(
-	displayName string,
-	emailAddress string,
-	password string) (int64, error) {
+func CreateNewUser(displayName string, emailAddress string, password string) (int64, error) {
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return -1, err
 	}
@@ -42,18 +39,16 @@ func SaveNewUser(
 		VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var id int64
-	err = db.QueryRow(sqlStatement, displayName, emailAddress, hash, time.Now().UTC()).Scan(&id)
+	err = db.QueryRow(sqlStatement, displayName, emailAddress, hashedPassword, time.Now().UTC()).Scan(&id)
 	if err != nil {
 		return -1, err
 	}
 
-	fmt.Sprintf("%d", id)
+	log.Printf("created new user with id '%d'", id)
 	return id, nil
 }
 
-func ValidateUser(
-	emailAddress string,
-	password string) (bool, error) {
+func ValidateUser(emailAddress string, password string) (bool, error) {
 
 	sqlStatement := `
 	SELECT password FROM users WHERE email_address = $1
