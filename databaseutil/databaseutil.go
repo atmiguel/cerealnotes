@@ -2,10 +2,10 @@ package databaseutil
 
 import (
 	"database/sql"
-	"fmt"
 	// Notice that we’re loading the driver anonymously, The driver registers itself as being available to the database/sql package.
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"time"
 )
 

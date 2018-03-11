@@ -87,7 +87,7 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 			panic(err)
 		}
 
-		val, err := databaseutil.SaveNewUser(
+		val, err := databaseutil.CreateNewUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
 			signupForm.Password)
