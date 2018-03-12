@@ -12,12 +12,12 @@ import (
 var db *sql.DB
 
 func Connect(dbUrl string) error {
-	temp, err := sql.Open("postgres", dbUrl)
+	var err error
+
+	db, err = sql.Open("postgres", dbUrl)
 	if err != nil {
 		return err
 	}
-
-	db = temp
 
 	// Quickly test if the connection to the database worked.
 	if err := db.Ping(); err != nil {
@@ -27,7 +27,7 @@ func Connect(dbUrl string) error {
 	return nil
 }
 
-func CreateNewUser(displayName string, emailAddress string, password string) (int64, error) {
+func CreateUser(displayName string, emailAddress string, password string) (int64, error) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -48,7 +48,7 @@ func CreateNewUser(displayName string, emailAddress string, password string) (in
 	return id, nil
 }
 
-func ValidateUser(emailAddress string, password string) (bool, error) {
+func AuthenticateUser(emailAddress string, password string) (bool, error) {
 
 	sqlStatement := `
 	SELECT password FROM users WHERE email_address = $1

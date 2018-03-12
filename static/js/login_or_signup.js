@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 var getInputField = function($form, field) {
     return $form.find('[name="' + field + '"]');
 };
@@ -50,7 +49,7 @@ $(function() {
     var emailAddressField = 'emailAddress';
     var passwordField = 'password';
 
-    var signupFieldsMetaData = {
+    var signupFormMetadata = {
         $form: $('#signup-form'),
         fields: [
             displayNameField,
@@ -60,7 +59,7 @@ $(function() {
         submitHasBeenClicked: false
     };
 
-    var loginFieldsMetaData = {
+    var loginFormMetadata = {
         $form: $('#login-form'),
         fields: [
             emailAddressField,
@@ -70,8 +69,8 @@ $(function() {
     };
 
 
-    var installFieldValidators = function(fieldsMetaData) {
-        getInputFields(fieldsMetaData.$form, fieldsMetaData.fields).forEach(
+    var installFieldValidators = function(formMetadata) {
+        getInputFields(formMetadata.$form, formMetadata.fields).forEach(
           ($field) => {
             var field = $field.attr('name');
 
@@ -79,7 +78,7 @@ $(function() {
             $field.on(
                 'input',
                 (event) => {
-                    if (fieldsMetaData.submitHasBeenClicked) {
+                    if (formMetadata.submitHasBeenClicked) {
                         populateValidationMessage($field);
                     }
                 });
@@ -108,29 +107,30 @@ $(function() {
         });
     };
 
-    installFieldValidators(signupFieldsMetaData);
-    installFieldValidators(loginFieldsMetaData);
+    installFieldValidators(signupFormMetadata);
+    installFieldValidators(loginFormMetadata);
 
 
-    var installSubmitClickHandler = function(fieldsMetaData, postFunction) {
-        fieldsMetaData.$form.find('button').click(
+    var installSubmitClickHandler = function(formMetadata, postFunction) {
+        formMetadata.$form.find('button').click(
         () => {
-            if (checkFormValidity(fieldsMetaData.$form, fieldsMetaData.fields)) {
-                var formData = getFormData(fieldsMetaData.$form, fieldsMetaData.fields);
+            if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
+                var formData = getFormData(formMetadata.$form, formMetadata.fields);
                 var jsonData = JSON.stringify(formData);
 
                 postFunction(jsonData)
 
-            } else if (!fieldsMetaData.submitHasBeenClicked) {
-                fieldsMetaData.submitHasBeenClicked = true;
+            } else if (!formMetadata.submitHasBeenClicked) {
+                formMetadata.submitHasBeenClicked = true;
 
-                populateValidationMessages(fieldsMetaData.$form, fieldsMetaData.fields);
-                touchAllFields(fieldsMetaData.$form, fieldsMetaData.fields);
+                populateValidationMessages(formMetadata.$form, formMetadata.fields);
+                touchAllFields(formMetadata.$form, formMetadata.fields);
             }
         });
     }
 
-    installSubmitClickHandler(signupFieldsMetaData, 
+    installSubmitClickHandler(
+        signupFormMetadata, 
         (formDataAsJsonString) => {
             $.post(
                 '/user',
@@ -141,13 +141,14 @@ $(function() {
                 'json');
         });
 
-    installSubmitClickHandler(loginFieldsMetaData, 
+    installSubmitClickHandler(
+        loginFormMetadata, 
         (formDataAsJsonString) => {
             $.post(
                 '/session', 
                 formDataAsJsonString, 
                 (response) => {
-                alert(response);
+                    alert(response);
                 }, 
                 'text');
         });
