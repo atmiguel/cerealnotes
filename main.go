@@ -53,7 +53,6 @@ func handleLoginOrSignupRequest(responseWriter http.ResponseWriter, request *htt
 	}
 }
 
-// TODO cleanup error cases
 func getRequestBody(request *http.Request) []byte {
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -95,7 +94,6 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 			panic(err)
 		}
 
-		// TODO create User
 		userId := UserId{Value: val}
 
 		responseWriter.WriteHeader(http.StatusCreated)
@@ -110,9 +108,7 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 	}
 }
 
-func handleSessionRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request) {
+func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Request) {
 
 	type LoginForm struct {
 		EmailAddress string `json:"emailAddress"`

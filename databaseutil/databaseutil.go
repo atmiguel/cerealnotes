@@ -34,12 +34,12 @@ func CreateUser(displayName string, emailAddress string, password string) (int64
 		return -1, err
 	}
 
-	sqlStatement := `
+	sqlQuery := `
 		INSERT INTO users (display_name, email_address, password, creation_time) 
 		VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var id int64
-	err = db.QueryRow(sqlStatement, displayName, emailAddress, hashedPassword, time.Now().UTC()).Scan(&id)
+	err = db.QueryRow(sqlQuery, displayName, emailAddress, hashedPassword, time.Now().UTC()).Scan(&id)
 	if err != nil {
 		return -1, err
 	}
@@ -50,19 +50,17 @@ func CreateUser(displayName string, emailAddress string, password string) (int64
 
 func AuthenticateUser(emailAddress string, password string) (bool, error) {
 
-	sqlStatement := `
+	sqlQuery := `
 	SELECT password FROM users WHERE email_address = $1
 	`
 
-	// TODO handle the scenario where there is nobody in the db
-	var hashFromDatabase []byte
-	err := db.QueryRow(sqlStatement, emailAddress).Scan(&hashFromDatabase)
+	var storedPasswordHash []byte
+	err := db.QueryRow(sqlQuery, emailAddress).Scan(&storedPasswordHash)
 	if err != nil {
 		return false, err
 	}
 
-	// Comparing the password with the hash
-	if err := bcrypt.CompareHashAndPassword(hashFromDatabase, []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(storedPasswordHash, []byte(password)); err != nil {
 		return false, err
 	}
 

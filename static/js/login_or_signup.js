@@ -56,7 +56,7 @@ $(function() {
             emailAddressField,
             passwordField,
         ],
-        submitHasBeenClicked: false
+        submitHasBeenClicked: false,
     };
 
     var loginFormMetadata = {
@@ -65,7 +65,7 @@ $(function() {
             emailAddressField,
             passwordField,
         ],
-        submitHasBeenClicked: false
+        submitHasBeenClicked: false,
     };
 
 
