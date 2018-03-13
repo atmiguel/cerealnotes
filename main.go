@@ -124,7 +124,7 @@ func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Requ
 			panic(err)
 		}
 
-		validated, err := databaseutil.AuthenticateUser(
+		isAuthenticated, err := databaseutil.AuthenticateUser(
 			loginForm.EmailAddress,
 			loginForm.Password)
 
@@ -132,9 +132,9 @@ func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Requ
 			panic(err)
 		}
 
-		log.Printf("did we find the user + password combo in the table: %t", validated)
+		log.Printf("did we find the user + password combo in the table: %t", isAuthenticated)
 		responseWriter.WriteHeader(http.StatusCreated)
-		responseWriter.Write([]byte(fmt.Sprintf("passward email combo was correct? %t", validated)))
+		responseWriter.Write([]byte(fmt.Sprintf("passward email combo was correct? %t", isAuthenticated)))
 
 	default:
 		respondWithMethodNotAllowed(

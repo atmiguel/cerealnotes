@@ -28,7 +28,6 @@ func Connect(dbUrl string) error {
 }
 
 func CreateUser(displayName string, emailAddress string, password string) (int64, error) {
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return -1, err
@@ -49,7 +48,6 @@ func CreateUser(displayName string, emailAddress string, password string) (int64
 }
 
 func AuthenticateUser(emailAddress string, password string) (bool, error) {
-
 	sqlQuery := `
 	SELECT password FROM users WHERE email_address = $1
 	`

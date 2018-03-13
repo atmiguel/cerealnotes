@@ -71,40 +71,40 @@ $(function() {
 
     var installFieldValidators = function(formMetadata) {
         getInputFields(formMetadata.$form, formMetadata.fields).forEach(
-          ($field) => {
-            var field = $field.attr('name');
+            ($field) => {
+                var field = $field.attr('name');
 
-            // continuously update validation message after failed submission
-            $field.on(
-                'input',
-                (event) => {
-                    if (formMetadata.submitHasBeenClicked) {
-                        populateValidationMessage($field);
-                    }
-                });
-
-            if (field !== passwordField) {
-                // restrict initial space character
-                $field.keypress(
+                // continuously update validation message after failed submission
+                $field.on(
+                    'input',
                     (event) => {
-                        var value = $field.val();
-                        var trimmedValue = $.trim(value);
-
-                        if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
-                            return false; // cancels keypress event
+                        if (formMetadata.submitHasBeenClicked) {
+                            populateValidationMessage($field);
                         }
                     });
 
-                // remove trailing spaces on blur
-                $field.blur(
-                    () => {
-                        var value = $field.val();
-                        var trimmedValue = $.trim(value);
+                if (field !== passwordField) {
+                    // restrict initial space character
+                    $field.keypress(
+                        (event) => {
+                            var value = $field.val();
+                            var trimmedValue = $.trim(value);
 
-                        $field.val(trimmedValue);
-                    });
-            }
-        });
+                            if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
+                                return false; // cancels keypress event
+                            }
+                        });
+
+                    // remove trailing spaces on blur
+                    $field.blur(
+                        () => {
+                            var value = $field.val();
+                            var trimmedValue = $.trim(value);
+
+                            $field.val(trimmedValue);
+                        });
+                }
+            });
     };
 
     installFieldValidators(signupFormMetadata);
@@ -113,20 +113,20 @@ $(function() {
 
     var installSubmitClickHandler = function(formMetadata, postFunction) {
         formMetadata.$form.find('button').click(
-        () => {
-            if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
-                var formData = getFormData(formMetadata.$form, formMetadata.fields);
-                var jsonData = JSON.stringify(formData);
+            () => {
+                if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
+                    var formData = getFormData(formMetadata.$form, formMetadata.fields);
+                    var jsonData = JSON.stringify(formData);
 
-                postFunction(jsonData)
+                    postFunction(jsonData)
 
-            } else if (!formMetadata.submitHasBeenClicked) {
-                formMetadata.submitHasBeenClicked = true;
+                } else if (!formMetadata.submitHasBeenClicked) {
+                    formMetadata.submitHasBeenClicked = true;
 
-                populateValidationMessages(formMetadata.$form, formMetadata.fields);
-                touchAllFields(formMetadata.$form, formMetadata.fields);
-            }
-        });
+                    populateValidationMessages(formMetadata.$form, formMetadata.fields);
+                    touchAllFields(formMetadata.$form, formMetadata.fields);
+                }
+            });
     }
 
     installSubmitClickHandler(
