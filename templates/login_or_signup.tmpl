@@ -88,13 +88,25 @@
                     <div id="login-form" class="mui-tabs__pane">
                         <div class="mui-form">
                             <div class="mui-textfield mui-textfield--float-label">
-                                <input type="email" required />
+                                <input
+                                    type="email"
+                                    name="emailAddress"
+                                    maxlength="128"
+                                    required
+                                />
                                 <label>Email Address</label>
+                                <span class="validation-message mui--text-accent-secondary"></span>
                             </div>
 
                             <div class="mui-textfield mui-textfield--float-label">
-                                <input type="password" required />
+                                <input
+                                    type="password"
+                                    name="password"
+                                    maxlength="128"
+                                    required
+                                />
                                 <label>Password</label>
+                                <span class="validation-message mui--text-accent-secondary"></span>
                             </div>
 
                             <button type="button" class="mui-btn mui-btn--primary">

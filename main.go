@@ -1,9 +1,9 @@
 package main
 
 import (
-	"cerealnotes/databaseutil"
 	"encoding/json"
 	"fmt"
+	"github.com/atmiguel/cerealnotes/databaseutil"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -53,7 +53,6 @@ func handleLoginOrSignupRequest(responseWriter http.ResponseWriter, request *htt
 	}
 }
 
-// TODO cleanup error cases
 func getRequestBody(request *http.Request) []byte {
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -68,7 +67,7 @@ func getRequestBody(request *http.Request) []byte {
 }
 
 type UserId struct {
-	Value int `json:"value"`
+	Value int64 `json:"value"`
 }
 
 func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request) {
@@ -87,13 +86,54 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 			panic(err)
 		}
 
-		// TODO create User
-		userId := UserId{Value: 1}
-
-		responseWriter.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(responseWriter).Encode(userId); err != nil {
+		userId, err := databaseutil.CreateUser(
+			signupForm.DisplayName,
+			signupForm.EmailAddress,
+			signupForm.Password)
+		if err != nil {
 			panic(err)
 		}
+
+		userIdObject := UserId{Value: userId}
+
+		responseWriter.WriteHeader(http.StatusCreated)
+		if err := json.NewEncoder(responseWriter).Encode(userIdObject); err != nil {
+			panic(err)
+		}
+
+	default:
+		respondWithMethodNotAllowed(
+			responseWriter,
+			[]string{http.MethodPost})
+	}
+}
+
+func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Request) {
+	type LoginForm struct {
+		EmailAddress string `json:"emailAddress"`
+		Password     string `json:"password"`
+	}
+
+	switch request.Method {
+	case http.MethodPost:
+		var loginForm LoginForm
+		body := getRequestBody(request)
+
+		if err := json.Unmarshal(body, &loginForm); err != nil {
+			panic(err)
+		}
+
+		isAuthenticated, err := databaseutil.AuthenticateUser(
+			loginForm.EmailAddress,
+			loginForm.Password)
+
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf("did we find the user + password combo in the table: %t", isAuthenticated)
+		responseWriter.WriteHeader(http.StatusCreated)
+		responseWriter.Write([]byte(fmt.Sprintf("passward email combo was correct? %t", isAuthenticated)))
 
 	default:
 		respondWithMethodNotAllowed(
@@ -119,19 +159,17 @@ func main() {
 				fileServer))
 	}
 
-	db, err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
+	err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// temporary use of db variable
-	db.Ping()
 
 	// templates
 	http.HandleFunc("/login-or-signup", handleLoginOrSignupRequest)
 
 	// forms
 	http.HandleFunc("/user", handleUserRequest)
+	http.HandleFunc("/session", handleSessionRequest)
 
 	// START SERVER
 	port, err := determineListenPort()
