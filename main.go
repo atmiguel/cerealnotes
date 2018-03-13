@@ -86,7 +86,7 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 			panic(err)
 		}
 
-		val, err := databaseutil.CreateUser(
+		userId, err := databaseutil.CreateUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
 			signupForm.Password)
@@ -94,10 +94,10 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 			panic(err)
 		}
 
-		userId := UserId{Value: val}
+		userIdObject := UserId{Value: userId}
 
 		responseWriter.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(responseWriter).Encode(userId); err != nil {
+		if err := json.NewEncoder(responseWriter).Encode(userIdObject); err != nil {
 			panic(err)
 		}
 
@@ -109,7 +109,6 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 }
 
 func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Request) {
-
 	type LoginForm struct {
 		EmailAddress string `json:"emailAddress"`
 		Password     string `json:"password"`

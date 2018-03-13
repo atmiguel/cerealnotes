@@ -68,7 +68,6 @@ $(function() {
         submitHasBeenClicked: false,
     };
 
-
     var installFieldValidators = function(formMetadata) {
         getInputFields(formMetadata.$form, formMetadata.fields).forEach(
             ($field) => {
@@ -77,7 +76,7 @@ $(function() {
                 // continuously update validation message after failed submission
                 $field.on(
                     'input',
-                    (event) => {
+                    () => {
                         if (formMetadata.submitHasBeenClicked) {
                             populateValidationMessage($field);
                         }
@@ -110,15 +109,14 @@ $(function() {
     installFieldValidators(signupFormMetadata);
     installFieldValidators(loginFormMetadata);
 
-
     var installSubmitClickHandler = function(formMetadata, postFunction) {
         formMetadata.$form.find('button').click(
             () => {
                 if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
                     var formData = getFormData(formMetadata.$form, formMetadata.fields);
-                    var jsonData = JSON.stringify(formData);
+                    var formDataAsJsonString = JSON.stringify(formData);
 
-                    postFunction(jsonData)
+                    postFunction(formDataAsJsonString)
 
                 } else if (!formMetadata.submitHasBeenClicked) {
                     formMetadata.submitHasBeenClicked = true;

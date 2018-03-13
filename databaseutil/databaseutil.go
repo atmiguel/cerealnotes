@@ -49,16 +49,16 @@ func CreateUser(displayName string, emailAddress string, password string) (int64
 
 func AuthenticateUser(emailAddress string, password string) (bool, error) {
 	sqlQuery := `
-	SELECT password FROM users WHERE email_address = $1
+		SELECT password FROM users WHERE email_address = $1
 	`
 
-	var storedPasswordHash []byte
-	err := db.QueryRow(sqlQuery, emailAddress).Scan(&storedPasswordHash)
+	var storedHashedPassword []byte
+	err := db.QueryRow(sqlQuery, emailAddress).Scan(&storedHashedPassword)
 	if err != nil {
 		return false, err
 	}
 
-	if err := bcrypt.CompareHashAndPassword(storedPasswordHash, []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(storedHashedPassword, []byte(password)); err != nil {
 		return false, err
 	}
 
