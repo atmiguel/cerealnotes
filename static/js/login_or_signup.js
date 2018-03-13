@@ -45,75 +45,109 @@ var checkKeypressIsSpace = function(event) {
 };
 
 $(function() {
-    var $signupForm = $('#signup-form');
-
-    var submitHasBeenClicked = false;
-
     var displayNameField = 'displayName';
     var emailAddressField = 'emailAddress';
     var passwordField = 'password';
 
-    var fields = [
-        displayNameField,
-        emailAddressField,
-        passwordField,
-    ];
+    var signupFormMetadata = {
+        $form: $('#signup-form'),
+        fields: [
+            displayNameField,
+            emailAddressField,
+            passwordField,
+        ],
+        submitHasBeenClicked: false,
+    };
 
-    getInputFields($signupForm, fields).forEach(
-        ($field) => {
-            var field = $field.attr('name');
+    var loginFormMetadata = {
+        $form: $('#login-form'),
+        fields: [
+            emailAddressField,
+            passwordField,
+        ],
+        submitHasBeenClicked: false,
+    };
 
-            // continuously update validation message after failed submission
-            $field.on(
-                'input',
-                (event) => {
-                    if (submitHasBeenClicked) {
-                        populateValidationMessage($field);
-                    }
-                });
+    var installFieldValidators = function(formMetadata) {
+        getInputFields(formMetadata.$form, formMetadata.fields).forEach(
+            ($field) => {
+                var field = $field.attr('name');
 
-            if (field !== passwordField) {
-                // restrict initial space character
-                $field.keypress(
-                    (event) => {
-                        var value = $field.val();
-                        var trimmedValue = $.trim(value);
-
-                        if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
-                            return false; // cancels keypress event
+                // continuously update validation message after failed submission
+                $field.on(
+                    'input',
+                    () => {
+                        if (formMetadata.submitHasBeenClicked) {
+                            populateValidationMessage($field);
                         }
                     });
 
-                // remove trailing spaces on blur
-                $field.blur(
-                    () => {
-                        var value = $field.val();
-                        var trimmedValue = $.trim(value);
+                if (field !== passwordField) {
+                    // restrict initial space character
+                    $field.keypress(
+                        (event) => {
+                            var value = $field.val();
+                            var trimmedValue = $.trim(value);
 
-                        $field.val(trimmedValue);
-                    });
-            }
+                            if (checkKeypressIsSpace(event) && trimmedValue.length === 0) {
+                                return false; // cancels keypress event
+                            }
+                        });
+
+                    // remove trailing spaces on blur
+                    $field.blur(
+                        () => {
+                            var value = $field.val();
+                            var trimmedValue = $.trim(value);
+
+                            $field.val(trimmedValue);
+                        });
+                }
+            });
+    };
+
+    installFieldValidators(signupFormMetadata);
+    installFieldValidators(loginFormMetadata);
+
+    var installSubmitClickHandler = function(formMetadata, postFunction) {
+        formMetadata.$form.find('button').click(
+            () => {
+                if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
+                    var formData = getFormData(formMetadata.$form, formMetadata.fields);
+                    var formDataAsJsonString = JSON.stringify(formData);
+
+                    postFunction(formDataAsJsonString)
+
+                } else if (!formMetadata.submitHasBeenClicked) {
+                    formMetadata.submitHasBeenClicked = true;
+
+                    populateValidationMessages(formMetadata.$form, formMetadata.fields);
+                    touchAllFields(formMetadata.$form, formMetadata.fields);
+                }
+            });
+    }
+
+    installSubmitClickHandler(
+        signupFormMetadata, 
+        (formDataAsJsonString) => {
+            $.post(
+                '/user',
+                formDataAsJsonString,
+                (userId) => {
+                    alert('Created User with id: ' + userId.value);
+                },
+                'json');
         });
 
-    $signupForm.find('button').click(
-        () => {
-            if (checkFormValidity($signupForm, fields)) {
-                var formData = getFormData($signupForm, fields);
-                var jsonData = JSON.stringify(formData);
-
-                $.post(
-                    '/user',
-                    jsonData,
-                    (userId) => {
-                        alert('Created User with id: ' + userId.value);
-                    },
-                    'json');
-
-            } else if (!submitHasBeenClicked) {
-                submitHasBeenClicked = true;
-
-                populateValidationMessages($signupForm, fields);
-                touchAllFields($signupForm, fields);
-            }
+    installSubmitClickHandler(
+        loginFormMetadata, 
+        (formDataAsJsonString) => {
+            $.post(
+                '/session', 
+                formDataAsJsonString, 
+                (response) => {
+                    alert(response);
+                }, 
+                'text');
         });
 });
