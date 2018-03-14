@@ -1,9 +1,9 @@
 package main
 
 import (
-	"CerealNotes/databaseutil"
 	"encoding/json"
 	"fmt"
+	"github.com/atmiguel/CerealNotes/databaseutil"
 	"html/template"
 	"io/ioutil"
 	"log"
