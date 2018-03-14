@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/atmiguel/CerealNotes",
+	"ImportPath": "github.com/atmiguel/cerealnotes",
 	"GoVersion": "go1.10",
 	"GodepVersion": "v80",
 	"Deps": [

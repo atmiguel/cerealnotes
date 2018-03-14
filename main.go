@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/atmiguel/CerealNotes/databaseutil"
+	"github.com/atmiguel/cerealnotes/databaseutil"
 	"html/template"
 	"io/ioutil"
 	"log"

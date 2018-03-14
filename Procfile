@@ -1,1 +1,1 @@
-web: CerealNotes
+web: cerealnotes

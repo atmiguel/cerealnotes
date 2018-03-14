@@ -8,7 +8,7 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 
 `go install`
 
-`CerealNotes`
+`cerealnotes`
 
 Visit localhost:8080/login-or-signup
 
