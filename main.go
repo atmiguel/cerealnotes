@@ -85,7 +85,7 @@ func handleUserRequest(
 			panic(err)
 		}
 
-		userId, err := userservice.CreateUser(
+		_, err := userservice.CreateUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
 			signupForm.Password)
@@ -95,9 +95,6 @@ func handleUserRequest(
 
 		// TODO js should check status returned
 		responseWriter.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(responseWriter).Encode(userId); err != nil {
-			panic(err)
-		}
 
 	default:
 		respondWithMethodNotAllowed(

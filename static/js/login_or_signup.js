@@ -128,26 +128,30 @@ $(function() {
     }
 
     installSubmitClickHandler(
-        signupFormMetadata, 
+        signupFormMetadata,
         (formDataAsJsonString) => {
             $.post(
                 '/user',
                 formDataAsJsonString,
-                (userId) => {
-                    alert('Created User with id: ' + userId.value);
-                },
-                'json');
+                (responseBody, _, request) => {
+                    if (request.status === 201) {
+                        alert('Successfully created user');
+                    } else {
+                        // TODO flesh out if statement possibilities
+                        alert('Email address already in use');
+                    }
+                });
         });
 
     installSubmitClickHandler(
-        loginFormMetadata, 
+        loginFormMetadata,
         (formDataAsJsonString) => {
             $.post(
-                '/session', 
-                formDataAsJsonString, 
+                '/session',
+                formDataAsJsonString,
                 (response) => {
                     alert(response);
-                }, 
+                },
                 'text');
         });
 });
