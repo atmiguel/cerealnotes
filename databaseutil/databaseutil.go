@@ -2,65 +2,80 @@ package databaseutil
 
 import (
 	"database/sql"
-	// Notice that we’re loading the driver anonymously, The driver registers itself as being available to the database/sql package.
+	"github.com/atmiguel/cerealnotes/models/user"
 	_ "github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 	"log"
+	"os"
 	"time"
 )
 
 var db *sql.DB
 
-func Connect(dbUrl string) error {
-	var err error
+func init() {
+	var databaseUrl string
+	{
+		environmentVariableName := "DATABASE_URL"
+		databaseUrl = os.Getenv(environmentVariableName)
 
-	db, err = sql.Open("postgres", dbUrl)
-	if err != nil {
-		return err
+		if len(databaseUrl) == 0 {
+			log.Fatalf("environment variable %s not set", environmentVariableName)
+		}
+	}
+
+	{
+		tempDb, err := sql.Open("postgres", databaseUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		db = tempDb
 	}
 
 	// Quickly test if the connection to the database worked.
 	if err := db.Ping(); err != nil {
-		return err
+		log.Fatal(err)
 	}
-
-	return nil
 }
 
-func CreateUser(displayName string, emailAddress string, password string) (int64, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
+func InsertIntoUsersTable(
+	displayName string,
+	emailAddress string,
+	password []byte,
+	creationTime time.Time,
+) (user.UserId, error) {
+	var row *sql.Row
+	{
+		sqlQuery := `
+			INSERT INTO users (display_name, email_address, password, creation_time)
+			VALUES ($1, $2, $3, $4) RETURNING id `
+
+		row = db.QueryRow(sqlQuery, displayName, emailAddress, password, creationTime)
+	}
+
+	var userId user.UserId
+	if err := row.Scan(&userId); err != nil {
+		// TODO handle err.ErrNoRows
 		return -1, err
 	}
 
-	sqlQuery := `
-		INSERT INTO users (display_name, email_address, password, creation_time) 
-		VALUES ($1, $2, $3, $4) RETURNING id`
-
-	var id int64
-	err = db.QueryRow(sqlQuery, displayName, emailAddress, hashedPassword, time.Now().UTC()).Scan(&id)
-	if err != nil {
-		return -1, err
-	}
-
-	log.Printf("created new user with id '%d'", id)
-	return id, nil
+	return userId, nil
 }
 
-func AuthenticateUser(emailAddress string, password string) (bool, error) {
-	sqlQuery := `
-		SELECT password FROM users WHERE email_address = $1
-	`
+func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
+	var row *sql.Row
+	{
+		sqlQuery := `
+			SELECT password FROM users
+			WHERE email_address = $1`
 
-	var storedHashedPassword []byte
-	err := db.QueryRow(sqlQuery, emailAddress).Scan(&storedHashedPassword)
-	if err != nil {
-		return false, err
+		row = db.QueryRow(sqlQuery, emailAddress)
 	}
 
-	if err := bcrypt.CompareHashAndPassword(storedHashedPassword, []byte(password)); err != nil {
-		return false, err
+	var password []byte
+	if err := row.Scan(&password); err != nil {
+		// TODO handle err.ErrNoRows
+		return nil, err
 	}
 
-	return true, nil
+	return password, nil
 }

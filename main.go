@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/atmiguel/cerealnotes/databaseutil"
+	"github.com/atmiguel/cerealnotes/services/userservice"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -23,20 +23,20 @@ func determineListenPort() (string, error) {
 	return ":" + port, nil
 }
 
-func respondWithMethodNotAllowed(responseWriter http.ResponseWriter, allowedMethods []string) {
+func respondWithMethodNotAllowed(
+	responseWriter http.ResponseWriter,
+	allowedMethods []string,
+) {
 	statusCode := http.StatusMethodNotAllowed
+	responseWriter.Header().Set("Allow", strings.Join(allowedMethods, ", "))
 
-	responseWriter.Header().Set(
-		"Allow",
-		strings.Join(allowedMethods, ", "))
-
-	http.Error(
-		responseWriter,
-		http.StatusText(statusCode),
-		statusCode)
+	http.Error(responseWriter, http.StatusText(statusCode), statusCode)
 }
 
-func handleLoginOrSignupRequest(responseWriter http.ResponseWriter, request *http.Request) {
+func handleLoginOrSignupRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
 	switch request.Method {
 	case http.MethodGet:
 		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
@@ -66,11 +66,10 @@ func getRequestBody(request *http.Request) []byte {
 	return body
 }
 
-type UserId struct {
-	Value int64 `json:"value"`
-}
-
-func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request) {
+func handleUserRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
 	type SignupForm struct {
 		DisplayName  string `json:"displayName"`
 		EmailAddress string `json:"emailAddress"`
@@ -86,7 +85,7 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 			panic(err)
 		}
 
-		userId, err := databaseutil.CreateUser(
+		userId, err := userservice.CreateUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
 			signupForm.Password)
@@ -94,10 +93,9 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 			panic(err)
 		}
 
-		userIdObject := UserId{Value: userId}
-
+		// TODO js should check status returned
 		responseWriter.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(responseWriter).Encode(userIdObject); err != nil {
+		if err := json.NewEncoder(responseWriter).Encode(userId); err != nil {
 			panic(err)
 		}
 
@@ -108,7 +106,10 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 	}
 }
 
-func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Request) {
+func handleSessionRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
 	type LoginForm struct {
 		EmailAddress string `json:"emailAddress"`
 		Password     string `json:"password"`
@@ -123,17 +124,16 @@ func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Requ
 			panic(err)
 		}
 
-		isAuthenticated, err := databaseutil.AuthenticateUser(
+		if err := userservice.AuthenticateUser(
 			loginForm.EmailAddress,
-			loginForm.Password)
-
-		if err != nil {
+			loginForm.Password,
+		); err != nil {
+			// TODO check err type
 			panic(err)
 		}
 
-		log.Printf("did we find the user + password combo in the table: %t", isAuthenticated)
 		responseWriter.WriteHeader(http.StatusCreated)
-		responseWriter.Write([]byte(fmt.Sprintf("passward email combo was correct? %t", isAuthenticated)))
+		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
 
 	default:
 		respondWithMethodNotAllowed(
@@ -157,11 +157,6 @@ func main() {
 			http.StripPrefix(
 				staticDirectoryPaddedWithSlashes,
 				fileServer))
-	}
-
-	err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	// templates
