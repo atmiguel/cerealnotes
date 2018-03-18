@@ -130,7 +130,7 @@ $(function() {
                 // TODO flesh out if statement possibilities
                 alert('Email address already in use');
             }
-        }, 'json');
+        });
     });
 
     installSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
