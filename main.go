@@ -92,7 +92,6 @@ func handleUserRequest(
 			panic(err)
 		}
 
-		// TODO js should check status returned
 		responseWriter.WriteHeader(http.StatusCreated)
 
 	default:
@@ -122,7 +121,6 @@ func handleSessionRequest(
 			loginForm.EmailAddress,
 			loginForm.Password,
 		); err != nil {
-			// TODO check err type
 			panic(err)
 		}
 

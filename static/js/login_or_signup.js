@@ -127,7 +127,6 @@ $(function() {
             if (request.status === 201) {
                 alert('Successfully created user');
             } else {
-                // TODO flesh out if statement possibilities
                 alert('Email address already in use');
             }
         });

@@ -54,7 +54,6 @@ func InsertIntoUsersTable(
 
 	var userId user.UserId
 	if err := row.Scan(&userId); err != nil {
-		// TODO handle err.ErrNoRows
 		return -1, err
 	}
 
@@ -73,7 +72,6 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 
 	var password []byte
 	if err := row.Scan(&password); err != nil {
-		// TODO handle err.ErrNoRows
 		return nil, err
 	}
 

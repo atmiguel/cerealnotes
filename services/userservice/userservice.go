@@ -32,7 +32,6 @@ func AuthenticateUser(emailAddress string, password string) error {
 	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(
 		emailAddress)
 	if err != nil {
-		// TODO distinguish between user not found and error
 		return err
 	}
 
@@ -40,7 +39,6 @@ func AuthenticateUser(emailAddress string, password string) error {
 		storedHashedPassword,
 		[]byte(password),
 	); err != nil {
-		// TODO return a specific error
 		return err
 	}
 
