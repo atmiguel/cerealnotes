@@ -27,9 +27,10 @@ func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
 	allowedMethods []string,
 ) {
-	statusCode := http.StatusMethodNotAllowed
-	responseWriter.Header().Set("Allow", strings.Join(allowedMethods, ", "))
+	allowedMethodsString := strings.Join(allowedMethods, ", ")
+	responseWriter.Header().Set("Allow", allowedMethodsString)
 
+	statusCode := http.StatusMethodNotAllowed
 	http.Error(responseWriter, http.StatusText(statusCode), statusCode)
 }
 
@@ -47,9 +48,7 @@ func handleLoginOrSignupRequest(
 		parsedTemplate.Execute(responseWriter, nil)
 
 	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodGet})
+		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
 	}
 }
 
@@ -97,9 +96,7 @@ func handleUserRequest(
 		responseWriter.WriteHeader(http.StatusCreated)
 
 	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodPost})
+		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
 	}
 }
 
@@ -133,9 +130,7 @@ func handleSessionRequest(
 		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
 
 	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodPost})
+		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
 	}
 }
 
@@ -151,9 +146,7 @@ func main() {
 
 		http.Handle(
 			staticDirectoryPaddedWithSlashes,
-			http.StripPrefix(
-				staticDirectoryPaddedWithSlashes,
-				fileServer))
+			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
 	}
 
 	// templates
