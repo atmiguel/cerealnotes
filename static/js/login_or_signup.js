@@ -8,7 +8,6 @@ var getInputFields = function($form, fields) {
 
 var checkFormValidity = function($form, fields) {
     var $inputFields = getInputFields($form, fields);
-
     return $inputFields.every(($field) => $field.get(0).checkValidity());
 };
 
@@ -17,7 +16,6 @@ var getFormData = function($form, fields) {
 
     return $inputFields.reduce((formData, $field) => {
         formData[$field.attr('name')] = $field.val();
-
         return formData;
     }, {});
 };
@@ -60,7 +58,7 @@ $(function() {
         submitHasBeenClicked: false,
     };
 
-    var installFieldValidators = function(formMetadata) {
+    var attachFieldValidators = function(formMetadata) {
         var $inputFields = getInputFields(
             formMetadata.$form,
             formMetadata.fields);
@@ -96,10 +94,10 @@ $(function() {
         });
     };
 
-    installFieldValidators(signupFormMetadata);
-    installFieldValidators(loginFormMetadata);
+    attachFieldValidators(signupFormMetadata);
+    attachFieldValidators(loginFormMetadata);
 
-    var installSubmitClickHandler = function(formMetadata, postFunction) {
+    var attachSubmitClickHandler = function(formMetadata, postFunction) {
         formMetadata.$form.find('button').click(() => {
             if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
                 var formData = getFormData(
@@ -122,7 +120,7 @@ $(function() {
         });
     }
 
-    installSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
+    attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
         $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
                 alert('Successfully created user');
@@ -132,7 +130,7 @@ $(function() {
         });
     });
 
-    installSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
+    attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
         $.post('/session', formDataAsJsonString, (response) => {
             alert(response);
         }, 'text');
