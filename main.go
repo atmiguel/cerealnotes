@@ -23,20 +23,21 @@ func determineListenPort() (string, error) {
 	return ":" + port, nil
 }
 
-func respondWithMethodNotAllowed(responseWriter http.ResponseWriter, allowedMethods []string) {
+func respondWithMethodNotAllowed(
+	responseWriter http.ResponseWriter,
+	allowedMethods []string,
+) {
+	allowedMethodsString := strings.Join(allowedMethods, ", ")
+	responseWriter.Header().Set("Allow", allowedMethodsString)
+
 	statusCode := http.StatusMethodNotAllowed
-
-	responseWriter.Header().Set(
-		"Allow",
-		strings.Join(allowedMethods, ", "))
-
-	http.Error(
-		responseWriter,
-		http.StatusText(statusCode),
-		statusCode)
+	http.Error(responseWriter, http.StatusText(statusCode), statusCode)
 }
 
-func handleLoginOrSignupRequest(responseWriter http.ResponseWriter, request *http.Request) {
+func handleLoginOrSignupRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
 	switch request.Method {
 	case http.MethodGet:
 		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
@@ -47,9 +48,7 @@ func handleLoginOrSignupRequest(responseWriter http.ResponseWriter, request *htt
 		parsedTemplate.Execute(responseWriter, nil)
 
 	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodGet})
+		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
 	}
 }
 
@@ -70,7 +69,10 @@ type UserId struct {
 	Value int64 `json:"value"`
 }
 
-func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request) {
+func handleUserRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
 	type SignupForm struct {
 		DisplayName  string `json:"displayName"`
 		EmailAddress string `json:"emailAddress"`
@@ -102,13 +104,14 @@ func handleUserRequest(responseWriter http.ResponseWriter, request *http.Request
 		}
 
 	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodPost})
+		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
 	}
 }
 
-func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Request) {
+func handleSessionRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
 	type LoginForm struct {
 		EmailAddress string `json:"emailAddress"`
 		Password     string `json:"password"`
@@ -126,19 +129,22 @@ func handleSessionRequest(responseWriter http.ResponseWriter, request *http.Requ
 		isAuthenticated, err := databaseutil.AuthenticateUser(
 			loginForm.EmailAddress,
 			loginForm.Password)
-
 		if err != nil {
 			panic(err)
 		}
 
-		log.Printf("did we find the user + password combo in the table: %t", isAuthenticated)
+		log.Printf(
+			"did we find the user + password combo in the table: %t",
+			isAuthenticated)
 		responseWriter.WriteHeader(http.StatusCreated)
-		responseWriter.Write([]byte(fmt.Sprintf("passward email combo was correct? %t", isAuthenticated)))
+		responseWriter.Write(
+			[]byte(
+				fmt.Sprintf(
+					"passward email combo was correct? %t",
+					isAuthenticated)))
 
 	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodPost})
+		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
 	}
 }
 
@@ -154,9 +160,7 @@ func main() {
 
 		http.Handle(
 			staticDirectoryPaddedWithSlashes,
-			http.StripPrefix(
-				staticDirectoryPaddedWithSlashes,
-				fileServer))
+			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
 	}
 
 	err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
