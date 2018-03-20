@@ -5,6 +5,7 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 `cd to this repo`
 
 `export PORT=8080`
+`export localhost=DB_URL`
 
 `go install`
 
