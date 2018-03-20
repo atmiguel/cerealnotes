@@ -1,23 +1,25 @@
-# CerealNotes
+# Installation
+## Locally
+* postgres server installed and running. 
+	* `brew install postgres`
+	* `pg_ctl -D /usr/local/var/postgres start`
+* heroku cli installed
+	* `brew install heroku`
+* golang installed
+	* `brew install go`
+* godep installed: `go get github.com/tools/godep`
+
+## Heroku
+* heroku instance
+* instance connected to postgres db
+
+# Running CerealNotes
 
 Assuming your local environment is setup correctly with Golang standards, you can start your local server with the following commands:
 
-`cd to this repo`
+1. `cd to this repo`
+2. `heroku run local`
+3. Visit `localhost:8080/login-or-signup`
 
-`export PORT=8080`
-`export localhost=DB_URL`
-
-`go install`
-
-`cerealnotes`
-
-Visit localhost:8080/login-or-signup
-
-# Heroku stuffs
-
-* install godep: `go get github.com/tools/godep`
-* install heroku cli tools: `brew install heroku`
-
-# Db stuffs
-
-* run first migration `heroku pg:psql < migrations/0000_createDbs.sql`
+# Run DB migrations
+More db information in `migrations/ReadMe.md`
