@@ -2,11 +2,14 @@ package databaseutil
 
 import (
 	"database/sql"
-	_ "github.com/lib/pq"
+	"errors"
+	"github.com/lib/pq"
 	"time"
 )
 
 var db *sql.DB
+
+var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
 func ConnectToDatabase(databaseUrl string) error {
 	{
@@ -44,6 +47,12 @@ func InsertIntoUsersTable(
 	if err := row.Scan(); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
+		}
+
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code == "23505" {
+				return UniqueConstraintError
+			}
 		}
 
 		return err

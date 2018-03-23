@@ -125,7 +125,13 @@ $(function() {
             if (request.status === 201) {
                 alert('Successfully created user');
             } else {
+                alert('Unknown successful status');
+            }
+        }).fail((request) => {
+            if (request.status === 409) {
                 alert('Email address already in use');
+            } else {
+                alert('Unknown error');
             }
         });
     });

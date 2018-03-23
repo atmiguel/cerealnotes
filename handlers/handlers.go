@@ -49,15 +49,22 @@ func HandleUserRequest(
 			panic(err)
 		}
 
-		err := userservice.StoreNewUser(
+		var statusCode int
+		if err := userservice.StoreNewUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
-			signupForm.Password)
-		if err != nil {
-			panic(err)
+			signupForm.Password,
+		); err != nil {
+			if err == userservice.EmailAddressAlreadyInUseError {
+				statusCode = http.StatusConflict
+			} else {
+				panic(err)
+			}
+		} else {
+			statusCode = http.StatusCreated
 		}
 
-		responseWriter.WriteHeader(http.StatusCreated)
+		responseWriter.WriteHeader(statusCode)
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
