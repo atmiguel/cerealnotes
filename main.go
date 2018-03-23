@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/services/userservice"
 	"html/template"
 	"io/ioutil"
@@ -84,7 +85,7 @@ func handleUserRequest(
 			panic(err)
 		}
 
-		_, err := userservice.CreateUser(
+		err := userservice.StoreNewUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
 			signupForm.Password)
@@ -117,7 +118,7 @@ func handleSessionRequest(
 			panic(err)
 		}
 
-		if err := userservice.AuthenticateUser(
+		if err := userservice.AuthenticateUserCredentials(
 			loginForm.EmailAddress,
 			loginForm.Password,
 		); err != nil {
@@ -133,6 +134,21 @@ func handleSessionRequest(
 }
 
 func main() {
+	// SET UP DB
+	var databaseUrl string
+	{
+		environmentVariableName := "DATABASE_URL"
+		databaseUrl = os.Getenv(environmentVariableName)
+
+		if len(databaseUrl) == 0 {
+			log.Fatalf("environment variable %s not set", environmentVariableName)
+		}
+	}
+
+	if err := databaseutil.ConnectToDatabase(databaseUrl); err != nil {
+		log.Fatal(err)
+	}
+
 	// SET ROUTER
 
 	// static files

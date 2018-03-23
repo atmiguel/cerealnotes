@@ -2,30 +2,17 @@ package databaseutil
 
 import (
 	"database/sql"
-	"github.com/atmiguel/cerealnotes/models/user"
 	_ "github.com/lib/pq"
-	"log"
-	"os"
 	"time"
 )
 
 var db *sql.DB
 
-func init() {
-	var databaseUrl string
-	{
-		environmentVariableName := "DATABASE_URL"
-		databaseUrl = os.Getenv(environmentVariableName)
-
-		if len(databaseUrl) == 0 {
-			log.Fatalf("environment variable %s not set", environmentVariableName)
-		}
-	}
-
+func ConnectToDatabase(databaseUrl string) error {
 	{
 		tempDb, err := sql.Open("postgres", databaseUrl)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		db = tempDb
@@ -33,8 +20,10 @@ func init() {
 
 	// Quickly test if the connection to the database worked.
 	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	return nil
 }
 
 func InsertIntoUsersTable(
@@ -42,22 +31,25 @@ func InsertIntoUsersTable(
 	emailAddress string,
 	password []byte,
 	creationTime time.Time,
-) (user.UserId, error) {
+) error {
 	var row *sql.Row
 	{
 		sqlQuery := `
 			INSERT INTO users (display_name, email_address, password, creation_time)
-			VALUES ($1, $2, $3, $4) RETURNING id `
+			VALUES ($1, $2, $3, $4)`
 
 		row = db.QueryRow(sqlQuery, displayName, emailAddress, password, creationTime)
 	}
 
-	var userId user.UserId
-	if err := row.Scan(&userId); err != nil {
-		return -1, err
+	if err := row.Scan(); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+
+		return err
 	}
 
-	return userId, nil
+	return nil
 }
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
