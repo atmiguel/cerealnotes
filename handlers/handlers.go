@@ -49,7 +49,7 @@ func HandleUserRequest(
 			panic(err)
 		}
 
-		_, err := userservice.CreateUser(
+		err := userservice.StoreNewUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
 			signupForm.Password)
@@ -82,7 +82,7 @@ func HandleSessionRequest(
 			panic(err)
 		}
 
-		if err := userservice.AuthenticateUser(
+		if err := userservice.AuthenticateUserCredentials(
 			loginForm.EmailAddress,
 			loginForm.Password,
 		); err != nil {

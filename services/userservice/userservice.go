@@ -2,33 +2,37 @@ package userservice
 
 import (
 	"github.com/atmiguel/cerealnotes/databaseutil"
-	"github.com/atmiguel/cerealnotes/models/user"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
-func CreateUser(
+func StoreNewUser(
 	displayName string,
 	emailAddress string,
 	password string,
-) (user.UserId, error) {
+) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
 		bcrypt.DefaultCost)
 	if err != nil {
-		return -1, err
+		return err
 	}
 
 	creationTime := time.Now().UTC()
 
-	return databaseutil.InsertIntoUsersTable(
+	if err := databaseutil.InsertIntoUsersTable(
 		displayName,
 		emailAddress,
 		hashedPassword,
-		creationTime)
+		creationTime,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func AuthenticateUser(emailAddress string, password string) error {
+func AuthenticateUserCredentials(emailAddress string, password string) error {
 	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(
 		emailAddress)
 	if err != nil {

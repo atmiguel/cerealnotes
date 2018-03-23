@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/routers"
 	"log"
 	"net/http"
@@ -19,18 +20,45 @@ func determineListenPort() (string, error) {
 	return ":" + port, nil
 }
 
+func determineDatabaseUrl() (string, error) {
+	environmentVariableName := "DATABASE_URL"
+	databaseUrl := os.Getenv(environmentVariableName)
+
+	if len(databaseUrl) == 0 {
+		return "", fmt.Errorf(
+			"environment variable %s not set",
+			environmentVariableName)
+	}
+
+	return databaseUrl, nil
+}
+
 func main() {
 	routers.SetRoutes()
 
-	// START SERVER
-	port, err := determineListenPort()
-	if err != nil {
-		log.Fatal(err)
+	// SET UP DB
+	{
+		databaseUrl, err := determineDatabaseUrl()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := databaseutil.ConnectToDatabase(databaseUrl); err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	log.Printf("Listening on %s...\n", port)
+	// START SERVER
+	{
+		port, err := determineListenPort()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	if err := http.ListenAndServe(port, nil); err != nil {
-		panic(err)
+		log.Printf("Listening on %s...\n", port)
+
+		if err := http.ListenAndServe(port, nil); err != nil {
+			panic(err)
+		}
 	}
 }
