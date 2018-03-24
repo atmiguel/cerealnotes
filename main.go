@@ -1,16 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/atmiguel/cerealnotes/databaseutil"
-	"github.com/atmiguel/cerealnotes/services/userservice"
-	"html/template"
-	"io/ioutil"
+	"github.com/atmiguel/cerealnotes/routers"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 )
 
 // get the current listening address or fail if input is not correct
@@ -24,161 +20,45 @@ func determineListenPort() (string, error) {
 	return ":" + port, nil
 }
 
-func respondWithMethodNotAllowed(
-	responseWriter http.ResponseWriter,
-	allowedMethods []string,
-) {
-	allowedMethodsString := strings.Join(allowedMethods, ", ")
-	responseWriter.Header().Set("Allow", allowedMethodsString)
+func determineDatabaseUrl() (string, error) {
+	environmentVariableName := "DATABASE_URL"
+	databaseUrl := os.Getenv(environmentVariableName)
 
-	statusCode := http.StatusMethodNotAllowed
-	http.Error(responseWriter, http.StatusText(statusCode), statusCode)
+	if len(databaseUrl) == 0 {
+		return "", fmt.Errorf(
+			"environment variable %s not set",
+			environmentVariableName)
+	}
+
+	return databaseUrl, nil
 }
 
-func handleLoginOrSignupRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-) {
-	switch request.Method {
-	case http.MethodGet:
-		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
+func main() {
+	routers.SetRoutes()
+
+	// SET UP DB
+	{
+		databaseUrl, err := determineDatabaseUrl()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		parsedTemplate.Execute(responseWriter, nil)
-
-	default:
-		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
-	}
-}
-
-func getRequestBody(request *http.Request) []byte {
-	body, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := request.Body.Close(); err != nil {
-		panic(err)
-	}
-
-	return body
-}
-
-func handleUserRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-) {
-	type SignupForm struct {
-		DisplayName  string `json:"displayName"`
-		EmailAddress string `json:"emailAddress"`
-		Password     string `json:"password"`
-	}
-
-	switch request.Method {
-	case http.MethodPost:
-		var signupForm SignupForm
-		body := getRequestBody(request)
-
-		if err := json.Unmarshal(body, &signupForm); err != nil {
-			panic(err)
-		}
-
-		err := userservice.StoreNewUser(
-			signupForm.DisplayName,
-			signupForm.EmailAddress,
-			signupForm.Password)
-		if err != nil {
-			panic(err)
-		}
-
-		responseWriter.WriteHeader(http.StatusCreated)
-
-	default:
-		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
-	}
-}
-
-func handleSessionRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-) {
-	type LoginForm struct {
-		EmailAddress string `json:"emailAddress"`
-		Password     string `json:"password"`
-	}
-
-	switch request.Method {
-	case http.MethodPost:
-		var loginForm LoginForm
-		body := getRequestBody(request)
-
-		if err := json.Unmarshal(body, &loginForm); err != nil {
-			panic(err)
-		}
-
-		if err := userservice.AuthenticateUserCredentials(
-			loginForm.EmailAddress,
-			loginForm.Password,
-		); err != nil {
-			panic(err)
-		}
-
-		responseWriter.WriteHeader(http.StatusCreated)
-		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
-
-	default:
-		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
-	}
-}
-
-func main() {
-	// SET UP DB
-	var databaseUrl string
-	{
-		environmentVariableName := "DATABASE_URL"
-		databaseUrl = os.Getenv(environmentVariableName)
-
-		if len(databaseUrl) == 0 {
-			log.Fatalf("environment variable %s not set", environmentVariableName)
+		if err := databaseutil.ConnectToDatabase(databaseUrl); err != nil {
+			log.Fatal(err)
 		}
 	}
-
-	if err := databaseutil.ConnectToDatabase(databaseUrl); err != nil {
-		log.Fatal(err)
-	}
-
-	// SET ROUTER
-
-	// static files
-	{
-		staticDirectoryName := "static"
-		staticDirectoryPaddedWithSlashes := "/" + staticDirectoryName + "/"
-
-		fileServer := http.FileServer(http.Dir(staticDirectoryName))
-
-		http.Handle(
-			staticDirectoryPaddedWithSlashes,
-			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
-	}
-
-	// templates
-	http.HandleFunc("/login-or-signup", handleLoginOrSignupRequest)
-
-	// forms
-	http.HandleFunc("/user", handleUserRequest)
-	http.HandleFunc("/session", handleSessionRequest)
 
 	// START SERVER
-	port, err := determineListenPort()
-	if err != nil {
-		log.Fatal(err)
-	}
+	{
+		port, err := determineListenPort()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	log.Printf("Listening on %s...\n", port)
+		log.Printf("Listening on %s...\n", port)
 
-	if err := http.ListenAndServe(port, nil); err != nil {
-		panic(err)
+		if err := http.ListenAndServe(port, nil); err != nil {
+			panic(err)
+		}
 	}
 }
