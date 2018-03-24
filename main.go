@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/atmiguel/cerealnotes/databaseutil"
+	"github.com/atmiguel/cerealnotes/services/userservice"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -65,10 +66,6 @@ func getRequestBody(request *http.Request) []byte {
 	return body
 }
 
-type UserId struct {
-	Value int64 `json:"value"`
-}
-
 func handleUserRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -88,7 +85,7 @@ func handleUserRequest(
 			panic(err)
 		}
 
-		userId, err := databaseutil.CreateUser(
+		err := userservice.StoreNewUser(
 			signupForm.DisplayName,
 			signupForm.EmailAddress,
 			signupForm.Password)
@@ -96,12 +93,7 @@ func handleUserRequest(
 			panic(err)
 		}
 
-		userIdObject := UserId{Value: userId}
-
 		responseWriter.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(responseWriter).Encode(userIdObject); err != nil {
-			panic(err)
-		}
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
@@ -126,22 +118,15 @@ func handleSessionRequest(
 			panic(err)
 		}
 
-		isAuthenticated, err := databaseutil.AuthenticateUser(
+		if err := userservice.AuthenticateUserCredentials(
 			loginForm.EmailAddress,
-			loginForm.Password)
-		if err != nil {
+			loginForm.Password,
+		); err != nil {
 			panic(err)
 		}
 
-		log.Printf(
-			"did we find the user + password combo in the table: %t",
-			isAuthenticated)
 		responseWriter.WriteHeader(http.StatusCreated)
-		responseWriter.Write(
-			[]byte(
-				fmt.Sprintf(
-					"passward email combo was correct? %t",
-					isAuthenticated)))
+		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
@@ -149,6 +134,21 @@ func handleSessionRequest(
 }
 
 func main() {
+	// SET UP DB
+	var databaseUrl string
+	{
+		environmentVariableName := "DATABASE_URL"
+		databaseUrl = os.Getenv(environmentVariableName)
+
+		if len(databaseUrl) == 0 {
+			log.Fatalf("environment variable %s not set", environmentVariableName)
+		}
+	}
+
+	if err := databaseutil.ConnectToDatabase(databaseUrl); err != nil {
+		log.Fatal(err)
+	}
+
 	// SET ROUTER
 
 	// static files
@@ -161,11 +161,6 @@ func main() {
 		http.Handle(
 			staticDirectoryPaddedWithSlashes,
 			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
-	}
-
-	err := databaseutil.Connect(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	// templates

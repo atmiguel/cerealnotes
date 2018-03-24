@@ -121,9 +121,13 @@ $(function() {
     }
 
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
-        $.post('/user', formDataAsJsonString, (userId) => {
-            alert('Created User with id: ' + userId.value);
-        }, 'json');
+        $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
+            if (request.status === 201) {
+                alert('Successfully created user');
+            } else {
+                alert('Email address already in use');
+            }
+        });
     });
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {

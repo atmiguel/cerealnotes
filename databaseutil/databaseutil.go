@@ -2,23 +2,20 @@ package databaseutil
 
 import (
 	"database/sql"
-	// Notice that we’re loading the driver anonymously.
-	// The driver registers itself as being available
-	// to the database/sql package.
 	_ "github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
-	"log"
 	"time"
 )
 
 var db *sql.DB
 
-func Connect(dbUrl string) error {
-	var err error
+func ConnectToDatabase(databaseUrl string) error {
+	{
+		tempDb, err := sql.Open("postgres", databaseUrl)
+		if err != nil {
+			return err
+		}
 
-	db, err = sql.Open("postgres", dbUrl)
-	if err != nil {
-		return err
+		db = tempDb
 	}
 
 	// Quickly test if the connection to the database worked.
@@ -29,55 +26,46 @@ func Connect(dbUrl string) error {
 	return nil
 }
 
-func CreateUser(
+func InsertIntoUsersTable(
 	displayName string,
 	emailAddress string,
-	password string,
-) (int64, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword(
-		[]byte(password),
-		bcrypt.DefaultCost)
-	if err != nil {
-		return -1, err
+	password []byte,
+	creationTime time.Time,
+) error {
+	var row *sql.Row
+	{
+		sqlQuery := `
+			INSERT INTO users (display_name, email_address, password, creation_time)
+			VALUES ($1, $2, $3, $4)`
+
+		row = db.QueryRow(sqlQuery, displayName, emailAddress, password, creationTime)
 	}
 
-	sqlQuery := `
-		INSERT INTO users (display_name, email_address, password, creation_time)
-		VALUES ($1, $2, $3, $4) RETURNING id`
+	if err := row.Scan(); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
 
-	var id int64
-	err = db.QueryRow(
-		sqlQuery,
-		displayName,
-		emailAddress,
-		hashedPassword,
-		time.Now().UTC(),
-	).Scan(&id)
-	if err != nil {
-		return -1, err
+		return err
 	}
 
-	log.Printf("created new user with id '%d'", id)
-	return id, nil
+	return nil
 }
 
-func AuthenticateUser(emailAddress string, password string) (bool, error) {
-	sqlQuery := `
-		SELECT password FROM users
-		WHERE email_address = $1`
+func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
+	var row *sql.Row
+	{
+		sqlQuery := `
+			SELECT password FROM users
+			WHERE email_address = $1`
 
-	var storedHashedPassword []byte
-	err := db.QueryRow(sqlQuery, emailAddress).Scan(&storedHashedPassword)
-	if err != nil {
-		return false, err
+		row = db.QueryRow(sqlQuery, emailAddress)
 	}
 
-	if err := bcrypt.CompareHashAndPassword(
-		storedHashedPassword,
-		[]byte(password),
-	); err != nil {
-		return false, err
+	var password []byte
+	if err := row.Scan(&password); err != nil {
+		return nil, err
 	}
 
-	return true, nil
+	return password, nil
 }
