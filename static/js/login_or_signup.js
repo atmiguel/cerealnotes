@@ -123,7 +123,11 @@ $(function() {
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
         $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
-                alert('Successfully created user');
+                $("#signup-tab").removeClass("mui--is-active")
+                $("#login-tab").addClass("mui--is-active")
+                $("#signup-form").removeClass("mui--is-active")
+                $("#login-form").addClass("mui--is-active")
+                alert('Successfully created user, please sign in');
             } else {
                 alert('Email address already in use');
             }
@@ -131,8 +135,12 @@ $(function() {
     });
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
-        $.post('/session', formDataAsJsonString, (response) => {
-            alert(response);
+        $.post('/session', formDataAsJsonString, (responseBody, _, request) => {
+            if (request.status === 201) {
+                location.reload();
+            } else {
+                alert('Error in logging in');
+            }
         }, 'text');
     });
 });
