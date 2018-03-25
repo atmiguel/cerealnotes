@@ -24,4 +24,8 @@ func SetRoutes() {
 	// forms
 	http.HandleFunc("/user", handlers.HandleUserRequest)
 	http.HandleFunc("/session", handlers.HandleSessionRequest)
+
+	// requires Authentication
+	http.HandleFunc("/", handlers.AuthenticateOrRedirectToLogin(handlers.HandleRootRequest))
+
 }

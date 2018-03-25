@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
 	"fmt"
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/services/userservice"
@@ -14,6 +15,11 @@ import (
 	"time"
 )
 
+type CerealNotesClaims struct {
+	UserId models.UserId `json:"UserId"`
+	jwt.StandardClaims
+}
+
 //Todo this should be pulled from an environemnt variable or something
 var tokenSigningKey []byte = []byte("AllYourBase")
 
@@ -24,6 +30,12 @@ func HandleLoginOrSignupRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
+		// Check to see if they are already logged in if so redirect 
+		if _, err := getUserIdFromStoredToken(request); err == nil {
+			http.Redirect(responseWriter, request, "/", http.StatusSeeOther)
+			return
+		}
+
 		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
 		if err != nil {
 			log.Fatal(err)
@@ -118,7 +130,6 @@ func HandleSessionRequest(
 
 			http.SetCookie(responseWriter, &cookie)
 
-			log.Println(token)
 		}
 
 		responseWriter.WriteHeader(http.StatusCreated)
@@ -129,9 +140,33 @@ func HandleSessionRequest(
 	}
 }
 
-type CerealNotesClaims struct {
-	UserId models.UserId `json:"UserId"`
-	jwt.StandardClaims
+
+func AuthenticateOrRedirectToLogin(originalHandlerFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
+		if _, err := getUserIdFromStoredToken(request); err == nil {
+			originalHandlerFunc(responseWriter, request) // call original
+		} else {
+			http.Redirect(responseWriter, request, "/login-or-signup", http.StatusSeeOther)
+		}
+	})
+}
+
+
+func HandleRootRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
+	switch request.Method {
+	case http.MethodGet:
+		parsedTemplate, err := template.ParseFiles("templates/root.tmpl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		parsedTemplate.Execute(responseWriter, nil)
+	default:
+		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
+	}
 }
 
 // UTIL
@@ -190,6 +225,24 @@ func createTokenAsString(
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	ss, err := token.SignedString(tokenSigningKey)
 	return ss, err
+}
+
+func getUserIdFromStoredToken(request *http.Request) (models.UserId, error) {
+	cookie, err := request.Cookie(cerealNotesCookieName)
+	if err != nil {
+		return 0, err
+	}
+
+	token, err := parseTokenFromString(cookie.Value)
+	if err != nil {
+		return 0, err
+	}
+
+	if claims, ok := token.Claims.(*CerealNotesClaims); ok && token.Valid {
+		return claims.UserId, nil
+	} else {
+		return 0, errors.Errorf("Token was invalid or unreadable")
+	}
 }
 
 func tokenTest1() {
