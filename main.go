@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/routers"
+	"github.com/atmiguel/cerealnotes/handlers"
 	"log"
 	"net/http"
 	"os"
@@ -11,10 +12,13 @@ import (
 
 // get the current listening address or fail if input is not correct
 func determineListenPort() (string, error) {
-	port := os.Getenv("PORT")
+	portEnvironmentVariableName := "PORT"
+	port := os.Getenv(portEnvironmentVariableName)
 
-	if port == "" {
-		return "", fmt.Errorf("$PORT not set")
+	if len(port) == 0 {
+		return "", fmt.Errorf(
+			"environment variable %s not set",
+			portEnvironmentVariableName)
 	}
 
 	return ":" + port, nil
@@ -33,6 +37,19 @@ func determineDatabaseUrl() (string, error) {
 	return databaseUrl, nil
 }
 
+func determineSigningKey() ([]byte, error) {
+	signingKeyVariableName := "TOKEN_SIGNING_KEY"
+	tokenSigningKey := os.Getenv(signingKeyVariableName)
+
+	if len(tokenSigningKey) == 0 {
+		return nil, fmt.Errorf(
+			"environment variable %s not set",
+			signingKeyVariableName)
+	}
+
+	return []byte(tokenSigningKey), nil
+}
+
 func main() {
 	routers.SetRoutes()
 
@@ -46,6 +63,16 @@ func main() {
 		if err := databaseutil.ConnectToDatabase(databaseUrl); err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	// set up signing key
+	{
+		tokenSigningKey, err := determineSigningKey()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		handlers.SetSigningKey(tokenSigningKey)
 	}
 
 	// START SERVER

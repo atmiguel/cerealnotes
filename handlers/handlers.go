@@ -20,8 +20,11 @@ type CerealNotesClaims struct {
 	jwt.StandardClaims
 }
 
-//Todo this should be pulled from an environemnt variable or something
-var tokenSigningKey []byte = []byte("AllYourBase")
+var tokenSigningKey []byte
+
+func SetSigningKey(key []byte) {
+	tokenSigningKey = key
+}
 
 // HANDLERS
 func HandleLoginOrSignupRequest(
@@ -140,21 +143,30 @@ func HandleSessionRequest(
 	}
 }
 
+type AuthentictedRequestHandlerType func(http.ResponseWriter, *http.Request, models.UserId)
 
-func AuthenticateOrRedirectToLogin(originalHandlerFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+
+func AuthenticateOrRedirectToLogin(
+	originalHandlerFunc AuthentictedRequestHandlerType,
+) func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
-		if _, err := getUserIdFromStoredToken(request); err == nil {
-			originalHandlerFunc(responseWriter, request) // call original
+		if userId, err := getUserIdFromStoredToken(request); err == nil {
+			originalHandlerFunc(responseWriter, request, userId) // call original
 		} else {
-			http.Redirect(responseWriter, request, "/login-or-signup", http.StatusSeeOther)
+			http.Redirect(
+				responseWriter, 
+				request, 
+				"/login-or-signup", 
+				http.StatusSeeOther,
+			)
 		}
 	})
 }
 
-
 func HandleRootRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
+	userId models.UserId,
 ) {
 	switch request.Method {
 	case http.MethodGet:
