@@ -32,7 +32,7 @@ func SetRoutes() {
 
 func handleAuthenticated(
 	pattern string,
-	handler handlers.AuthentictedRequestHandlerType,
+	handlerFunc handlers.AuthentictedRequestHandlerType,
 ) {
-	http.HandleFunc(pattern, handlers.AuthenticateOrRedirectToLogin(handler))
+	http.HandleFunc(pattern, handlers.AuthenticateOrRedirectToLogin(handlerFunc))
 }

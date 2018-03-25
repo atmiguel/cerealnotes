@@ -209,6 +209,11 @@ func getRequestBody(request *http.Request) []byte {
 	return body
 }
 
+
+// Token Util
+const oneWeekInMinutes = 60 * 24 * 7
+const cerealNotesCookieName = "CerealNotesToken"
+
 func parseTokenFromString(tokenString string) (*jwt.Token, error) {
 	// Parse the token
 	token, err := jwt.ParseWithClaims(
@@ -219,10 +224,6 @@ func parseTokenFromString(tokenString string) (*jwt.Token, error) {
 		})
 	return token, err
 }
-
-// one week
-const oneWeekInMinutes = 60 * 24 * 7
-const cerealNotesCookieName = "CerealNotesToken"
 
 func createTokenAsString(
 	userId models.UserId,
