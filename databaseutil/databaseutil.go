@@ -69,3 +69,21 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 
 	return password, nil
 }
+
+func GetUserIdFromUserWithEmailAddress(emailAddress string) (int64, error) {
+	var row *sql.Row
+	{
+		sqlQuery := `
+			SELECT id FROM users
+			WHERE email_address = $1`
+
+		row = db.QueryRow(sqlQuery, emailAddress)
+	}
+
+	var userId int64
+	if err := row.Scan(&userId); err != nil {
+		return 0, err
+	}
+
+	return userId, nil
+}

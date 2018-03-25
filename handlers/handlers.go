@@ -9,14 +9,13 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
-	"time"
 	"net/http"
 	"strings"
+	"time"
 )
 
 //Todo this should be pulled from an environemnt variable or something
 var tokenSigningKey []byte = []byte("AllYourBase")
-
 
 // HANDLERS
 func HandleLoginOrSignupRequest(
@@ -96,6 +95,32 @@ func HandleSessionRequest(
 			panic(err)
 		}
 
+		// Create token as a cookie and set it
+		{
+			userId, err := userservice.GetUserIdFromEmailAddress(loginForm.EmailAddress)
+			if err != nil {
+				panic(err)
+			}
+
+			token, err := createTokenAsString(userId, oneWeekInMinutes)
+			if err != nil {
+				panic(err)
+			}
+
+			expiration := time.Now().Add(oneWeekInMinutes * time.Minute)
+
+			cookie := http.Cookie{
+				Name:     cerealNotesCookieName,
+				Value:    token,
+				Expires:  expiration,
+				HttpOnly: true,
+			}
+
+			http.SetCookie(responseWriter, &cookie)
+
+			log.Println(token)
+		}
+
 		responseWriter.WriteHeader(http.StatusCreated)
 		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
 
@@ -145,12 +170,19 @@ func parseTokenFromString(tokenString string) (*jwt.Token, error) {
 	return token, err
 }
 
-func createTokenAsString(userId models.UserId, expirationTimeInMinutes int64) (string, error) {
+// one week
+const oneWeekInMinutes = 60 * 24 * 7
+const cerealNotesCookieName = "CerealNotesToken"
+
+func createTokenAsString(
+	userId models.UserId,
+	expirationTimeInMinutes int64,
+) (string, error) {
 	// Create the Claims
 	claims := CerealNotesClaims{
 		userId,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Unix()+(expirationTimeInMinutes*60),
+			ExpiresAt: time.Now().Unix() + (expirationTimeInMinutes * 60),
 			Issuer:    "CerealNotes",
 		},
 	}
@@ -159,7 +191,6 @@ func createTokenAsString(userId models.UserId, expirationTimeInMinutes int64) (s
 	ss, err := token.SignedString(tokenSigningKey)
 	return ss, err
 }
-
 
 func tokenTest1() {
 	var num models.UserId = 32
@@ -179,8 +210,8 @@ func tokenTest1() {
 		if claims.UserId != 32 {
 			log.Fatal("error in token")
 		}
-        fmt.Printf("%v %v", claims.UserId, claims.StandardClaims.ExpiresAt)
-    } else {
-        fmt.Println("Token claims could not be read")
-    }
+		fmt.Printf("%v %v", claims.UserId, claims.StandardClaims.ExpiresAt)
+	} else {
+		fmt.Println("Token claims could not be read")
+	}
 }
