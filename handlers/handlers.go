@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/atmiguel/cerealnotes/models"
+	"github.com/atmiguel/cerealnotes/paths"
 	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
@@ -35,7 +36,7 @@ func HandleLoginOrSignupRequest(
 	case http.MethodGet:
 		// Check to see if they are already logged in if so redirect
 		if _, err := getUserIdFromStoredToken(request); err == nil {
-			http.Redirect(responseWriter, request, "/", http.StatusSeeOther)
+			http.Redirect(responseWriter, request, paths.HomePath, http.StatusSeeOther)
 			return
 		}
 
@@ -158,7 +159,7 @@ func AuthenticateOrRedirectToLogin(
 				http.Redirect(
 					responseWriter,
 					request,
-					"/login-or-signup",
+					paths.LoginSignupPath,
 					http.StatusSeeOther,
 				)
 			}

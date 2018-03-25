@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/atmiguel/cerealnotes/handlers"
+	"github.com/atmiguel/cerealnotes/paths"
 	"net/http"
 )
 
@@ -19,14 +20,14 @@ func SetRoutes() {
 	}
 
 	// templates
-	http.HandleFunc("/login-or-signup", handlers.HandleLoginOrSignupRequest)
+	http.HandleFunc(paths.LoginSignupPath, handlers.HandleLoginOrSignupRequest)
 
 	// forms
 	http.HandleFunc("/user", handlers.HandleUserRequest)
 	http.HandleFunc("/session", handlers.HandleSessionRequest)
 
 	// requires Authentication
-	handleAuthenticated("/", handlers.HandleRootRequest)
+	handleAuthenticated(paths.HomePath, handlers.HandleRootRequest)
 
 }
 
