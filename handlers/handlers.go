@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"fmt"
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -33,7 +33,7 @@ func HandleLoginOrSignupRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		// Check to see if they are already logged in if so redirect 
+		// Check to see if they are already logged in if so redirect
 		if _, err := getUserIdFromStoredToken(request); err == nil {
 			http.Redirect(responseWriter, request, "/", http.StatusSeeOther)
 			return
@@ -145,24 +145,27 @@ func HandleSessionRequest(
 
 type AuthentictedRequestHandlerType func(http.ResponseWriter, *http.Request, models.UserId)
 
-
 func AuthenticateOrRedirectToLogin(
-	originalHandlerFunc AuthentictedRequestHandlerType,
+	authenticatedHandlerFunc AuthentictedRequestHandlerType,
 ) func(http.ResponseWriter, *http.Request) {
-	return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
-		if userId, err := getUserIdFromStoredToken(request); err == nil {
-			originalHandlerFunc(responseWriter, request, userId) // call original
-		} else {
-			http.Redirect(
-				responseWriter, 
-				request, 
-				"/login-or-signup", 
-				http.StatusSeeOther,
-			)
-		}
-	})
+	return http.HandlerFunc(
+		func(responseWriter http.ResponseWriter, request *http.Request) {
+			if userId, err := getUserIdFromStoredToken(request); err == nil {
+				// call authenticatedHandlerFunc if log in works
+				authenticatedHandlerFunc(responseWriter, request, userId)
+			} else {
+				// Else redirect to login page
+				http.Redirect(
+					responseWriter,
+					request,
+					"/login-or-signup",
+					http.StatusSeeOther,
+				)
+			}
+		})
 }
 
+// Authenticated Handlers
 func HandleRootRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -175,7 +178,7 @@ func HandleRootRequest(
 			log.Fatal(err)
 		}
 
-		parsedTemplate.Execute(responseWriter, nil)
+		parsedTemplate.Execute(responseWriter, userId)
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
 	}

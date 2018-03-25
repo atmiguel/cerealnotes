@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/atmiguel/cerealnotes/databaseutil"
-	"github.com/atmiguel/cerealnotes/routers"
 	"github.com/atmiguel/cerealnotes/handlers"
+	"github.com/atmiguel/cerealnotes/routers"
 	"log"
 	"net/http"
 	"os"
