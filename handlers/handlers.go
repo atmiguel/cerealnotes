@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/atmiguel/cerealnotes/services/userservice"
+	"github.com/dgrijalva/jwt-go"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 )
+
+//Todo this should be pulled from an environemnt variable or something
+var tokenSigningKey string = "bob"
 
 // HANDLERS
 func HandleLoginOrSignupRequest(
@@ -97,6 +101,26 @@ func HandleSessionRequest(
 	}
 }
 
+type CerealNotesClaims struct {
+	UserId string `json:"UserId"`
+	jwt.StandardClaims
+}
+
+func createClaim(userId string) (string, error) {
+	// Create the Claims
+	claims := CerealNotesClaims{
+		userId,
+		jwt.StandardClaims{
+			ExpiresAt: 15000,
+			Issuer:    "test",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString(tokenSigningKey)
+	return ss, err
+}
+
 // UTIL
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
@@ -120,4 +144,17 @@ func getRequestBody(request *http.Request) []byte {
 	}
 
 	return body
+}
+
+func parseTokenString(tokenString string) (*jwt.Token, error){
+	// Parse the token
+	token, err := jwt.ParseWithClaims(
+		strings.TrimSpace(tokenString),
+		&CerealNotesClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			// since we only use the one private key to sign the tokens,
+			// we also only use its public counter part to verify
+			return tokenSigningKey, nil
+		})
+	return token, err
 }
