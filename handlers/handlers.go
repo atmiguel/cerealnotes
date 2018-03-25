@@ -139,6 +139,18 @@ func HandleSessionRequest(
 		responseWriter.WriteHeader(http.StatusCreated)
 		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
 
+	case http.MethodDelete:
+		//Cookie will overwrite existing cookie then delete itself
+		cookie := http.Cookie{
+				Name:     cerealNotesCookieName,
+				Value:    "",
+				HttpOnly: true,
+				MaxAge:   -1,
+			}
+
+		http.SetCookie(responseWriter, &cookie)
+		responseWriter.WriteHeader(http.StatusOK)
+		responseWriter.Write([]byte(fmt.Sprint("user succefully logged out")))
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
 	}
@@ -167,14 +179,14 @@ func AuthenticateOrRedirectToLogin(
 }
 
 // Authenticated Handlers
-func HandleRootRequest(
+func HandleHomeRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		parsedTemplate, err := template.ParseFiles("templates/root.tmpl")
+		parsedTemplate, err := template.ParseFiles("templates/home.tmpl")
 		if err != nil {
 			log.Fatal(err)
 		}

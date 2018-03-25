@@ -27,7 +27,7 @@ func SetRoutes() {
 	http.HandleFunc("/session", handlers.HandleSessionRequest)
 
 	// requires Authentication
-	handleAuthenticated(paths.HomePath, handlers.HandleRootRequest)
+	handleAuthenticated(paths.HomePath, handlers.HandleHomeRequest)
 
 }
 
