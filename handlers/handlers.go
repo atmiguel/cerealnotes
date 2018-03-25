@@ -3,17 +3,20 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
 	"html/template"
 	"io/ioutil"
 	"log"
+	"time"
 	"net/http"
 	"strings"
 )
 
 //Todo this should be pulled from an environemnt variable or something
-var tokenSigningKey string = "bob"
+var tokenSigningKey []byte = []byte("AllYourBase")
+
 
 // HANDLERS
 func HandleLoginOrSignupRequest(
@@ -102,23 +105,8 @@ func HandleSessionRequest(
 }
 
 type CerealNotesClaims struct {
-	UserId string `json:"UserId"`
+	UserId models.UserId `json:"UserId"`
 	jwt.StandardClaims
-}
-
-func createClaim(userId string) (string, error) {
-	// Create the Claims
-	claims := CerealNotesClaims{
-		userId,
-		jwt.StandardClaims{
-			ExpiresAt: 15000,
-			Issuer:    "test",
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(tokenSigningKey)
-	return ss, err
 }
 
 // UTIL
@@ -146,15 +134,53 @@ func getRequestBody(request *http.Request) []byte {
 	return body
 }
 
-func parseTokenString(tokenString string) (*jwt.Token, error){
+func parseTokenFromString(tokenString string) (*jwt.Token, error) {
 	// Parse the token
 	token, err := jwt.ParseWithClaims(
 		strings.TrimSpace(tokenString),
 		&CerealNotesClaims{},
 		func(token *jwt.Token) (interface{}, error) {
-			// since we only use the one private key to sign the tokens,
-			// we also only use its public counter part to verify
 			return tokenSigningKey, nil
 		})
 	return token, err
+}
+
+func createTokenAsString(userId models.UserId, expirationTimeInMinutes int64) (string, error) {
+	// Create the Claims
+	claims := CerealNotesClaims{
+		userId,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Unix()+(expirationTimeInMinutes*60),
+			Issuer:    "CerealNotes",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString(tokenSigningKey)
+	return ss, err
+}
+
+
+func tokenTest1() {
+	var num models.UserId = 32
+	bob, err := createTokenAsString(num, 1)
+	if err != nil {
+		fmt.Println("create error")
+		log.Fatal(err)
+	}
+
+	token, err := parseTokenFromString(bob)
+	if err != nil {
+		fmt.Println("parse error")
+		log.Fatal(err)
+	}
+	fmt.Println(bob)
+	if claims, ok := token.Claims.(*CerealNotesClaims); ok && token.Valid {
+		if claims.UserId != 32 {
+			log.Fatal("error in token")
+		}
+        fmt.Printf("%v %v", claims.UserId, claims.StandardClaims.ExpiresAt)
+    } else {
+        fmt.Println("Token claims could not be read")
+    }
 }
