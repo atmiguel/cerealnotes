@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var EmailAddressAlreadyInUseError = errors.New("")
+var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
 
 func StoreNewUser(
 	displayName string,
