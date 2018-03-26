@@ -20,7 +20,7 @@ func SetRoutes() {
 	}
 
 	// templates
-	http.HandleFunc(paths.LoginSignupPath, handlers.HandleLoginOrSignupRequest)
+	http.HandleFunc(paths.LoginOrSignupPath, handlers.HandleLoginOrSignupRequest)
 
 	// forms
 	http.HandleFunc("/user", handlers.HandleUserRequest)
@@ -28,7 +28,6 @@ func SetRoutes() {
 
 	// requires Authentication
 	handleAuthenticated(paths.HomePath, handlers.HandleHomeRequest)
-
 }
 
 func handleAuthenticated(

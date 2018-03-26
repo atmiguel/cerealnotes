@@ -16,14 +16,14 @@ import (
 	"time"
 )
 
-type CerealNotesClaims struct {
-	UserId models.UserId `json:"UserId"`
+type JwtTokenClaim struct {
+	userId models.UserId `json:"UserId"`
 	jwt.StandardClaims
 }
 
 var tokenSigningKey []byte
 
-func SetSigningKey(key []byte) {
+func SetTokenSigningKey(key []byte) {
 	tokenSigningKey = key
 }
 
@@ -34,9 +34,9 @@ func HandleLoginOrSignupRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		// Check to see if they are already logged in if so redirect
-		if _, err := getUserIdFromStoredToken(request); err == nil {
-			http.Redirect(responseWriter, request, paths.HomePath, http.StatusSeeOther)
+		// Check to see if user is already logged in, if so redirect
+		if _, err := getUserIdFromJwtToken(request); err == nil {
+			http.Redirect(responseWriter, request, paths.HomePath, http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -111,9 +111,9 @@ func HandleSessionRequest(
 			panic(err)
 		}
 
-		// Create token as a cookie and set it
+		// Set cerealNotesCookieName to have value as a our JWT Token
 		{
-			userId, err := userservice.GetUserIdFromEmailAddress(loginForm.EmailAddress)
+			userId, err := userservice.GetIdForUserWithEmailAddress(loginForm.EmailAddress)
 			if err != nil {
 				panic(err)
 			}
@@ -123,57 +123,59 @@ func HandleSessionRequest(
 				panic(err)
 			}
 
-			expiration := time.Now().Add(oneWeekInMinutes * time.Minute)
+			expirationTime := time.Now().Add(oneWeekInMinutes * time.Minute)
 
 			cookie := http.Cookie{
 				Name:     cerealNotesCookieName,
 				Value:    token,
-				Expires:  expiration,
+				Expires:  expirationTime,
 				HttpOnly: true,
 			}
 
 			http.SetCookie(responseWriter, &cookie)
-
 		}
 
 		responseWriter.WriteHeader(http.StatusCreated)
 		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
 
 	case http.MethodDelete:
-		//Cookie will overwrite existing cookie then delete itself
+		// Cookie will overwrite existing cookie then delete itself
 		cookie := http.Cookie{
-				Name:     cerealNotesCookieName,
-				Value:    "",
-				HttpOnly: true,
-				MaxAge:   -1,
-			}
+			Name:     cerealNotesCookieName,
+			Value:    "",
+			HttpOnly: true,
+			MaxAge:   -1,
+		}
 
 		http.SetCookie(responseWriter, &cookie)
 		responseWriter.WriteHeader(http.StatusOK)
 		responseWriter.Write([]byte(fmt.Sprint("user succefully logged out")))
 	default:
-		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
+		respondWithMethodNotAllowed(
+			responseWriter,
+			[]string{http.MethodPost, http.MethodDelete})
 	}
 }
 
-type AuthentictedRequestHandlerType func(http.ResponseWriter, *http.Request, models.UserId)
+type AuthentictedRequestHandlerType func(
+	http.ResponseWriter,
+	*http.Request,
+	models.UserId)
 
 func AuthenticateOrRedirectToLogin(
 	authenticatedHandlerFunc AuthentictedRequestHandlerType,
 ) func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(
 		func(responseWriter http.ResponseWriter, request *http.Request) {
-			if userId, err := getUserIdFromStoredToken(request); err == nil {
-				// call authenticatedHandlerFunc if log in works
-				authenticatedHandlerFunc(responseWriter, request, userId)
-			} else {
-				// Else redirect to login page
+			if userId, err := getUserIdFromJwtToken(request); err != nil {
+				// If not loggedin redirect to login page
 				http.Redirect(
 					responseWriter,
 					request,
-					paths.LoginSignupPath,
-					http.StatusSeeOther,
-				)
+					paths.LoginOrSignupPath,
+					http.StatusSeeOther)
+			} else {
+				authenticatedHandlerFunc(responseWriter, request, userId)
 			}
 		})
 }
@@ -222,28 +224,24 @@ func getRequestBody(request *http.Request) []byte {
 	return body
 }
 
-
 // Token Util
 const oneWeekInMinutes = 60 * 24 * 7
 const cerealNotesCookieName = "CerealNotesToken"
 
-func parseTokenFromString(tokenString string) (*jwt.Token, error) {
-	// Parse the token
-	token, err := jwt.ParseWithClaims(
-		strings.TrimSpace(tokenString),
-		&CerealNotesClaims{},
-		func(token *jwt.Token) (interface{}, error) {
+func parseTokenFromString(tokenAsString string) (*jwt.Token, error) {
+	return jwt.ParseWithClaims(
+		strings.TrimSpace(tokenAsString),
+		&JwtTokenClaim{},
+		func(*jwt.Token) (interface{}, error) {
 			return tokenSigningKey, nil
 		})
-	return token, err
 }
 
 func createTokenAsString(
 	userId models.UserId,
 	expirationTimeInMinutes int64,
 ) (string, error) {
-	// Create the Claims
-	claims := CerealNotesClaims{
+	claims := JwtTokenClaim{
 		userId,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Unix() + (expirationTimeInMinutes * 60),
@@ -252,26 +250,24 @@ func createTokenAsString(
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(tokenSigningKey)
-	return ss, err
+	return token.SignedString(tokenSigningKey)
 }
 
-func getUserIdFromStoredToken(request *http.Request) (models.UserId, error) {
+func getUserIdFromJwtToken(request *http.Request) (models.UserId, error) {
 	cookie, err := request.Cookie(cerealNotesCookieName)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	token, err := parseTokenFromString(cookie.Value)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
-	if claims, ok := token.Claims.(*CerealNotesClaims); ok && token.Valid {
-		return claims.UserId, nil
-	} else {
-		return 0, errors.Errorf("Token was invalid or unreadable")
+	if claims, ok := token.Claims.(*JwtTokenClaim); ok && token.Valid {
+		return claims.userId, nil
 	}
+	return -1, errors.Errorf("Token was invalid or unreadable")
 }
 
 func tokenTest1() {
@@ -288,11 +284,11 @@ func tokenTest1() {
 		log.Fatal(err)
 	}
 	fmt.Println(bob)
-	if claims, ok := token.Claims.(*CerealNotesClaims); ok && token.Valid {
-		if claims.UserId != 32 {
+	if claims, ok := token.Claims.(*JwtTokenClaim); ok && token.Valid {
+		if claims.userId != 32 {
 			log.Fatal("error in token")
 		}
-		fmt.Printf("%v %v", claims.UserId, claims.StandardClaims.ExpiresAt)
+		fmt.Printf("%v %v", claims.userId, claims.StandardClaims.ExpiresAt)
 	} else {
 		fmt.Println("Token claims could not be read")
 	}

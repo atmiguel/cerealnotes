@@ -37,7 +37,7 @@ func determineDatabaseUrl() (string, error) {
 	return databaseUrl, nil
 }
 
-func determineSigningKey() ([]byte, error) {
+func determineTokenSigningKey() ([]byte, error) {
 	signingKeyVariableName := "TOKEN_SIGNING_KEY"
 	tokenSigningKey := os.Getenv(signingKeyVariableName)
 
@@ -67,12 +67,12 @@ func main() {
 
 	// set up signing key
 	{
-		tokenSigningKey, err := determineSigningKey()
+		tokenSigningKey, err := determineTokenSigningKey()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		handlers.SetSigningKey(tokenSigningKey)
+		handlers.SetTokenSigningKey(tokenSigningKey)
 	}
 
 	// START SERVER

@@ -50,7 +50,7 @@ func AuthenticateUserCredentials(emailAddress string, password string) error {
 	return nil
 }
 
-func GetUserIdFromEmailAddress(emailAddress string) (models.UserId, error) {
+func GetIdForUserWithEmailAddress(emailAddress string) (models.UserId, error) {
 	number, err := databaseutil.GetUserIdFromUserWithEmailAddress(emailAddress)
 	if err != nil {
 		return 0, err

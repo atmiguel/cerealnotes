@@ -1,13 +1,14 @@
 # Installation
 ## Locally
-* postgres server installed and running. 
+* postgres server installed and running
 	* `brew install postgres`
 	* `pg_ctl -D /usr/local/var/postgres start`
 * heroku cli installed
 	* `brew install heroku`
 * golang installed
 	* `brew install go`
-* godep installed: `go get github.com/tools/godep`
+* godep installed: 
+	* `go get github.com/tools/godep`
 
 ## Heroku
 * heroku instance
@@ -15,7 +16,7 @@
 
 # Running CerealNotes
 
-Assuming your local environment is setup correctly with Golang standards, you can start your local server with the following commands:
+Assuming your local environment is setup correctly with Golang standards, you can start your local server with the following commands
 
 1. `cd to this repo`
 2. `heroku run local`

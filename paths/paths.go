@@ -1,4 +1,4 @@
 package paths
 
 const HomePath = "/home"
-const LoginSignupPath = "/login-or-signup"
+const LoginOrSignupPath = "/login-or-signup"

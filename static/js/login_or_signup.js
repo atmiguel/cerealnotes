@@ -123,10 +123,7 @@ $(function() {
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
         $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
-                $("#signup-tab").removeClass("mui--is-active")
-                $("#login-tab").addClass("mui--is-active")
-                $("#signup-form").removeClass("mui--is-active")
-                $("#login-form").addClass("mui--is-active")
+                mui.tabs.activate("login-form")
                 alert('Successfully created user, please sign in');
             } else {
                 alert('Email address already in use');
