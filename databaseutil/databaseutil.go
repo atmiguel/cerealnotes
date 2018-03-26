@@ -45,7 +45,7 @@ func InsertIntoUsersTable(
 	}
 
 	if err := row.Scan(); err != nil {
-		if err == sql.ErrNoRows {
+		if err == sql.ErrNoRows { // success
 			return nil
 		}
 
@@ -58,7 +58,7 @@ func InsertIntoUsersTable(
 		return err
 	}
 
-	return nil
+	panic("unexpected")
 }
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
