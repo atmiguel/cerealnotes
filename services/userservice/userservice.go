@@ -51,10 +51,10 @@ func AuthenticateUserCredentials(emailAddress string, password string) error {
 }
 
 func GetIdForUserWithEmailAddress(emailAddress string) (models.UserId, error) {
-	number, err := databaseutil.GetUserIdFromUserWithEmailAddress(emailAddress)
+	userIdAsInt, err := databaseutil.GetIdForUserWithEmailAddress(emailAddress)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
-	return models.UserId(number), nil
+	return models.UserId(userIdAsInt), nil
 }

@@ -3,7 +3,7 @@ $(function() {
         $.ajax({
             url: '/session',
             type: 'DELETE',
-            success: function(result) {
+            success: function() {
                 alert("you've been successfully logged out");
                 location.reload();
             }

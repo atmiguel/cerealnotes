@@ -38,13 +38,13 @@ func determineDatabaseUrl() (string, error) {
 }
 
 func determineTokenSigningKey() ([]byte, error) {
-	signingKeyVariableName := "TOKEN_SIGNING_KEY"
-	tokenSigningKey := os.Getenv(signingKeyVariableName)
+	tokenSigningKeyVariableName := "TOKEN_SIGNING_KEY"
+	tokenSigningKey := os.Getenv(tokenSigningKeyVariableName)
 
 	if len(tokenSigningKey) == 0 {
 		return nil, fmt.Errorf(
 			"environment variable %s not set",
-			signingKeyVariableName)
+			tokenSigningKeyVariableName)
 	}
 
 	return []byte(tokenSigningKey), nil

@@ -70,7 +70,7 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
-func GetUserIdFromUserWithEmailAddress(emailAddress string) (int64, error) {
+func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	var row *sql.Row
 	{
 		sqlQuery := `
