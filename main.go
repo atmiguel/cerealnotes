@@ -65,7 +65,7 @@ func main() {
 		}
 	}
 
-	// set up signing key
+	// Set up token signing key
 	{
 		tokenSigningKey, err := determineTokenSigningKey()
 		if err != nil {
