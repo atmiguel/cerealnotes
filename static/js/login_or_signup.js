@@ -123,7 +123,8 @@ $(function() {
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
         $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
-                alert('Successfully created user');
+                mui.tabs.activate("login-form")
+                alert('Successfully created user, please sign in');
             } else {
                 alert('Email address already in use');
             }
@@ -131,8 +132,12 @@ $(function() {
     });
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
-        $.post('/session', formDataAsJsonString, (response) => {
-            alert(response);
+        $.post('/session', formDataAsJsonString, (responseBody, _, request) => {
+            if (request.status === 201) {
+                location.reload();
+            } else {
+                alert('Error in logging in');
+            }
         }, 'text');
     });
 });

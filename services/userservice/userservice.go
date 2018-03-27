@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"github.com/atmiguel/cerealnotes/databaseutil"
+	"github.com/atmiguel/cerealnotes/models"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -47,4 +48,13 @@ func AuthenticateUserCredentials(emailAddress string, password string) error {
 	}
 
 	return nil
+}
+
+func GetIdForUserWithEmailAddress(emailAddress string) (models.UserId, error) {
+	userIdAsInt, err := databaseutil.GetIdForUserWithEmailAddress(emailAddress)
+	if err != nil {
+		return -1, err
+	}
+
+	return models.UserId(userIdAsInt), nil
 }
