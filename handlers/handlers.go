@@ -100,6 +100,30 @@ func HandleUserRequest(
 	}
 }
 
+func HandleRootRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
+	switch request.Method {
+	case http.MethodGet:
+		if request.URL.Path == "/" {
+			http.Redirect(
+				responseWriter,
+				request,
+				paths.HomePath,
+				http.StatusTemporaryRedirect)
+			return
+		}
+
+		http.NotFound(responseWriter, request)
+
+	default:
+		respondWithMethodNotAllowed(
+			responseWriter,
+			[]string{http.MethodGet})
+	}
+}
+
 func HandleSessionRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,

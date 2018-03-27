@@ -23,4 +23,4 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 3. Visit `localhost:8080/login-or-signup`
 
 # Run DB migrations
-More db information in `migrations/ReadMe.md`
+More db information in `migrations/README.md`
