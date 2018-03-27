@@ -49,13 +49,7 @@ func InsertIntoUsersTable(
 			return nil
 		}
 
-		if pgErr, ok := err.(*pq.Error); ok {
-			if pgErr.Code == "23505" {
-				return UniqueConstraintError
-			}
-		}
-
-		return err
+		return convertPostgresError(err)
 	}
 
 	panic("unexpected")
@@ -77,4 +71,17 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	}
 
 	return password, nil
+}
+
+// PRIVATE
+func convertPostgresError(err error) error {
+	const uniqueConstraintErrorCode = "23505"
+
+	if postgresErr, ok := err.(*pq.Error); ok {
+		if postgresErr.Code == uniqueConstraintErrorCode {
+			return UniqueConstraintError
+		}
+	}
+
+	return err
 }
