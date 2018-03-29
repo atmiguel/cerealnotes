@@ -2,11 +2,14 @@ package databaseutil
 
 import (
 	"database/sql"
-	_ "github.com/lib/pq"
+	"errors"
+	"github.com/lib/pq"
 	"time"
 )
 
 var db *sql.DB
+
+var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
 func ConnectToDatabase(databaseUrl string) error {
 	{
@@ -42,14 +45,14 @@ func InsertIntoUsersTable(
 	}
 
 	if err := row.Scan(); err != nil {
-		if err == sql.ErrNoRows {
+		if err == sql.ErrNoRows { // success
 			return nil
 		}
 
-		return err
+		return convertPostgresError(err)
 	}
 
-	return nil
+	panic("unexpected")
 }
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
@@ -86,4 +89,17 @@ func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	}
 
 	return userId, nil
+}
+
+// PRIVATE
+func convertPostgresError(err error) error {
+	const uniqueConstraintErrorCode = "23505"
+
+	if postgresErr, ok := err.(*pq.Error); ok {
+		if postgresErr.Code == uniqueConstraintErrorCode {
+			return UniqueConstraintError
+		}
+	}
+
+	return err
 }

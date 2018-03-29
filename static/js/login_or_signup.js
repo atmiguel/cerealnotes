@@ -106,7 +106,7 @@ $(function() {
 
                 var formDataAsJsonString = JSON.stringify(formData);
 
-                postFunction(formDataAsJsonString)
+                postFunction(formDataAsJsonString);
 
             } else if (!formMetadata.submitHasBeenClicked) {
                 formMetadata.submitHasBeenClicked = true;
@@ -118,15 +118,21 @@ $(function() {
                 touchAllFields(formMetadata.$form, formMetadata.fields);
             }
         });
-    }
+    };
 
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
         $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
-                mui.tabs.activate("login-form")
+                mui.tabs.activate('login-form');
                 alert('Successfully created user, please sign in');
             } else {
+                alert('Unknown successful status');
+            }
+        }).fail((request) => {
+            if (request.status === 409) {
                 alert('Email address already in use');
+            } else {
+                alert('Unknown error');
             }
         });
     });

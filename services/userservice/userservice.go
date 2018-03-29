@@ -1,11 +1,14 @@
 package userservice
 
 import (
+	"errors"
 	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/models"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
+
+var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
 
 func StoreNewUser(
 	displayName string,
@@ -27,6 +30,10 @@ func StoreNewUser(
 		hashedPassword,
 		creationTime,
 	); err != nil {
+		if err == databaseutil.UniqueConstraintError {
+			return EmailAddressAlreadyInUseError
+		}
+
 		return err
 	}
 
