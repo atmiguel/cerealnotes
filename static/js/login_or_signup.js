@@ -106,7 +106,7 @@ $(function() {
 
                 var formDataAsJsonString = JSON.stringify(formData);
 
-                postFunction(formDataAsJsonString)
+                postFunction(formDataAsJsonString);
 
             } else if (!formMetadata.submitHasBeenClicked) {
                 formMetadata.submitHasBeenClicked = true;
@@ -118,12 +118,13 @@ $(function() {
                 touchAllFields(formMetadata.$form, formMetadata.fields);
             }
         });
-    }
+    };
 
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
         $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
-                alert('Successfully created user');
+                mui.tabs.activate('login-form');
+                alert('Successfully created user, please sign in');
             } else {
                 alert('Unknown successful status');
             }
@@ -137,8 +138,12 @@ $(function() {
     });
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
-        $.post('/session', formDataAsJsonString, (response) => {
-            alert(response);
+        $.post('/session', formDataAsJsonString, (responseBody, _, request) => {
+            if (request.status === 201) {
+                location.reload();
+            } else {
+                alert('Error in logging in');
+            }
         }, 'text');
     });
 });
