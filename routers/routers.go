@@ -31,7 +31,6 @@ func SetRoutes() {
 
 	// requires Authentication
 	handleAuthenticated(paths.HomePath, handlers.HandleHomeRequest)
-
 }
 
 func handleAuthenticated(
