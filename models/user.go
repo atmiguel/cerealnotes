@@ -1,3 +1,3 @@
-package models 
-
-type UserId int64
+package models  
+ 
+type UserId int64 
