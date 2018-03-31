@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"strings"
@@ -50,7 +50,7 @@ func getUserIdFromJwtToken(request *http.Request) (models.UserId, error) {
 	if claims, ok := token.Claims.(*JwtTokenClaim); ok && token.Valid {
 		return claims.UserId, nil
 	}
-	return -1, errors.Errorf("Token was invalid or unreadable")
+	return -1, errors.New("Token was invalid or unreadable")
 }
 
 func tokenTest1() {
