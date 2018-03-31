@@ -19,8 +19,7 @@ func SetRoutes() {
 			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
 	}
 
-	// Root path will redirect to home
-	http.HandleFunc("/", handlers.HandleRootRequest)
+	http.HandleFunc("/", handlers.RedirectRequestToHome)
 
 	// templates
 	http.HandleFunc(paths.LoginOrSignupPath, handlers.HandleLoginOrSignupRequest)

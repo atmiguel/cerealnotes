@@ -100,23 +100,18 @@ func HandleUserRequest(
 	}
 }
 
-func HandleRootRequest(
+func RedirectRequestToHome(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		if request.URL.Path == "/" {
-			http.Redirect(
-				responseWriter,
-				request,
-				paths.HomePath,
-				http.StatusTemporaryRedirect)
-			return
-		}
-
-		http.NotFound(responseWriter, request)
-
+		http.Redirect(
+			responseWriter,
+			request,
+			paths.HomePath,
+			http.StatusTemporaryRedirect)
+		return
 	default:
 		respondWithMethodNotAllowed(
 			responseWriter,
