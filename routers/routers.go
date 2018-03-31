@@ -1,9 +1,10 @@
 package routers
 
 import (
+	"net/http"
+
 	"github.com/atmiguel/cerealnotes/handlers"
 	"github.com/atmiguel/cerealnotes/paths"
-	"net/http"
 )
 
 func SetRoutes() {
