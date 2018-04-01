@@ -52,8 +52,6 @@ func determineTokenSigningKey() ([]byte, error) {
 }
 
 func main() {
-	routers.SetRoutes()
-
 	// SET UP DB
 	{
 		databaseUrl, err := determineDatabaseUrl()
@@ -85,8 +83,8 @@ func main() {
 
 		log.Printf("Listening on %s...\n", port)
 
-		if err := http.ListenAndServe(port, nil); err != nil {
-			panic(err)
+		if err := http.ListenAndServe(port, routers.DefineRoutes()); err != nil {
+			log.Fatal(err)
 		}
 	}
 }

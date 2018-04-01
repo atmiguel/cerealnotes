@@ -7,7 +7,8 @@ import (
 	"github.com/atmiguel/cerealnotes/paths"
 )
 
-func SetRoutes() {
+func DefineRoutes() http.Handler {
+	mux := http.NewServeMux()
 	// static files
 	{
 		staticDirectoryName := "static"
@@ -15,27 +16,30 @@ func SetRoutes() {
 
 		fileServer := http.FileServer(http.Dir(staticDirectoryName))
 
-		http.Handle(
+		mux.Handle(
 			staticDirectoryPaddedWithSlashes,
 			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
 	}
 
-	http.HandleFunc("/", handlers.RedirectRequestToHome)
+	mux.HandleFunc("/", handlers.RedirectRequestToHome)
 
 	// templates
-	http.HandleFunc(paths.LoginOrSignupPath, handlers.HandleLoginOrSignupRequest)
+	mux.HandleFunc(paths.LoginOrSignupPath, handlers.HandleLoginOrSignupRequest)
 
 	// forms
-	http.HandleFunc("/user", handlers.HandleUserRequest)
-	http.HandleFunc("/session", handlers.HandleSessionRequest)
+	mux.HandleFunc("/user", handlers.HandleUserRequest)
+	mux.HandleFunc("/session", handlers.HandleSessionRequest)
 
 	// requires Authentication
-	handleAuthenticated(paths.HomePath, handlers.HandleHomeRequest)
+	handleAuthenticated(mux, paths.HomePath, handlers.HandleHomeRequest)
+
+	return mux
 }
 
 func handleAuthenticated(
+	mux *http.ServeMux,
 	pattern string,
 	handlerFunc handlers.AuthentictedRequestHandlerType,
 ) {
-	http.HandleFunc(pattern, handlers.AuthenticateOrRedirectToLogin(handlerFunc))
+	mux.HandleFunc(pattern, handlers.AuthenticateOrRedirectToLogin(handlerFunc))
 }
