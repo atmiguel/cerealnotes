@@ -3,12 +3,13 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/atmiguel/cerealnotes/models"
-	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/atmiguel/cerealnotes/models"
+	"github.com/dgrijalva/jwt-go"
 )
 
 func parseTokenFromString(tokenAsString string) (*jwt.Token, error) {

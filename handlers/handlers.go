@@ -3,16 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/atmiguel/cerealnotes/models"
-	"github.com/atmiguel/cerealnotes/paths"
-	"github.com/atmiguel/cerealnotes/services/userservice"
-	"github.com/dgrijalva/jwt-go"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/atmiguel/cerealnotes/models"
+	"github.com/atmiguel/cerealnotes/paths"
+	"github.com/atmiguel/cerealnotes/services/userservice"
+	"github.com/dgrijalva/jwt-go"
 )
 
 const oneWeekInMinutes = 60 * 24 * 7

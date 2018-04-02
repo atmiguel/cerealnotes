@@ -2,10 +2,11 @@ package userservice
 
 import (
 	"errors"
+	"time"
+
 	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/models"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 var EmailAddressAlreadyInUseError = errors.New("Email address already in use")

@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/atmiguel/cerealnotes/databaseutil"
-	"github.com/atmiguel/cerealnotes/handlers"
-	"github.com/atmiguel/cerealnotes/routers"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/atmiguel/cerealnotes/databaseutil"
+	"github.com/atmiguel/cerealnotes/handlers"
+	"github.com/atmiguel/cerealnotes/routers"
 )
 
 // get the current listening address or fail if input is not correct

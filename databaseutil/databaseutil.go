@@ -3,8 +3,9 @@ package databaseutil
 import (
 	"database/sql"
 	"errors"
-	"github.com/lib/pq"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 var db *sql.DB
