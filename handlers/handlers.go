@@ -81,7 +81,7 @@ func HandleUserRequest(
 		var statusCode int
 		if err := userservice.StoreNewUser(
 			signupForm.DisplayName,
-			signupForm.EmailAddress,
+			models.NewEmailAddress(signupForm.EmailAddress),
 			signupForm.Password,
 		); err != nil {
 			if err == userservice.EmailAddressAlreadyInUseError {
@@ -97,6 +97,25 @@ func HandleUserRequest(
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
+	}
+}
+
+func RedirectRequestToHome(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
+	switch request.Method {
+	case http.MethodGet:
+		http.Redirect(
+			responseWriter,
+			request,
+			paths.HomePath,
+			http.StatusTemporaryRedirect)
+		return
+	default:
+		respondWithMethodNotAllowed(
+			responseWriter,
+			[]string{http.MethodGet})
 	}
 }
 
@@ -119,7 +138,7 @@ func HandleSessionRequest(
 		}
 
 		if err := userservice.AuthenticateUserCredentials(
-			loginForm.EmailAddress,
+			models.NewEmailAddress(loginForm.EmailAddress),
 			loginForm.Password,
 		); err != nil {
 			panic(err)
@@ -127,7 +146,8 @@ func HandleSessionRequest(
 
 		// Set our cookie to have a valid JWT Token as the value
 		{
-			userId, err := userservice.GetIdForUserWithEmailAddress(loginForm.EmailAddress)
+			userId, err := userservice.GetIdForUserWithEmailAddress(
+				models.NewEmailAddress(loginForm.EmailAddress))
 			if err != nil {
 				panic(err)
 			}
@@ -180,17 +200,17 @@ func AuthenticateOrRedirectToLogin(
 	authenticatedHandlerFunc AuthentictedRequestHandlerType,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-			if userId, err := getUserIdFromJwtToken(request); err != nil {
-				// If not loggedin redirect to login page
-				http.Redirect(
-					responseWriter,
-					request,
-					paths.LoginOrSignupPath,
-					http.StatusTemporaryRedirect)
-			} else {
-				authenticatedHandlerFunc(responseWriter, request, userId)
-			}
+		if userId, err := getUserIdFromJwtToken(request); err != nil {
+			// If not loggedin redirect to login page
+			http.Redirect(
+				responseWriter,
+				request,
+				paths.LoginOrSignupPath,
+				http.StatusTemporaryRedirect)
+		} else {
+			authenticatedHandlerFunc(responseWriter, request, userId)
 		}
+	}
 }
 
 // Authenticated Handlers

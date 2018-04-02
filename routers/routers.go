@@ -19,6 +19,8 @@ func SetRoutes() {
 			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
 	}
 
+	http.HandleFunc("/", handlers.RedirectRequestToHome)
+
 	// templates
 	http.HandleFunc(paths.LoginOrSignupPath, handlers.HandleLoginOrSignupRequest)
 

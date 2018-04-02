@@ -12,7 +12,7 @@ var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
 
 func StoreNewUser(
 	displayName string,
-	emailAddress string,
+	emailAddress *models.EmailAddress,
 	password string,
 ) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword(
@@ -26,7 +26,7 @@ func StoreNewUser(
 
 	if err := databaseutil.InsertIntoUsersTable(
 		displayName,
-		emailAddress,
+		emailAddress.String(),
 		hashedPassword,
 		creationTime,
 	); err != nil {
@@ -40,9 +40,9 @@ func StoreNewUser(
 	return nil
 }
 
-func AuthenticateUserCredentials(emailAddress string, password string) error {
+func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password string) error {
 	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(
-		emailAddress)
+		emailAddress.String())
 	if err != nil {
 		return err
 	}
@@ -57,8 +57,8 @@ func AuthenticateUserCredentials(emailAddress string, password string) error {
 	return nil
 }
 
-func GetIdForUserWithEmailAddress(emailAddress string) (models.UserId, error) {
-	userIdAsInt, err := databaseutil.GetIdForUserWithEmailAddress(emailAddress)
+func GetIdForUserWithEmailAddress(emailAddress *models.EmailAddress) (models.UserId, error) {
+	userIdAsInt, err := databaseutil.GetIdForUserWithEmailAddress(emailAddress.String())
 	if err != nil {
 		return -1, err
 	}
