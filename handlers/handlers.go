@@ -202,7 +202,7 @@ type AuthentictedRequestHandlerType func(
 
 func AuthenticateOrRedirectToLogin(
 	authenticatedHandlerFunc AuthentictedRequestHandlerType,
-) func(http.ResponseWriter, *http.Request) {
+) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
 			// If not loggedin redirect to login page
