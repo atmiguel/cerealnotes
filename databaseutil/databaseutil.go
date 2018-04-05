@@ -1,7 +1,6 @@
 /*
 Package databaseutil provides functions to be run against the database.
 
-
 These functions are simple wrappers around the databse accepting and returning
 primitive types.
 */
