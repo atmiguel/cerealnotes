@@ -1,3 +1,6 @@
+/*
+Package routers defines the path to handler pairs for the endpoint.
+*/
 package routers
 
 import (
@@ -7,6 +10,8 @@ import (
 	"github.com/atmiguel/cerealnotes/paths"
 )
 
+// DefineRoutes returns a new servemux with all the required path, handler pairs
+// attached
 func DefineRoutes() http.Handler {
 	mux := http.NewServeMux()
 	// static files

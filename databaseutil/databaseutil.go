@@ -1,3 +1,10 @@
+/*
+Package databaseutil provides functions to be run against the database.
+
+
+These functions are simple wrappers around the databse accepting and returning
+primitive types.
+*/
 package databaseutil
 
 import (
@@ -10,8 +17,12 @@ import (
 
 var db *sql.DB
 
+// UniqueConstraintError is returned when a uniqueness constraint is violated
+// when trying to insert into the table
 var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
+// ConnectToDatabase connects to the database and pings the database to make
+// sure that the connection works.
 func ConnectToDatabase(databaseUrl string) error {
 	{
 		tempDb, err := sql.Open("postgres", databaseUrl)
@@ -30,6 +41,7 @@ func ConnectToDatabase(databaseUrl string) error {
 	return nil
 }
 
+// InsertIntoUsersTable inserts the given user information into the database
 func InsertIntoUsersTable(
 	displayName string,
 	emailAddress string,
@@ -53,6 +65,8 @@ func InsertIntoUsersTable(
 	return nil
 }
 
+// GetPasswordForUserWithEmailAddress given an email address returns the password
+// as []byte
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	var row *sql.Row
 	{
@@ -71,6 +85,8 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
+// GetIdForUserWithEmailAddress returns the user id assosiated with the given
+// email address
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	var row *sql.Row
 	{

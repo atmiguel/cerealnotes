@@ -1,3 +1,10 @@
+/*
+Package handlers provides but authenticated and unauthenticated http handlers.
+
+
+All unauthenticated handlers are of type http.HandlerFunc, and all authenticated
+handlers are of type AuthenticatedRequestHandlerType
+*/
 package handlers
 
 import (
@@ -18,6 +25,8 @@ const oneWeek = time.Hour * 24 * 7
 const credentialTimeoutDuration = oneWeek
 const cerealNotesCookieName = "CerealNotesToken"
 
+// Type JwtTokenClaim is a struct containting the standarded jwt claims and
+// any aditional claims required for authentication for these endpoints
 type JwtTokenClaim struct {
 	models.UserId `json:"userId"`
 	jwt.StandardClaims
@@ -25,11 +34,17 @@ type JwtTokenClaim struct {
 
 var tokenSigningKey []byte
 
+// SetTokenSigningKey sets the global token signing key to whatever is based in.
+// Before this method is called the signing key is the zero value of []byte
 func SetTokenSigningKey(key []byte) {
 	tokenSigningKey = key
 }
 
-// HANDLERS
+// Unauthenticated Handlers
+
+// HandleLoginOrSignupRequest responds to get requests with the login or signup
+// page. If the request comes from an authenticated source, it redirects to the
+// home page.
 func HandleLoginOrSignupRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -59,6 +74,8 @@ func HandleLoginOrSignupRequest(
 	}
 }
 
+// HandleUserRequest responds to POST requests by attempting to create a user
+// with the information provided in the request body
 func HandleUserRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -101,6 +118,8 @@ func HandleUserRequest(
 	}
 }
 
+// RedirectRequestToHome responds to all GET requests by redirecting them to the
+// home path
 func RedirectRequestToHome(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -120,6 +139,11 @@ func RedirectRequestToHome(
 	}
 }
 
+// HandleSessionRequest responds to POST, and DELETE reqeusts. On POST requests
+// It attempts to validate the information in the request body. If succesfull
+// the response constains a cookie with a valid JWT, with information to be
+// authenticated in future requests. On DELETE, set a cookie to expire immediatly
+// essentially deleting the cookie on the host machine
 func HandleSessionRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -195,11 +219,17 @@ func HandleSessionRequest(
 	}
 }
 
+// AuthentictedRequestHandlerType is the function signature for all authenticated
+// handlers
 type AuthentictedRequestHandlerType func(
 	http.ResponseWriter,
 	*http.Request,
 	models.UserId)
 
+// AuthenticateOrRedirectToLogin is a meta handler that resonds to all request.
+// It tries to authenticate the input request. If it's succesfull it call the passed
+// in authenticatedHandlerFunc. On failures to authenticate it redirects to the
+// LoginOrSignup Page.
 func AuthenticateOrRedirectToLogin(
 	authenticatedHandlerFunc AuthentictedRequestHandlerType,
 ) http.HandlerFunc {
@@ -218,6 +248,8 @@ func AuthenticateOrRedirectToLogin(
 }
 
 // Authenticated Handlers
+
+// HandleHomeRequest responds to GET requests with the home page.
 func HandleHomeRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -238,6 +270,7 @@ func HandleHomeRequest(
 }
 
 // UTIL
+
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
 	allowedMethods []string,
