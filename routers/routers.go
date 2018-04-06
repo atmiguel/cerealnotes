@@ -34,8 +34,8 @@ func DefineRoutes() http.Handler {
 	mux.HandleFunc(paths.LoginOrSignup, handlers.HandleLoginOrSignupRequest)
 
 	// forms
-	mux.HandleFunc("/user", handlers.HandleUserRequest)
-	mux.HandleFunc("/session", handlers.HandleSessionRequest)
+	mux.HandleFunc(paths.User, handlers.HandleUserRequest)
+	mux.HandleFunc(paths.Session, handlers.HandleSessionRequest)
 
 	// requires Authentication
 	handleAuthenticated(mux, paths.Home, handlers.HandleHomeRequest)
