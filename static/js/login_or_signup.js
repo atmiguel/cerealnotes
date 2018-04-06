@@ -139,11 +139,18 @@ $(function() {
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
         $.post('/session', formDataAsJsonString, (responseBody, _, request) => {
+            console.log(request.status)
             if (request.status === 201) {
                 location.reload();
             } else {
                 alert('Error in logging in');
             }
-        }, 'text');
+        }, 'text').fail((request) => {
+            if (request.status === 401) {
+                alert("Password was not correct");
+            } else {
+                alert('Unknown error');
+            }
+        });
     });
 });

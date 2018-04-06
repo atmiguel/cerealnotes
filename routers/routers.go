@@ -26,17 +26,19 @@ func DefineRoutes() http.Handler {
 			http.StripPrefix(staticDirectoryPaddedWithSlashes, fileServer))
 	}
 
-	mux.HandleFunc("/", handlers.RedirectRequestToHome)
+	// Redirects
+	mux.HandleFunc("/", handlers.GetRedirectHandler(paths.Home))
+	mux.HandleFunc("/favicon.ico", handlers.GetRedirectHandler("/static/favicon.ico"))
 
 	// templates
-	mux.HandleFunc(paths.LoginOrSignupPath, handlers.HandleLoginOrSignupRequest)
+	mux.HandleFunc(paths.LoginOrSignup, handlers.HandleLoginOrSignupRequest)
 
 	// forms
 	mux.HandleFunc("/user", handlers.HandleUserRequest)
 	mux.HandleFunc("/session", handlers.HandleSessionRequest)
 
 	// requires Authentication
-	handleAuthenticated(mux, paths.HomePath, handlers.HandleHomeRequest)
+	handleAuthenticated(mux, paths.Home, handlers.HandleHomeRequest)
 
 	return mux
 }

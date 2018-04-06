@@ -49,7 +49,7 @@ func HandleLoginOrSignupRequest(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.HomePath,
+				paths.Home,
 				http.StatusTemporaryRedirect)
 			return
 		}
@@ -111,27 +111,6 @@ func HandleUserRequest(
 	}
 }
 
-// RedirectRequestToHome responds to all GET requests by redirecting them to the
-// home path
-func RedirectRequestToHome(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-) {
-	switch request.Method {
-	case http.MethodGet:
-		http.Redirect(
-			responseWriter,
-			request,
-			paths.HomePath,
-			http.StatusTemporaryRedirect)
-		return
-	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodGet})
-	}
-}
-
 // HandleSessionRequest responds to POST, and DELETE reqeusts. On POST requests
 // It attempts to validate the information in the request body. If succesfull
 // the response constains a cookie with a valid JWT, with information to be
@@ -159,7 +138,14 @@ func HandleSessionRequest(
 			models.NewEmailAddress(loginForm.EmailAddress),
 			loginForm.Password,
 		); err != nil {
-			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			statusCode := http.StatusInternalServerError
+			if err == userservice.InvalidPasswordError {
+				statusCode = http.StatusUnauthorized
+			}
+			http.Error(
+				responseWriter,
+				err.Error(),
+				statusCode)
 			return
 		}
 
@@ -232,10 +218,32 @@ func AuthenticateOrRedirectToLogin(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.LoginOrSignupPath,
+				paths.LoginOrSignup,
 				http.StatusTemporaryRedirect)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
+		}
+	}
+}
+
+// GetRedirectHandler is a function which given a path returns a handler that
+// on get requests redirects to the given path.
+func GetRedirectHandler(
+	newPath string,
+) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		switch request.Method {
+		case http.MethodGet:
+			http.Redirect(
+				responseWriter,
+				request,
+				newPath,
+				http.StatusTemporaryRedirect)
+			return
+		default:
+			respondWithMethodNotAllowed(
+				responseWriter,
+				[]string{http.MethodGet})
 		}
 	}
 }
