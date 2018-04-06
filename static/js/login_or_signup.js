@@ -150,7 +150,6 @@ $(function() {
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
         $.post('/session', formDataAsJsonString, (responseBody, _, request) => {
-            console.log(request.status)
             if (request.status === 201) {
                 location.reload();
             } else {
