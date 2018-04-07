@@ -17,6 +17,8 @@ import (
 const oneWeek = time.Hour * 24 * 7
 const credentialTimeoutDuration = oneWeek
 const cerealNotesCookieName = "CerealNotesToken"
+const baseTemplateName = "base"
+const baseTemplateFile = "templates/base.tmpl"
 
 // Type JwtTokenClaim is a struct containting the standarded jwt claims and
 // any aditional claims required for authentication for these endpoints
@@ -54,13 +56,13 @@ func HandleLoginOrSignupRequest(
 			return
 		}
 
-		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl", "templates/base.tmpl")
+		parsedTemplate, err := template.ParseFiles(baseTemplateFile, "templates/login_or_signup.tmpl")
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		parsedTemplate.ExecuteTemplate(responseWriter, "base", nil)
+		parsedTemplate.ExecuteTemplate(responseWriter, baseTemplateName, nil)
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
@@ -258,13 +260,13 @@ func HandleHomeRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		parsedTemplate, err := template.ParseFiles("templates/base.tmpl", "templates/home.tmpl")
+		parsedTemplate, err := template.ParseFiles(baseTemplateFile, "templates/home.tmpl")
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		parsedTemplate.ExecuteTemplate(responseWriter, "base", userId)
+		parsedTemplate.ExecuteTemplate(responseWriter, baseTemplateName, userId)
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
 	}
