@@ -54,13 +54,13 @@ func HandleLoginOrSignupRequest(
 			return
 		}
 
-		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
+		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl", "templates/base.tmpl")
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		parsedTemplate.Execute(responseWriter, nil)
+		parsedTemplate.ExecuteTemplate(responseWriter, "base", nil)
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
