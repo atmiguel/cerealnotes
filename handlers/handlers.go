@@ -258,13 +258,13 @@ func HandleHomeRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		parsedTemplate, err := template.ParseFiles("templates/home.tmpl")
+		parsedTemplate, err := template.ParseFiles("templates/base.tmpl", "templates/home.tmpl")
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		parsedTemplate.Execute(responseWriter, userId)
+		parsedTemplate.ExecuteTemplate(responseWriter, "base", userId)
 	default:
 		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
 	}
