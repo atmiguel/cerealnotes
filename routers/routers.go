@@ -1,5 +1,5 @@
 /*
-Package routers defines the path to handler pairs for the endpoint.
+Package routers defines the path to handler pairs for each endpoint.
 */
 package routers
 

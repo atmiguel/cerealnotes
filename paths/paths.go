@@ -1,5 +1,5 @@
 /*
-Package paths is a package to store all the url path constants.
+Package paths is a stores all the url path constants.
 */
 package paths
 

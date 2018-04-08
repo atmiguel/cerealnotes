@@ -17,10 +17,10 @@ import (
 var db *sql.DB
 
 // UniqueConstraintError is returned when a uniqueness constraint is violated
-// when trying to insert into the table
+// when trying to insert into the table.
 var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
-// ConnectToDatabase connects to the database and pings the database to make
+// ConnectToDatabase connects and pings the database to make
 // sure that the connection works.
 func ConnectToDatabase(databaseUrl string) error {
 	{
@@ -40,7 +40,8 @@ func ConnectToDatabase(databaseUrl string) error {
 	return nil
 }
 
-// InsertIntoUsersTable inserts the given user information into the database
+// InsertIntoUsersTable inserts into the DB. If the email already exists returns
+// a UniqueConstraintError
 func InsertIntoUsersTable(
 	displayName string,
 	emailAddress string,
@@ -64,8 +65,7 @@ func InsertIntoUsersTable(
 	return nil
 }
 
-// GetPasswordForUserWithEmailAddress given an email address returns the password
-// as []byte
+// GetPasswordForUserWithEmailAddress returns the password as []byte for given email.
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	var row *sql.Row
 	{
@@ -85,7 +85,7 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 }
 
 // GetIdForUserWithEmailAddress returns the user id assosiated with the given
-// email address
+// email address.
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	var row *sql.Row
 	{

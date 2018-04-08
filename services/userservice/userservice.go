@@ -1,6 +1,5 @@
 /*
-Package userservice contains functions to handle interactions of app with
-database layer.
+Package userservice handles interactions of app with database layer.
 */
 package userservice
 

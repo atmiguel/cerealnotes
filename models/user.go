@@ -2,17 +2,17 @@ package models
 
 import "strings"
 
-// UserId is used to symbolize that this int64 is a specifically a UserId
+// UserId is a type that represents the key of the user in the database.
 type UserId int64
 
-// EmailAddress is a wrapper struct of the private string emailAddress to make
-// sure that emails are always formatted properly when passed around in the system.
+// EmailAddress is a wrapper of the string class to make sure that emails
+// are always formatted properly when passed around in the system.
 type EmailAddress struct {
 	emailAddressAsString string
 }
 
-// NewEmailAddress constructs an EmailAddress objects and provides some guranteess
-// that it is a properly formated email address.
+// NewEmailAddress provides some guranteess that it is a properly formated email
+// address.
 func NewEmailAddress(emailAddressAsString string) *EmailAddress {
 	return &EmailAddress{emailAddressAsString: strings.ToLower(emailAddressAsString)}
 }
