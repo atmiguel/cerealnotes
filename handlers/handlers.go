@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -16,8 +14,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const oneWeekInMinutes = 60 * 24 * 7
-const credentialTimeoutInMinutes = oneWeekInMinutes
+const oneWeek = time.Hour * 24 * 7
+const credentialTimeoutDuration = oneWeek
 const cerealNotesCookieName = "CerealNotesToken"
 
 type JwtTokenClaim struct {
@@ -50,7 +48,8 @@ func HandleLoginOrSignupRequest(
 
 		parsedTemplate, err := template.ParseFiles("templates/login_or_signup.tmpl")
 		if err != nil {
-			log.Fatal(err)
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		parsedTemplate.Execute(responseWriter, nil)
@@ -72,11 +71,11 @@ func HandleUserRequest(
 
 	switch request.Method {
 	case http.MethodPost:
-		var signupForm SignupForm
-		body := getRequestBody(request)
+		signupForm := new(SignupForm)
 
-		if err := json.Unmarshal(body, &signupForm); err != nil {
-			panic(err)
+		if err := json.NewDecoder(request.Body).Decode(signupForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		var statusCode int
@@ -88,7 +87,8 @@ func HandleUserRequest(
 			if err == userservice.EmailAddressAlreadyInUseError {
 				statusCode = http.StatusConflict
 			} else {
-				panic(err)
+				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
 			}
 		} else {
 			statusCode = http.StatusCreated
@@ -131,18 +131,19 @@ func HandleSessionRequest(
 
 	switch request.Method {
 	case http.MethodPost:
-		var loginForm LoginForm
-		body := getRequestBody(request)
+		loginForm := new(LoginForm)
 
-		if err := json.Unmarshal(body, &loginForm); err != nil {
-			panic(err)
+		if err := json.NewDecoder(request.Body).Decode(loginForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		if err := userservice.AuthenticateUserCredentials(
 			models.NewEmailAddress(loginForm.EmailAddress),
 			loginForm.Password,
 		); err != nil {
-			panic(err)
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		// Set our cookie to have a valid JWT Token as the value
@@ -150,15 +151,17 @@ func HandleSessionRequest(
 			userId, err := userservice.GetIdForUserWithEmailAddress(
 				models.NewEmailAddress(loginForm.EmailAddress))
 			if err != nil {
-				panic(err)
+				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
 			}
 
-			token, err := createTokenAsString(userId, credentialTimeoutInMinutes)
+			token, err := createTokenAsString(userId, credentialTimeoutDuration)
 			if err != nil {
-				panic(err)
+				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
 			}
 
-			expirationTime := time.Now().Add(credentialTimeoutInMinutes * time.Minute)
+			expirationTime := time.Now().Add(credentialTimeoutDuration)
 
 			cookie := http.Cookie{
 				Name:     cerealNotesCookieName,
@@ -171,7 +174,7 @@ func HandleSessionRequest(
 		}
 
 		responseWriter.WriteHeader(http.StatusCreated)
-		responseWriter.Write([]byte(fmt.Sprint("passward email combo was correct")))
+		fmt.Fprint(responseWriter, "passward email combo was correct")
 
 	case http.MethodDelete:
 		// Cookie will overwrite existing cookie then delete itself
@@ -199,7 +202,7 @@ type AuthentictedRequestHandlerType func(
 
 func AuthenticateOrRedirectToLogin(
 	authenticatedHandlerFunc AuthentictedRequestHandlerType,
-) func(http.ResponseWriter, *http.Request) {
+) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
 			// If not loggedin redirect to login page
@@ -224,7 +227,8 @@ func HandleHomeRequest(
 	case http.MethodGet:
 		parsedTemplate, err := template.ParseFiles("templates/home.tmpl")
 		if err != nil {
-			log.Fatal(err)
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		parsedTemplate.Execute(responseWriter, userId)
@@ -243,17 +247,4 @@ func respondWithMethodNotAllowed(
 
 	statusCode := http.StatusMethodNotAllowed
 	http.Error(responseWriter, http.StatusText(statusCode), statusCode)
-}
-
-func getRequestBody(request *http.Request) []byte {
-	body, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := request.Body.Close(); err != nil {
-		panic(err)
-	}
-
-	return body
 }

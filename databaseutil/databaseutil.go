@@ -36,24 +36,21 @@ func InsertIntoUsersTable(
 	password []byte,
 	creationTime time.Time,
 ) error {
-	var row *sql.Row
-	{
-		sqlQuery := `
-			INSERT INTO users (display_name, email_address, password, creation_time)
-			VALUES ($1, $2, $3, $4)`
+	sqlQuery := `
+		INSERT INTO users (display_name, email_address, password, creation_time)
+		VALUES ($1, $2, $3, $4)`
 
-		row = db.QueryRow(sqlQuery, displayName, emailAddress, password, creationTime)
+	rows, err := db.Query(sqlQuery, displayName, emailAddress, password, creationTime)
+	if err != nil {
+		return convertPostgresError(err)
 	}
+	defer rows.Close()
 
-	if err := row.Scan(); err != nil {
-		if err == sql.ErrNoRows { // success
-			return nil
-		}
-
+	if err := rows.Err(); err != nil {
 		return convertPostgresError(err)
 	}
 
-	panic("unexpected")
+	return nil
 }
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {

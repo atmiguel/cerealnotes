@@ -23,12 +23,12 @@ func parseTokenFromString(tokenAsString string) (*jwt.Token, error) {
 
 func createTokenAsString(
 	userId models.UserId,
-	minutesTilExpiration int64,
+	durationTilExpiration time.Duration,
 ) (string, error) {
 	claims := JwtTokenClaim{
 		userId,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Unix() + (minutesTilExpiration * 60),
+			ExpiresAt: time.Now().Add(durationTilExpiration).Unix(),
 			Issuer:    "CerealNotes",
 		},
 	}
