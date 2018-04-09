@@ -1,6 +1,5 @@
 /*
-Package userservice contains functions to handle interactions of app with
-database layer.
+Package userservice handles interactions with database layer.
 */
 package userservice
 
@@ -13,14 +12,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// EmailAddressAlreadyInUseError is returned when the email that was passed in
-// cannot be used becaues it already being used by another user
 var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
 
 var CredentialsNotAuthorizedError = errors.New("The provided credentials were not found")
 
-// StoreNewUser takes a new user information and attempts to store it into the
-// database
 func StoreNewUser(
 	displayName string,
 	emailAddress *models.EmailAddress,
@@ -51,8 +46,6 @@ func StoreNewUser(
 	return nil
 }
 
-// AuthenticateUserCredentials validates if the email address passwrod combo
-// is valid. Returns nil on success and not nil depending on the error.
 func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password string) error {
 	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(
 		emailAddress.String())
@@ -74,8 +67,6 @@ func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password str
 	return nil
 }
 
-// GetIdForUserWithEmailAddress returns the assoaited userId for a given
-// email address.
 func GetIdForUserWithEmailAddress(emailAddress *models.EmailAddress) (models.UserId, error) {
 	userIdAsInt, err := databaseutil.GetIdForUserWithEmailAddress(emailAddress.String())
 	if err != nil {

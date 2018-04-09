@@ -1,8 +1,7 @@
 /*
-Package databaseutil provides functions to be run against the database.
+Package databaseutil abstracts away details about sql and postgres.
 
-These functions are simple wrappers around the databse accepting and returning
-primitive types.
+These functions only accept and return primitive types.
 */
 package databaseutil
 
@@ -16,12 +15,10 @@ import (
 
 var db *sql.DB
 
-// UniqueConstraintError is returned when a uniqueness constraint is violated
-// when trying to insert into the table
+// This is returned when a uniqueness constraint is violated during an insert.
 var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
-// ConnectToDatabase connects to the database and pings the database to make
-// sure that the connection works.
+// After connecting, it also pings the database to ensure a working connection.
 func ConnectToDatabase(databaseUrl string) error {
 	{
 		tempDb, err := sql.Open("postgres", databaseUrl)
@@ -32,7 +29,6 @@ func ConnectToDatabase(databaseUrl string) error {
 		db = tempDb
 	}
 
-	// Quickly test if the connection to the database worked.
 	if err := db.Ping(); err != nil {
 		return err
 	}
@@ -40,7 +36,6 @@ func ConnectToDatabase(databaseUrl string) error {
 	return nil
 }
 
-// InsertIntoUsersTable inserts the given user information into the database
 func InsertIntoUsersTable(
 	displayName string,
 	emailAddress string,
@@ -57,15 +52,13 @@ func InsertIntoUsersTable(
 	}
 	defer rows.Close()
 
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return convertPostgresError(err)
 	}
 
 	return nil
 }
 
-// GetPasswordForUserWithEmailAddress given an email address returns the password
-// as []byte
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	var row *sql.Row
 	{
@@ -84,8 +77,6 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
-// GetIdForUserWithEmailAddress returns the user id assosiated with the given
-// email address
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	var row *sql.Row
 	{
@@ -105,6 +96,7 @@ func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 }
 
 // PRIVATE
+
 func convertPostgresError(err error) error {
 	const uniqueConstraintErrorCode = "23505"
 
