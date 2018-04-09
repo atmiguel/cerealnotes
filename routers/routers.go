@@ -10,8 +10,7 @@ import (
 	"github.com/atmiguel/cerealnotes/paths"
 )
 
-// DefineRoutes returns a new servemux with all the required path, handler pairs
-// attached
+// This returns a new servemux with all the required path and handler pairs attached
 func DefineRoutes() http.Handler {
 	mux := http.NewServeMux()
 	// static files
