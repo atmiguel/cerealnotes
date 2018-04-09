@@ -17,9 +17,7 @@ import (
 // cannot be used becaues it already being used by another user
 var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
 
-// InvalidPasswordError is returned when the password provided does not match
-// the password we have in our system
-var InvalidPasswordError = errors.New("The password did not match")
+var CredentialsNotAuthorizedError = errors.New("The provided credentials were not found")
 
 // StoreNewUser takes a new user information and attempts to store it into the
 // database
@@ -67,7 +65,7 @@ func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password str
 		[]byte(password),
 	); err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return InvalidPasswordError
+			return CredentialsNotAuthorizedError
 		}
 
 		return err

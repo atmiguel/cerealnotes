@@ -139,13 +139,10 @@ func HandleSessionRequest(
 			loginForm.Password,
 		); err != nil {
 			statusCode := http.StatusInternalServerError
-			if err == userservice.InvalidPasswordError {
+			if err == userservice.CredentialsNotAuthorizedError {
 				statusCode = http.StatusUnauthorized
 			}
-			http.Error(
-				responseWriter,
-				err.Error(),
-				statusCode)
+			http.Error(responseWriter, err.Error(), statusCode)
 			return
 		}
 
@@ -226,10 +223,10 @@ func AuthenticateOrRedirectToLogin(
 	}
 }
 
-// GetRedirectHandler is a function which given a path returns a handler that
+// RedirectToPathHandler is a function which given a path returns a handler that
 // on get requests redirects to the given path.
-func GetRedirectHandler(
-	newPath string,
+func RedirectToPathHandler(
+	finalPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		switch request.Method {
@@ -237,7 +234,7 @@ func GetRedirectHandler(
 			http.Redirect(
 				responseWriter,
 				request,
-				newPath,
+				finalPath,
 				http.StatusTemporaryRedirect)
 			return
 		default:
