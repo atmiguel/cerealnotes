@@ -26,8 +26,8 @@ func DefineRoutes() http.Handler {
 	}
 
 	// Redirects
-	mux.HandleFunc("/", handlers.GetRedirectHandler(paths.Home))
-	mux.HandleFunc("/favicon.ico", handlers.GetRedirectHandler("/static/favicon.ico"))
+	mux.HandleFunc("/", handlers.RedirectToPathHandler(paths.Home))
+	mux.HandleFunc("/favicon.ico", handlers.RedirectToPathHandler("/static/favicon.ico"))
 
 	// templates
 	mux.HandleFunc(paths.LoginOrSignup, handlers.HandleLoginOrSignupRequest)
