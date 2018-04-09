@@ -52,7 +52,7 @@ func InsertIntoUsersTable(
 	}
 	defer rows.Close()
 
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return convertPostgresError(err)
 	}
 
