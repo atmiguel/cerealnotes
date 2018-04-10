@@ -1,3 +1,6 @@
+/*
+Package userservice handles interactions with database layer.
+*/
 package userservice
 
 import (

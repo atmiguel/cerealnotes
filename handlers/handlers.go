@@ -18,6 +18,7 @@ const oneWeek = time.Hour * 24 * 7
 const credentialTimeoutDuration = oneWeek
 const cerealNotesCookieName = "CerealNotesToken"
 
+// JwtTokenClaim contains all claims required for authentication, including the standard JWT claims.
 type JwtTokenClaim struct {
 	models.UserId `json:"userId"`
 	jwt.StandardClaims
@@ -29,14 +30,16 @@ func SetTokenSigningKey(key []byte) {
 	tokenSigningKey = key
 }
 
-// HANDLERS
+// UNAUTHENTICATED HANDLERS
+
+// HandleLoginOrSignupRequest responds to unauthenticated GET requests with the login or signup page.
+// For authenticated requests, it redirects to the home page.
 func HandleLoginOrSignupRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		// Check to see if user is already logged in, if so redirect
 		if _, err := getUserIdFromJwtToken(request); err == nil {
 			http.Redirect(
 				responseWriter,
@@ -120,6 +123,8 @@ func RedirectRequestToHome(
 	}
 }
 
+// HandleSessionRequest responds to POST requests by authenticating and responding with a JWT.
+// It responds to DELETE requests by expiring the client's cookie.
 func HandleSessionRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -205,7 +210,7 @@ func AuthenticateOrRedirectToLogin(
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
-			// If not loggedin redirect to login page
+			// If not logged in, redirect to login page
 			http.Redirect(
 				responseWriter,
 				request,
@@ -217,7 +222,8 @@ func AuthenticateOrRedirectToLogin(
 	}
 }
 
-// Authenticated Handlers
+// AUTHENTICATED HANDLERS
+
 func HandleHomeRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -237,7 +243,8 @@ func HandleHomeRequest(
 	}
 }
 
-// UTIL
+// PRIVATE
+
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
 	allowedMethods []string,

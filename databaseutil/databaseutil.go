@@ -1,3 +1,8 @@
+/*
+Package databaseutil abstracts away details about sql and postgres.
+
+These functions only accept and return primitive types.
+*/
 package databaseutil
 
 import (
@@ -10,8 +15,10 @@ import (
 
 var db *sql.DB
 
+// UniqueConstraintError is returned when a uniqueness constraint is violated during an insert.
 var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
+// ConnectToDatabase also pings the database to ensure a working connection.
 func ConnectToDatabase(databaseUrl string) error {
 	{
 		tempDb, err := sql.Open("postgres", databaseUrl)
@@ -22,7 +29,6 @@ func ConnectToDatabase(databaseUrl string) error {
 		db = tempDb
 	}
 
-	// Quickly test if the connection to the database worked.
 	if err := db.Ping(); err != nil {
 		return err
 	}
@@ -90,6 +96,7 @@ func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 }
 
 // PRIVATE
+
 func convertPostgresError(err error) error {
 	const uniqueConstraintErrorCode = "23505"
 
