@@ -210,7 +210,7 @@ func AuthenticateOrRedirectToLogin(
 // RedirectToPathHandler is a function which given a path returns a handler that
 // on get requests redirects to the given path.
 func RedirectToPathHandler(
-	finalPath string,
+	path string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		switch request.Method {
@@ -218,7 +218,7 @@ func RedirectToPathHandler(
 			http.Redirect(
 				responseWriter,
 				request,
-				finalPath,
+				path,
 				http.StatusTemporaryRedirect)
 			return
 		default:
