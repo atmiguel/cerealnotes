@@ -40,18 +40,19 @@ func createTokenAsString(
 func getUserIdFromJwtToken(request *http.Request) (models.UserId, error) {
 	cookie, err := request.Cookie(cerealNotesCookieName)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	token, err := parseTokenFromString(cookie.Value)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	if claims, ok := token.Claims.(*JwtTokenClaim); ok && token.Valid {
 		return claims.UserId, nil
 	}
-	return -1, errors.New("Token was invalid or unreadable")
+
+	return 0, errors.New("Token was invalid or unreadable")
 }
 
 func tokenTest1() {
