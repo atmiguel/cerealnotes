@@ -4,7 +4,7 @@ import "strings"
 
 type UserId int64
 
-// This ensures that email addresses are always formatted properly within the backend.
+// EmailAddress ensures that email addresses are always formatted properly within the backend.
 type EmailAddress struct {
 	emailAddressAsString string
 }
