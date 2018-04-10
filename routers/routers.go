@@ -1,5 +1,5 @@
 /*
-Package routers defines the path to handler pairs for the endpoint.
+Package routers defines the path to handler pairs for each endpoint.
 */
 package routers
 
@@ -10,8 +10,7 @@ import (
 	"github.com/atmiguel/cerealnotes/paths"
 )
 
-// DefineRoutes returns a new servemux with all the required path, handler pairs
-// attached
+// DefineRoutes returns a new servemux with all the required path and handler pairs attached.
 func DefineRoutes() http.Handler {
 	mux := http.NewServeMux()
 	// static files
@@ -27,8 +26,8 @@ func DefineRoutes() http.Handler {
 	}
 
 	// Redirects
-	mux.HandleFunc("/", handlers.GetRedirectHandler(paths.Home))
-	mux.HandleFunc("/favicon.ico", handlers.GetRedirectHandler("/static/favicon.ico"))
+	mux.HandleFunc("/", handlers.RedirectToPathHandler(paths.Home))
+	mux.HandleFunc("/favicon.ico", handlers.RedirectToPathHandler("/static/favicon.ico"))
 
 	// templates
 	mux.HandleFunc(paths.LoginOrSignup, handlers.HandleLoginOrSignupRequest)
@@ -37,7 +36,7 @@ func DefineRoutes() http.Handler {
 	mux.HandleFunc(paths.User, handlers.HandleUserRequest)
 	mux.HandleFunc(paths.Session, handlers.HandleSessionRequest)
 
-	// requires Authentication
+	// requires authentication
 	handleAuthenticated(mux, paths.Home, handlers.HandleHomeRequest)
 
 	return mux

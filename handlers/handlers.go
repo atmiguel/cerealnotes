@@ -20,8 +20,7 @@ const cerealNotesCookieName = "CerealNotesToken"
 const baseTemplateName = "base"
 const baseTemplateFile = "templates/base.tmpl"
 
-// Type JwtTokenClaim is a struct containting the standarded jwt claims and
-// any aditional claims required for authentication for these endpoints
+// JwtTokenClaim contains all claims required for authentication, including the standard JWT claims.
 type JwtTokenClaim struct {
 	models.UserId `json:"userId"`
 	jwt.StandardClaims
@@ -29,24 +28,20 @@ type JwtTokenClaim struct {
 
 var tokenSigningKey []byte
 
-// SetTokenSigningKey sets the global token signing key to whatever is based in.
-// Before this method is called the signing key is the zero value of []byte
 func SetTokenSigningKey(key []byte) {
 	tokenSigningKey = key
 }
 
-// Unauthenticated Handlers
+// UNAUTHENTICATED HANDLERS
 
-// HandleLoginOrSignupRequest responds to get requests with the login or signup
-// page. If the request comes from an authenticated source, it redirects to the
-// home page.
+// HandleLoginOrSignupRequest responds to unauthenticated GET requests with the login or signup page.
+// For authenticated requests, it redirects to the home page.
 func HandleLoginOrSignupRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		// Check to see if user is already logged in, if so redirect
 		if _, err := getUserIdFromJwtToken(request); err == nil {
 			http.Redirect(
 				responseWriter,
@@ -69,8 +64,6 @@ func HandleLoginOrSignupRequest(
 	}
 }
 
-// HandleUserRequest responds to POST requests by attempting to create a user
-// with the information provided in the request body
 func HandleUserRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -113,11 +106,8 @@ func HandleUserRequest(
 	}
 }
 
-// HandleSessionRequest responds to POST, and DELETE reqeusts. On POST requests
-// It attempts to validate the information in the request body. If succesfull
-// the response constains a cookie with a valid JWT, with information to be
-// authenticated in future requests. On DELETE, set a cookie to expire immediatly
-// essentially deleting the cookie on the host machine
+// HandleSessionRequest responds to POST requests by authenticating and responding with a JWT.
+// It responds to DELETE requests by expiring the client's cookie.
 func HandleSessionRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -141,13 +131,10 @@ func HandleSessionRequest(
 			loginForm.Password,
 		); err != nil {
 			statusCode := http.StatusInternalServerError
-			if err == userservice.InvalidPasswordError {
+			if err == userservice.CredentialsNotAuthorizedError {
 				statusCode = http.StatusUnauthorized
 			}
-			http.Error(
-				responseWriter,
-				err.Error(),
-				statusCode)
+			http.Error(responseWriter, err.Error(), statusCode)
 			return
 		}
 
@@ -200,23 +187,17 @@ func HandleSessionRequest(
 	}
 }
 
-// AuthentictedRequestHandlerType is the function signature for all authenticated
-// handlers
 type AuthentictedRequestHandlerType func(
 	http.ResponseWriter,
 	*http.Request,
 	models.UserId)
 
-// AuthenticateOrRedirectToLogin is a meta handler that resonds to all request.
-// It tries to authenticate the input request. If it's succesfull it call the passed
-// in authenticatedHandlerFunc. On failures to authenticate it redirects to the
-// LoginOrSignup Page.
 func AuthenticateOrRedirectToLogin(
 	authenticatedHandlerFunc AuthentictedRequestHandlerType,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
-			// If not loggedin redirect to login page
+			// If not logged in, redirect to login page
 			http.Redirect(
 				responseWriter,
 				request,
@@ -228,10 +209,8 @@ func AuthenticateOrRedirectToLogin(
 	}
 }
 
-// GetRedirectHandler is a function which given a path returns a handler that
-// on get requests redirects to the given path.
-func GetRedirectHandler(
-	newPath string,
+func RedirectToPathHandler(
+	finalPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		switch request.Method {
@@ -239,7 +218,7 @@ func GetRedirectHandler(
 			http.Redirect(
 				responseWriter,
 				request,
-				newPath,
+				finalPath,
 				http.StatusTemporaryRedirect)
 			return
 		default:
@@ -250,9 +229,8 @@ func GetRedirectHandler(
 	}
 }
 
-// Authenticated Handlers
+// AUTHENTICATED HANDLERS
 
-// HandleHomeRequest responds to GET requests with the home page.
 func HandleHomeRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -272,7 +250,7 @@ func HandleHomeRequest(
 	}
 }
 
-// UTIL
+// PRIVATE
 
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,

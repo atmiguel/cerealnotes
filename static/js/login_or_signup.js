@@ -102,8 +102,8 @@ $(function() {
     attachFieldValidators(loginFormMetadata);
 
     var attachSubmitClickHandler = function(formMetadata, postFunction) {
-        var button = formMetadata.$form.find('button');
-        button.click(() => {
+        var $button = formMetadata.$form.find('button');
+        $button.click(() => {
             if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
                 var formData = getFormData(
                     formMetadata.$form,
@@ -124,9 +124,9 @@ $(function() {
             }
         });
 
-        formMetadata.$form.find("input:password").keyup((event) => {
+        formMetadata.$form.find('input:password').keydown((event) => {
             if (checkKeypressIsEnter(event)) {
-                button.click();
+                $button.click();
             }
         });
     };
@@ -157,7 +157,7 @@ $(function() {
             }
         }, 'text').fail((request) => {
             if (request.status === 401) {
-                alert("Password was not correct");
+                alert('Password was not correct');
             } else {
                 alert('Unknown error');
             }
