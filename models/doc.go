@@ -1,7 +1,6 @@
 /*
-Package models provides simple models of object in the system.
+Package models provides useful types and structs.
 
-
-This package also contains useful tools to create user objects
+It also contains useful tools for creating user objects.
 */
 package models
