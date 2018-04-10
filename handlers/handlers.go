@@ -207,7 +207,6 @@ func AuthenticateOrRedirectToLogin(
 	}
 }
 
-// RedirectToPathHandler returns a handler that redirects GET requests to the given path.
 func RedirectToPathHandler(
 	finalPath string,
 ) http.HandlerFunc {
