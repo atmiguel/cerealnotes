@@ -41,6 +41,10 @@ var checkKeypressIsSpace = function(event) {
     return event.which === 32;
 };
 
+var checkKeypressIsEnter = function(event) {
+    return event.which === 13;
+}
+
 $(function() {
     var displayNameField = 'displayName';
     var emailAddressField = 'emailAddress';
@@ -98,7 +102,8 @@ $(function() {
     attachFieldValidators(loginFormMetadata);
 
     var attachSubmitClickHandler = function(formMetadata, postFunction) {
-        formMetadata.$form.find('button').click(() => {
+        var $button = formMetadata.$form.find('button');
+        $button.click(() => {
             if (checkFormValidity(formMetadata.$form, formMetadata.fields)) {
                 var formData = getFormData(
                     formMetadata.$form,
@@ -116,6 +121,12 @@ $(function() {
                     formMetadata.fields);
 
                 touchAllFields(formMetadata.$form, formMetadata.fields);
+            }
+        });
+
+        formMetadata.$form.find('input:password').keydown((event) => {
+            if (checkKeypressIsEnter(event)) {
+                $button.click();
             }
         });
     };
@@ -144,6 +155,12 @@ $(function() {
             } else {
                 alert('Error in logging in');
             }
-        }, 'text');
+        }, 'text').fail((request) => {
+            if (request.status === 401) {
+                alert('Password was not correct');
+            } else {
+                alert('Unknown error');
+            }
+        });
     });
 });

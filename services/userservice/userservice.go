@@ -14,6 +14,8 @@ import (
 
 var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
 
+var CredentialsNotAuthorizedError = errors.New("The provided credentials were not found")
+
 func StoreNewUser(
 	displayName string,
 	emailAddress *models.EmailAddress,
@@ -55,6 +57,10 @@ func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password str
 		storedHashedPassword,
 		[]byte(password),
 	); err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return CredentialsNotAuthorizedError
+		}
+
 		return err
 	}
 

@@ -44,7 +44,7 @@ func HandleLoginOrSignupRequest(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.HomePath,
+				paths.Home,
 				http.StatusTemporaryRedirect)
 			return
 		}
@@ -104,25 +104,6 @@ func HandleUserRequest(
 	}
 }
 
-func RedirectRequestToHome(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-) {
-	switch request.Method {
-	case http.MethodGet:
-		http.Redirect(
-			responseWriter,
-			request,
-			paths.HomePath,
-			http.StatusTemporaryRedirect)
-		return
-	default:
-		respondWithMethodNotAllowed(
-			responseWriter,
-			[]string{http.MethodGet})
-	}
-}
-
 // HandleSessionRequest responds to POST requests by authenticating and responding with a JWT.
 // It responds to DELETE requests by expiring the client's cookie.
 func HandleSessionRequest(
@@ -147,7 +128,11 @@ func HandleSessionRequest(
 			models.NewEmailAddress(loginForm.EmailAddress),
 			loginForm.Password,
 		); err != nil {
-			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			statusCode := http.StatusInternalServerError
+			if err == userservice.CredentialsNotAuthorizedError {
+				statusCode = http.StatusUnauthorized
+			}
+			http.Error(responseWriter, err.Error(), statusCode)
 			return
 		}
 
@@ -214,10 +199,30 @@ func AuthenticateOrRedirectToLogin(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.LoginOrSignupPath,
+				paths.LoginOrSignup,
 				http.StatusTemporaryRedirect)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
+		}
+	}
+}
+
+func RedirectToPathHandler(
+	path string,
+) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		switch request.Method {
+		case http.MethodGet:
+			http.Redirect(
+				responseWriter,
+				request,
+				path,
+				http.StatusTemporaryRedirect)
+			return
+		default:
+			respondWithMethodNotAllowed(
+				responseWriter,
+				[]string{http.MethodGet})
 		}
 	}
 }

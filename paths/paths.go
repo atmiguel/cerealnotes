@@ -3,5 +3,9 @@ Package paths stores all the url path constants.
 */
 package paths
 
-const HomePath = "/home"
-const LoginOrSignupPath = "/login-or-signup"
+const (
+	Home          = "/home"
+	LoginOrSignup = "/login-or-signup"
+	User          = "/user"
+	Session       = "/session"
+)
