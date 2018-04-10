@@ -15,10 +15,10 @@ import (
 
 var db *sql.DB
 
-// This is returned when a uniqueness constraint is violated during an insert.
+// UniqueConstraintError is returned when a uniqueness constraint is violated during an insert.
 var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
-// After connecting, it also pings the database to ensure a working connection.
+// ConnectToDatabase also pings the database to ensure a working connection.
 func ConnectToDatabase(databaseUrl string) error {
 	{
 		tempDb, err := sql.Open("postgres", databaseUrl)

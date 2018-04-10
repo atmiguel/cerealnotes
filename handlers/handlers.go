@@ -18,7 +18,7 @@ const oneWeek = time.Hour * 24 * 7
 const credentialTimeoutDuration = oneWeek
 const cerealNotesCookieName = "CerealNotesToken"
 
-// This contains all claims required for authentication, including the standard JWT claims.
+// JwtTokenClaim contains all claims required for authentication, including the standard JWT claims.
 type JwtTokenClaim struct {
 	models.UserId `json:"userId"`
 	jwt.StandardClaims
@@ -30,9 +30,9 @@ func SetTokenSigningKey(key []byte) {
 	tokenSigningKey = key
 }
 
-// Unauthenticated Handlers
+// UNAUTHENTICATED HANDLERS
 
-// This responds to unauthenticated GET requests with the login or signup page.
+// HandleLoginOrSignupRequest responds to unauthenticated GET requests with the login or signup page.
 // For authenticated requests, it redirects to the home page.
 func HandleLoginOrSignupRequest(
 	responseWriter http.ResponseWriter,
@@ -104,8 +104,8 @@ func HandleUserRequest(
 	}
 }
 
-// This responds to POST requests by authenticating and responding with a JWT.
-// This responds to DELETE requests by expiring the client's cookie.
+// HandleSessionRequest responds to POST requests by authenticating and responding with a JWT.
+// It responds to DELETE requests by expiring the client's cookie.
 func HandleSessionRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -195,7 +195,7 @@ func AuthenticateOrRedirectToLogin(
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
-			// If not loggedin redirect to login page
+			// If not logged in, redirect to login page
 			http.Redirect(
 				responseWriter,
 				request,
@@ -207,8 +207,6 @@ func AuthenticateOrRedirectToLogin(
 	}
 }
 
-// RedirectToPathHandler is a function which given a path returns a handler that
-// on get requests redirects to the given path.
 func RedirectToPathHandler(
 	path string,
 ) http.HandlerFunc {
@@ -229,7 +227,7 @@ func RedirectToPathHandler(
 	}
 }
 
-// Authenticated Handlers
+// AUTHENTICATED HANDLERS
 
 func HandleHomeRequest(
 	responseWriter http.ResponseWriter,
@@ -250,7 +248,7 @@ func HandleHomeRequest(
 	}
 }
 
-// UTIL
+// PRIVATE
 
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
