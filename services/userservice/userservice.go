@@ -12,9 +12,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
-
-var CredentialsNotAuthorizedError = errors.New("The provided credentials were not found")
+var (
+	EmailAddressAlreadyInUseError = errors.New("Email address already in use")
+	CredentialsNotAuthorizedError = errors.New("The provided credentials were not found")
+)
 
 func StoreNewUser(
 	displayName string,
