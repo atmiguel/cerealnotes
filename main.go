@@ -11,7 +11,7 @@ import (
 	"github.com/atmiguel/cerealnotes/routers"
 )
 
-// get the current listening address or fail if input is not correct
+// Get the current listening address
 func determineListenPort() (string, error) {
 	portEnvironmentVariableName := "PORT"
 	port := os.Getenv(portEnvironmentVariableName)
@@ -52,7 +52,7 @@ func determineTokenSigningKey() ([]byte, error) {
 }
 
 func main() {
-	// SET UP DB
+	// Set up db
 	{
 		databaseUrl, err := determineDatabaseUrl()
 		if err != nil {
@@ -74,7 +74,7 @@ func main() {
 		handlers.SetTokenSigningKey(tokenSigningKey)
 	}
 
-	// START SERVER
+	// Start server
 	{
 		port, err := determineListenPort()
 		if err != nil {
