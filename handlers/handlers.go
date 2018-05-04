@@ -211,7 +211,7 @@ func AuthenticateOrRedirectToLogin(
 }
 
 func RedirectToPathHandler(
-	finalPath string,
+	path string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		switch request.Method {
@@ -219,7 +219,7 @@ func RedirectToPathHandler(
 			http.Redirect(
 				responseWriter,
 				request,
-				finalPath,
+				path,
 				http.StatusTemporaryRedirect)
 			return
 		default:
