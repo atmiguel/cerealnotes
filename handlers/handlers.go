@@ -158,6 +158,7 @@ func HandleSessionRequest(
 			cookie := http.Cookie{
 				Name:     cerealNotesCookieName,
 				Value:    token,
+				Path:     "/",
 				Expires:  expirationTime,
 				HttpOnly: true,
 			}
@@ -173,6 +174,7 @@ func HandleSessionRequest(
 		cookie := http.Cookie{
 			Name:     cerealNotesCookieName,
 			Value:    "",
+			Path:     "/",
 			HttpOnly: true,
 			MaxAge:   -1,
 		}

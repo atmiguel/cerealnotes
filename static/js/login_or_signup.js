@@ -149,7 +149,7 @@ $(function() {
     });
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
-        $.post('/session', formDataAsJsonString, (responseBody, _, request) => {
+        $.post('/api/session', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
                 location.reload();
             } else {

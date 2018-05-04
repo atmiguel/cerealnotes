@@ -8,5 +8,5 @@ const (
 	NotesPage         = "/notes"
 	LoginOrSignupPage = "/login-or-signup"
 	User              = "/api/user"
-	Session           = "/session"
+	Session           = "/api/session"
 )
