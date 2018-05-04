@@ -38,6 +38,7 @@ func DefineRoutes() http.Handler {
 
 	// requires authentication
 	handleAuthenticated(mux, paths.Home, handlers.HandleHomeRequest)
+	handleAuthenticated(mux, paths.Notes, handlers.HandleNotesRequest)
 
 	return mux
 }

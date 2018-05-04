@@ -5,6 +5,7 @@ package paths
 
 const (
 	Home          = "/home"
+	Notes         = "/notes"
 	LoginOrSignup = "/login-or-signup"
 	User          = "/user"
 	Session       = "/session"

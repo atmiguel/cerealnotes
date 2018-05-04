@@ -249,6 +249,26 @@ func HandleHomeRequest(
 	}
 }
 
+func HandleNotesRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodGet:
+		parsedTemplate, err := template.ParseFiles(baseTemplateFile, "templates/notes.tmpl")
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		parsedTemplate.ExecuteTemplate(responseWriter, baseTemplateName, userId)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+	}
+}
+
 // PRIVATE
 
 func respondWithMethodNotAllowed(
