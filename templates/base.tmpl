@@ -10,19 +10,19 @@
                 name="viewport"
                 content="width=device-width, initial-scale=1" />
 
-            <title>CerealNotes | {{ block "title" . }} {{end}}</title>
+            <title>CerealNotes | {{ block "title" . }} {{ end }}</title>
 
             <!-- CSS -->
             <link href="//cdn.muicss.com/mui-0.9.36/css/mui.min.css" rel="stylesheet" type="text/css" />
-            {{block "css" .}} {{end}}
+            {{ block "css" . }} {{ end }}
 
             <!-- Javascript -->
             <script src="//cdn.muicss.com/mui-0.9.36/js/mui.min.js"></script>
             <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-            {{block "js" .}} {{end}}
+            {{ block "js" . }} {{ end }}
         </head>
         <body>
-            {{template "content" .}}
+            {{ template "content" . }}
         </body>
     </html>
 {{ end }}
