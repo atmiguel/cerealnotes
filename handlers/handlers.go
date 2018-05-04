@@ -46,7 +46,7 @@ func HandleLoginOrSignupRequest(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.Home,
+				paths.HomePage,
 				http.StatusTemporaryRedirect)
 			return
 		}
@@ -202,7 +202,7 @@ func AuthenticateOrRedirectToLogin(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.LoginOrSignup,
+				paths.LoginOrSignupPage,
 				http.StatusTemporaryRedirect)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)

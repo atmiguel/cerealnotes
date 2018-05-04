@@ -4,9 +4,9 @@ Package paths stores all the url path constants.
 package paths
 
 const (
-	Home          = "/home"
-	Notes         = "/notes"
-	LoginOrSignup = "/login-or-signup"
-	User          = "/user"
-	Session       = "/session"
+	HomePage          = "/home"
+	NotesPage         = "/notes"
+	LoginOrSignupPage = "/login-or-signup"
+	User              = "/user"
+	Session           = "/session"
 )
