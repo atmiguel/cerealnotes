@@ -29,16 +29,15 @@ func DefineRoutes() http.Handler {
 	mux.HandleFunc("/", handlers.RedirectToPathHandler(paths.HomePage))
 	mux.HandleFunc("/favicon.ico", handlers.RedirectToPathHandler("/static/favicon.ico"))
 
-	// templates
-	mux.HandleFunc(paths.LoginOrSignupPage, handlers.HandleLoginOrSignupRequest)
+	// pages
+	mux.HandleFunc(paths.LoginOrSignupPage, handlers.HandleLoginOrSignupPageRequest)
 
-	// forms
+	handleAuthenticated(mux, paths.HomePage, handlers.HandleHomePageRequest)
+	handleAuthenticated(mux, paths.NotesPage, handlers.HandleNotesPageRequest)
+
+	// ajax
 	mux.HandleFunc(paths.User, handlers.HandleUserRequest)
 	mux.HandleFunc(paths.Session, handlers.HandleSessionRequest)
-
-	// requires authentication
-	handleAuthenticated(mux, paths.HomePage, handlers.HandleHomeRequest)
-	handleAuthenticated(mux, paths.NotesPage, handlers.HandleNotesRequest)
 
 	return mux
 }

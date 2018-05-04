@@ -34,9 +34,9 @@ func SetTokenSigningKey(key []byte) {
 
 // UNAUTHENTICATED HANDLERS
 
-// HandleLoginOrSignupRequest responds to unauthenticated GET requests with the login or signup page.
+// HandleLoginOrSignupPageRequest responds to unauthenticated GET requests with the login or signup page.
 // For authenticated requests, it redirects to the home page.
-func HandleLoginOrSignupRequest(
+func HandleLoginOrSignupPageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -230,7 +230,7 @@ func RedirectToPathHandler(
 
 // AUTHENTICATED HANDLERS
 
-func HandleHomeRequest(
+func HandleHomePageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -249,7 +249,7 @@ func HandleHomeRequest(
 	}
 }
 
-func HandleNotesRequest(
+func HandleNotesPageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,

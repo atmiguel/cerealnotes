@@ -7,6 +7,6 @@ const (
 	HomePage          = "/home"
 	NotesPage         = "/notes"
 	LoginOrSignupPage = "/login-or-signup"
-	User              = "/user"
+	User              = "/api/user"
 	Session           = "/session"
 )
