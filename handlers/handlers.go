@@ -256,7 +256,7 @@ func respondWithMethodNotAllowed(
 	allowedMethods ...string,
 ) {
 	if allowedMethods == nil {
-		return
+		panic("This should never happen")
 	}
 
 	allowedMethodsString := strings.Join(allowedMethods, ", ")

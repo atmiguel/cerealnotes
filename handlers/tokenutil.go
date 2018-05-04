@@ -12,6 +12,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+var InvalidJWTokenError = errors.New("Token was invalid or unreadable")
+
 func parseTokenFromString(tokenAsString string) (*jwt.Token, error) {
 	return jwt.ParseWithClaims(
 		strings.TrimSpace(tokenAsString),
@@ -52,7 +54,7 @@ func getUserIdFromJwtToken(request *http.Request) (models.UserId, error) {
 		return claims.UserId, nil
 	}
 
-	return 0, errors.New("Token was invalid or unreadable")
+	return 0, InvalidJWTokenError
 }
 
 func tokenTest1() {
