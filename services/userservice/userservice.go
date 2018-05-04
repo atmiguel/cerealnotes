@@ -70,7 +70,7 @@ func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password str
 func GetIdForUserWithEmailAddress(emailAddress *models.EmailAddress) (models.UserId, error) {
 	userIdAsInt, err := databaseutil.GetIdForUserWithEmailAddress(emailAddress.String())
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	return models.UserId(userIdAsInt), nil

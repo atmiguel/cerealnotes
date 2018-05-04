@@ -89,7 +89,7 @@ func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 
 	var userId int64
 	if err := row.Scan(&userId); err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	return userId, nil

@@ -60,7 +60,7 @@ func HandleLoginOrSignupRequest(
 		parsedTemplate.ExecuteTemplate(responseWriter, baseTemplateName, nil)
 
 	default:
-		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 	}
 }
 
@@ -102,7 +102,7 @@ func HandleUserRequest(
 		responseWriter.WriteHeader(statusCode)
 
 	default:
-		respondWithMethodNotAllowed(responseWriter, []string{http.MethodPost})
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
 	}
 }
 
@@ -183,7 +183,8 @@ func HandleSessionRequest(
 	default:
 		respondWithMethodNotAllowed(
 			responseWriter,
-			[]string{http.MethodPost, http.MethodDelete})
+			http.MethodPost,
+			http.MethodDelete)
 	}
 }
 
@@ -222,9 +223,7 @@ func RedirectToPathHandler(
 				http.StatusTemporaryRedirect)
 			return
 		default:
-			respondWithMethodNotAllowed(
-				responseWriter,
-				[]string{http.MethodGet})
+			respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 		}
 	}
 }
@@ -246,7 +245,7 @@ func HandleHomeRequest(
 
 		parsedTemplate.ExecuteTemplate(responseWriter, baseTemplateName, userId)
 	default:
-		respondWithMethodNotAllowed(responseWriter, []string{http.MethodGet})
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 	}
 }
 
@@ -254,8 +253,12 @@ func HandleHomeRequest(
 
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
-	allowedMethods []string,
+	allowedMethods ...string,
 ) {
+	if allowedMethods == nil {
+		panic("This should never happen")
+	}
+
 	allowedMethodsString := strings.Join(allowedMethods, ", ")
 	responseWriter.Header().Set("Allow", allowedMethodsString)
 
