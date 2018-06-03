@@ -216,15 +216,25 @@ func HandleNoteApiRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		note := models.Note{
+		note1 := &models.Note{
 			AuthorId:      1,
 			Type:          models.MARGINALIA,
 			Content:       "This is an example note.",
 			PublicationId: 1,
-			CreationTime:  time.Now(),
+			CreationTime:  time.Now().Add(-oneWeek).UTC(),
 		}
 
-		noteInJson, err := json.Marshal(note)
+		note2 := &models.Note{
+			AuthorId:      2,
+			Type:          models.QUESTIONS,
+			Content:       "What is this site for?",
+			PublicationId: 1,
+			CreationTime:  time.Now().Add(-60 * 12).UTC(),
+		}
+
+		notes := [2]*models.Note{note1, note2}
+
+		notesInJson, err := json.Marshal(notes)
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -232,7 +242,8 @@ func HandleNoteApiRequest(
 
 		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)
-		fmt.Fprint(responseWriter, string(noteInJson))
+
+		fmt.Fprint(responseWriter, string(notesInJson))
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
