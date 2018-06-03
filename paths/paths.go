@@ -4,9 +4,11 @@ Package paths stores all the url path constants.
 package paths
 
 const (
+	LoginOrSignupPage = "/login-or-signup"
 	HomePage          = "/home"
 	NotesPage         = "/notes"
-	LoginOrSignupPage = "/login-or-signup"
-	User              = "/api/user"
-	Session           = "/api/session"
+
+	UserApi    = "/api/user"
+	SessionApi = "/api/session"
+	NoteApi    = "/api/note"
 )

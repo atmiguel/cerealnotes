@@ -64,7 +64,7 @@ func HandleLoginOrSignupPageRequest(
 	}
 }
 
-func HandleUserRequest(
+func HandleUserApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -75,6 +75,25 @@ func HandleUserRequest(
 	}
 
 	switch request.Method {
+	case http.MethodGet:
+		user1 := models.User{"Adrian"}
+		user2 := models.User{"Evan"}
+
+		usersById := map[models.UserId]models.User{
+			1: user1,
+			2: user2,
+		}
+
+		usersByIdJson, err := json.Marshal(usersById)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+		fmt.Fprint(responseWriter, string(usersByIdJson))
+
 	case http.MethodPost:
 		signupForm := new(SignupForm)
 
@@ -102,13 +121,13 @@ func HandleUserRequest(
 		responseWriter.WriteHeader(statusCode)
 
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
 	}
 }
 
-// HandleSessionRequest responds to POST requests by authenticating and responding with a JWT.
+// HandleSessionApiRequest responds to POST requests by authenticating and responding with a JWT.
 // It responds to DELETE requests by expiring the client's cookie.
-func HandleSessionRequest(
+func HandleSessionApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -167,7 +186,7 @@ func HandleSessionRequest(
 		}
 
 		responseWriter.WriteHeader(http.StatusCreated)
-		fmt.Fprint(responseWriter, "passward email combo was correct")
+		fmt.Fprint(responseWriter, "password email combo was correct")
 
 	case http.MethodDelete:
 		// Cookie will overwrite existing cookie then delete itself
@@ -181,12 +200,42 @@ func HandleSessionRequest(
 
 		http.SetCookie(responseWriter, &cookie)
 		responseWriter.WriteHeader(http.StatusOK)
-		responseWriter.Write([]byte(fmt.Sprint("user succefully logged out")))
+		fmt.Fprint(responseWriter, "user successfully logged out")
+
 	default:
 		respondWithMethodNotAllowed(
 			responseWriter,
 			http.MethodPost,
 			http.MethodDelete)
+	}
+}
+
+func HandleNoteApiRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
+	switch request.Method {
+	case http.MethodGet:
+		note := models.Note{
+			AuthorId:      1,
+			Type:          models.MARGINALIA,
+			Content:       "This is an example note.",
+			PublicationId: 1,
+			CreationTime:  time.Now(),
+		}
+
+		noteInJson, err := json.Marshal(note)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+		fmt.Fprint(responseWriter, string(noteInJson))
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 	}
 }
 
