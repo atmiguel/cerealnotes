@@ -16,19 +16,19 @@ const (
 	PREDICTIONS
 )
 
-func (noteType NoteType) String() string {
-	types := [...]string{
-		"Marginalia",
-		"Meta",
-		"Questions",
-		"Predictions",
-	}
+const noteTypeStrings = [...]string{
+	"Marginalia",
+	"Meta",
+	"Questions",
+	"Predictions",
+}
 
+func (noteType NoteType) String() string {
 	if noteType < MARGINALIA || noteType > PREDICTIONS {
 		return "Unknown"
 	}
 
-	return types[noteType]
+	return noteTypeStrings[noteType]
 }
 
 type Note struct {
