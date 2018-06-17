@@ -186,7 +186,6 @@ func HandleSessionApiRequest(
 		}
 
 		responseWriter.WriteHeader(http.StatusCreated)
-		fmt.Fprint(responseWriter, "password email combo was correct")
 
 	case http.MethodDelete:
 		// Cookie will overwrite existing cookie then delete itself
