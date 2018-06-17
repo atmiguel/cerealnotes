@@ -1,7 +1,7 @@
 $(function() {
     $("#logout-button").click(() => {
         $.ajax({
-            url: '/session',
+            url: '/api/session',
             type: 'DELETE',
             success: function() {
                 alert("you've been successfully logged out");

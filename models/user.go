@@ -4,6 +4,10 @@ import "strings"
 
 type UserId int64
 
+type User struct {
+	DisplayName string `json:"displayName"`
+}
+
 // EmailAddress ensures that email addresses are always formatted properly within the backend.
 type EmailAddress struct {
 	emailAddressAsString string

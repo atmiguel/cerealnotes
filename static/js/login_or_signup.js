@@ -132,7 +132,7 @@ $(function() {
     };
 
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
-        $.post('/user', formDataAsJsonString, (responseBody, _, request) => {
+        $.post('/api/user', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
                 mui.tabs.activate('login-form');
                 alert('Successfully created user, please sign in');
@@ -149,7 +149,7 @@ $(function() {
     });
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
-        $.post('/session', formDataAsJsonString, (responseBody, _, request) => {
+        $.post('/api/session', formDataAsJsonString, (responseBody, _, request) => {
             if (request.status === 201) {
                 location.reload();
             } else {

@@ -34,9 +34,9 @@ func SetTokenSigningKey(key []byte) {
 
 // UNAUTHENTICATED HANDLERS
 
-// HandleLoginOrSignupRequest responds to unauthenticated GET requests with the login or signup page.
+// HandleLoginOrSignupPageRequest responds to unauthenticated GET requests with the login or signup page.
 // For authenticated requests, it redirects to the home page.
-func HandleLoginOrSignupRequest(
+func HandleLoginOrSignupPageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -46,7 +46,7 @@ func HandleLoginOrSignupRequest(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.Home,
+				paths.HomePage,
 				http.StatusTemporaryRedirect)
 			return
 		}
@@ -64,7 +64,7 @@ func HandleLoginOrSignupRequest(
 	}
 }
 
-func HandleUserRequest(
+func HandleUserApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -75,6 +75,25 @@ func HandleUserRequest(
 	}
 
 	switch request.Method {
+	case http.MethodGet:
+		user1 := models.User{"Adrian"}
+		user2 := models.User{"Evan"}
+
+		usersById := map[models.UserId]models.User{
+			1: user1,
+			2: user2,
+		}
+
+		usersByIdJson, err := json.Marshal(usersById)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+		fmt.Fprint(responseWriter, string(usersByIdJson))
+
 	case http.MethodPost:
 		signupForm := new(SignupForm)
 
@@ -102,13 +121,13 @@ func HandleUserRequest(
 		responseWriter.WriteHeader(statusCode)
 
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
 	}
 }
 
-// HandleSessionRequest responds to POST requests by authenticating and responding with a JWT.
+// HandleSessionApiRequest responds to POST requests by authenticating and responding with a JWT.
 // It responds to DELETE requests by expiring the client's cookie.
-func HandleSessionRequest(
+func HandleSessionApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -158,6 +177,7 @@ func HandleSessionRequest(
 			cookie := http.Cookie{
 				Name:     cerealNotesCookieName,
 				Value:    token,
+				Path:     "/",
 				Expires:  expirationTime,
 				HttpOnly: true,
 			}
@@ -166,25 +186,66 @@ func HandleSessionRequest(
 		}
 
 		responseWriter.WriteHeader(http.StatusCreated)
-		fmt.Fprint(responseWriter, "passward email combo was correct")
 
 	case http.MethodDelete:
 		// Cookie will overwrite existing cookie then delete itself
 		cookie := http.Cookie{
 			Name:     cerealNotesCookieName,
 			Value:    "",
+			Path:     "/",
 			HttpOnly: true,
 			MaxAge:   -1,
 		}
 
 		http.SetCookie(responseWriter, &cookie)
 		responseWriter.WriteHeader(http.StatusOK)
-		responseWriter.Write([]byte(fmt.Sprint("user succefully logged out")))
+		fmt.Fprint(responseWriter, "user successfully logged out")
+
 	default:
 		respondWithMethodNotAllowed(
 			responseWriter,
 			http.MethodPost,
 			http.MethodDelete)
+	}
+}
+
+func HandleNoteApiRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
+	switch request.Method {
+	case http.MethodGet:
+		note1 := &models.Note{
+			AuthorId:      1,
+			Type:          models.MARGINALIA,
+			Content:       "This is an example note.",
+			PublicationId: 1,
+			CreationTime:  time.Now().Add(-oneWeek).UTC(),
+		}
+
+		note2 := &models.Note{
+			AuthorId:      2,
+			Type:          models.QUESTIONS,
+			Content:       "What is this site for?",
+			PublicationId: 1,
+			CreationTime:  time.Now().Add(-60 * 12).UTC(),
+		}
+
+		notes := [2]*models.Note{note1, note2}
+
+		notesInJson, err := json.Marshal(notes)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+
+		fmt.Fprint(responseWriter, string(notesInJson))
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 	}
 }
 
@@ -202,7 +263,7 @@ func AuthenticateOrRedirectToLogin(
 			http.Redirect(
 				responseWriter,
 				request,
-				paths.LoginOrSignup,
+				paths.LoginOrSignupPage,
 				http.StatusTemporaryRedirect)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
@@ -230,7 +291,7 @@ func RedirectToPathHandler(
 
 // AUTHENTICATED HANDLERS
 
-func HandleHomeRequest(
+func HandleHomePageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -244,6 +305,26 @@ func HandleHomeRequest(
 		}
 
 		parsedTemplate.ExecuteTemplate(responseWriter, baseTemplateName, userId)
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+	}
+}
+
+func HandleNotesPageRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodGet:
+		parsedTemplate, err := template.ParseFiles(baseTemplateFile, "templates/notes.tmpl")
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		parsedTemplate.ExecuteTemplate(responseWriter, baseTemplateName, userId)
+
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 	}
