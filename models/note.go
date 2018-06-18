@@ -16,7 +16,7 @@ const (
 	PREDICTIONS
 )
 
-const noteTypeStrings = [...]string{
+var noteTypeStrings = [...]string{
 	"Marginalia",
 	"Meta",
 	"Questions",
