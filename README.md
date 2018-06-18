@@ -19,7 +19,7 @@
 Assuming your local environment is setup correctly with Golang standards, you can start your local server with the following commands
 
 1. `cd to this repo`
-2. `heroku run local`
+2. `go install && heroku local`
 3. Visit `localhost:8080/login-or-signup`
 
 # Run DB migrations
