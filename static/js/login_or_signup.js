@@ -157,7 +157,7 @@ $(function() {
             }
         }, 'text').fail((request) => {
             if (request.status === 401) {
-                alert('Password was not correct');
+                alert('Email address and/or password was incorrect');
             } else {
                 alert('Unknown error');
             }
