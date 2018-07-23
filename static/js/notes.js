@@ -21,12 +21,16 @@ const $createButtonWithText = function(text) {
     return $('<button>').addClass('mui-btn').text(text);
 };
 
-const setButtonToPrimary = function($button) {
+const activateButton = function($button) {
     $button.addClass(classNamesByName.primaryButton);
 };
 
-const setButtonToNormal = function($button) {
+const deactivateButton = function($button) {
     $button.removeClass(classNamesByName.primaryButton);
+};
+
+const isButtonActive = function($button) {
+    return $button.hasClass(classNamesByName.primaryButton);
 };
 
 const $createHalfRowDivWithElement = function($element) {
@@ -46,6 +50,15 @@ const $createRowWithTwoElements = function($element1, $element2) {
 
 const $createGridContainer = function() {
     return $('<div>').addClass('mui-container-fluid');
+};
+
+const $createTextarea = function(labelText) {
+    const $textarea = $('<textarea>').prop('required', true).prop('rows', 4);
+    const $label = $('<label>').text(labelText);
+
+    return $('<div>').addClass('mui-textfield')
+        .append($textarea)
+        .append($label);
 };
 
 // NOTES
@@ -95,10 +108,13 @@ const $createAddNoteModal = function() {
         return $createButtonWithText(noteType).addClass(classNamesByName.noteTypeButton);
     });
 
+    const $textarea = $createTextarea('Note').addClass('note-content');
+
     return $modal
         .append($createGridContainer()
             .append($createRowWithTwoElements($buttons[0], $buttons[1]))
-            .append($createRowWithTwoElements($buttons[2], $buttons[3])));
+            .append($createRowWithTwoElements($buttons[2], $buttons[3])))
+        .append($textarea);
 };
 
 const activateModal = function($modal) {
@@ -129,14 +145,18 @@ $(function() {
     $(document).on('click', classesByName.noteTypeButton, function() {
         const $clickedButton = $(this);
 
-        $(classesByName.noteTypeButton).each(function() {
-            const $button = $(this);
+        if (isButtonActive($clickedButton)) {
+            deactivateButton($clickedButton);
+        } else {
+            $(classesByName.noteTypeButton).each(function() {
+                const $button = $(this);
 
-            if ($button.is($clickedButton)) {
-                setButtonToPrimary($button);
-            } else {
-                setButtonToNormal($button);
-            }
-        });
+                if ($button.is($clickedButton)) {
+                    activateButton($button);
+                } else {
+                    deactivateButton($button);
+                }
+            });
+        }
     });
 });

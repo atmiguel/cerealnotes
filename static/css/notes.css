@@ -19,3 +19,8 @@
 .note-type-button {
     width: 100%;
 }
+
+.note-content {
+    width: 90%;
+    margin: auto;
+}
