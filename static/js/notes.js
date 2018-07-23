@@ -1,5 +1,54 @@
 var USERS_BY_ID = {};
 
+const NOTE_TYPES = [
+    'Marginalia',
+    'Meta',
+    'Prediction',
+    'Question',
+];
+
+const classNamesByName = {
+    noteTypeButton: 'note-type-button',
+    primaryButton: 'mui-btn--primary',
+};
+
+const classesByName = {
+    noteTypeButton: '.' + classNamesByName.noteTypeButton,
+};
+
+// CREATE ELEMENTS
+const $createButtonWithText = function(text) {
+    return $('<button>').addClass('mui-btn').text(text);
+};
+
+const setButtonToPrimary = function($button) {
+    $button.addClass(classNamesByName.primaryButton);
+};
+
+const setButtonToNormal = function($button) {
+    $button.removeClass(classNamesByName.primaryButton);
+};
+
+const $createHalfRowDivWithElement = function($element) {
+    return $('<div>').addClass('mui-col-xs-6').append($element);
+};
+
+const $createRowWithTwoElements = function($element1, $element2) {
+    const $row = $('<div>').addClass('mui-row');
+
+    const $column1 = $createHalfRowDivWithElement($element1);
+    const $column2 = $createHalfRowDivWithElement($element2);
+
+    return $row
+        .append($column1)
+        .append($column2);
+};
+
+const $createGridContainer = function() {
+    return $('<div>').addClass('mui-container-fluid');
+};
+
+// NOTES
 const $createAuthor = function(authorId) {
     const user = USERS_BY_ID[authorId];
 
@@ -38,41 +87,12 @@ const $createNote = function(note) {
         .append($content);
 };
 
-const $createButtonWithText = function(text) {
-    return $('<button>').addClass('mui-btn').text(text);
-};
-
-const $createHalfRowDivWithElement = function($element) {
-    return $('<div>').addClass('mui-col-xs-6').append($element);
-}
-
-const $createRowWithTwoElements = function($element1, $element2) {
-    const $row = $('<div>').addClass('mui-row');
-
-    const $column1 = $createHalfRowDivWithElement($element1);
-    const $column2 = $createHalfRowDivWithElement($element2);
-
-    return $row
-        .append($column1)
-        .append($column2);
-};
-
-const $createGridContainer = function() {
-    return $('<div>').addClass('mui-container-fluid');
-};
-
+// ADD NOTE
 const $createAddNoteModal = function() {
     const $modal = $('<div>').addClass('modal');
 
-    const noteTypes = [
-        'Marginalia',
-        'Meta',
-        'Prediction',
-        'Question',
-    ];
-
-    const $buttons = noteTypes.map(noteType => {
-        return $createButtonWithText(noteType).addClass('note-type-button');
+    const $buttons = NOTE_TYPES.map(noteType => {
+        return $createButtonWithText(noteType).addClass(classNamesByName.noteTypeButton);
     });
 
     return $modal
@@ -83,7 +103,7 @@ const $createAddNoteModal = function() {
 
 const activateModal = function($modal) {
     mui.overlay('on', $modal.get(0));
-}
+};
 
 $(function() {
     const $addNoteModal = $createAddNoteModal();
@@ -104,5 +124,19 @@ $(function() {
 
     $('#add-note-button').click(function() {
         activateModal($addNoteModal);
+    });
+
+    $(document).on('click', classesByName.noteTypeButton, function() {
+        const $clickedButton = $(this);
+
+        $(classesByName.noteTypeButton).each(function() {
+            const $button = $(this);
+
+            if ($button.is($clickedButton)) {
+                setButtonToPrimary($button);
+            } else {
+                setButtonToNormal($button);
+            }
+        });
     });
 });
