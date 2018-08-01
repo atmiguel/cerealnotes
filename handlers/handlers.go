@@ -169,8 +169,7 @@ func HandleSessionApiRequest(
 
 		// Set our cookie to have a valid JWT Token as the value
 		{
-			userId, err := userservice.GetIdForUserWithEmailAddress(
-				models.NewEmailAddress(loginForm.EmailAddress))
+			userId, err := userservice.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
@@ -345,15 +344,14 @@ func HandleNotesPageRequest(
 
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
-	allowedMethods ...string,
+	allowedMethod string,
+	otherAllowedMethods ...string,
 ) {
-	if allowedMethods == nil {
-		panic("This should never happen")
-	}
-
+	allowedMethods := append([]string{allowedMethod}, otherAllowedMethods...)
 	allowedMethodsString := strings.Join(allowedMethods, ", ")
-	responseWriter.Header().Set("Allow", allowedMethodsString)
 
+	responseWriter.Header().Set("Allow", allowedMethodsString)
 	statusCode := http.StatusMethodNotAllowed
+
 	http.Error(responseWriter, http.StatusText(statusCode), statusCode)
 }
