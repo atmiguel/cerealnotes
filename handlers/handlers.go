@@ -263,12 +263,14 @@ func HandleNoteApiRequest(
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		note := models.CreateNewNote(userId, noteForm.Content, models.DecodeNoteType(noteForm.NoteType))
-		// fmt.Fprint(responseWriter, string(note.Content) + " waat " + string(note.Type))
-
-
 		var statusCode int
+
+		if len(strings.TrimSpace(noteForm.Content)) == 0 {
+			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
+			return
+		}
+		note := models.CreateNewNote(userId, noteForm.Content, models.DecodeNoteType(noteForm.NoteType))
+
 		if err := userservice.StoreNewNote(note); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
