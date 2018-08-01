@@ -64,35 +64,6 @@ func HandleLoginOrSignupPageRequest(
 	}
 }
 
-func HandleUsersApiRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-	userId models.UserId,
-) {
-	switch request.Method {
-	case http.MethodGet:
-		user1 := models.User{"Adrian"}
-		user2 := models.User{"Evan"}
-
-		usersById := map[models.UserId]models.User{
-			1: user1,
-			2: user2,
-		}
-
-		usersByIdJson, err := json.Marshal(usersById)
-		if err != nil {
-			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		responseWriter.Header().Set("Content-Type", "application/json")
-		responseWriter.WriteHeader(http.StatusOK)
-		fmt.Fprint(responseWriter, string(usersByIdJson))
-	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
-	}
-}
-
 func HandleUserApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -130,8 +101,34 @@ func HandleUserApiRequest(
 
 		responseWriter.WriteHeader(statusCode)
 
+	case http.MethodGet:
+
+		if _, err := getUserIdFromJwtToken(request); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
+		}
+
+		user1 := models.User{"Adrian"}
+		user2 := models.User{"Evan"}
+
+		usersById := map[models.UserId]models.User{
+			1: user1,
+			2: user2,
+		}
+
+		usersByIdJson, err := json.Marshal(usersById)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+		fmt.Fprint(responseWriter, string(usersByIdJson))
+
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost, http.MethodGet)
 	}
 }
 
@@ -218,7 +215,7 @@ func HandleSessionApiRequest(
 	}
 }
 
-func HandleNotesApiRequest(
+func HandleNoteApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
