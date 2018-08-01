@@ -15,5 +15,28 @@
         </h1>
 
         <div id="notes"></div>
+        <hr />
+        <div id="new-note"> 
+        	<h3> New Note </h3>
+			<div class="mui-form">
+				<form>
+        			<h4> New Note </h4>
+					<input type="radio" name="note_type" value="not_categorized" checked="checked"> Undecided<br>
+                    <input type="radio" name="note_type" value="predictions"> Predictions<br>
+					<input type="radio" name="note_type" value="marginalia">Marginalia<br>
+    				<input type="radio" name="note_type" value="meta">Meta<br>
+    				<input type="radio" name="note_type" value="questions">Qustions<br>
+                </form>
+                <br />
+                 <div class="mui-textfield mui-textfield--float-label">
+                    <textarea> </textarea>
+                    <label>Content</label>
+                    <span class="mui--text-accent-secondary"></span>
+                </div>
+                <button type="button" class="mui-btn mui-btn--primary">
+                	Save Note
+				</button>
+             </div>
+        </div>
     </div>
 {{ end }}
