@@ -260,6 +260,44 @@ func HandleNotesApiRequest(
 	}
 }
 
+func HandleNoteApiRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodPost:
+		type NoteForm struct {
+			Content  string `json:"content"`
+			NoteType string `json:"noteType"`
+		}
+
+		noteForm := new(NoteForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		note := models.CreateNewNote(userId, noteForm.Content, models.DecodeNoteType(noteForm.NoteType))
+		// fmt.Fprint(responseWriter, string(note.Content) + " waat " + string(note.Type))
+
+
+		var statusCode int
+		if err := userservice.StoreNewNote(note); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		} else {
+			statusCode = http.StatusCreated
+		}
+
+		responseWriter.WriteHeader(statusCode)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+	}
+}
+
 type AuthentictedRequestHandlerType func(
 	http.ResponseWriter,
 	*http.Request,

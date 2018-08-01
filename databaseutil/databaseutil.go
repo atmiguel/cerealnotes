@@ -8,6 +8,7 @@ package databaseutil
 import (
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -47,6 +48,41 @@ func InsertIntoUsersTable(
 		VALUES ($1, $2, $3, $4)`
 
 	rows, err := db.Query(sqlQuery, displayName, emailAddress, password, creationTime)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+}
+
+
+func InsertIntoNoteTable(
+	userId int64,
+	noteType string,
+	content string,
+	publicationId int64,
+	creationTime time.Time,
+) error {
+
+	sqlQuery := `
+		INSERT INTO notes (author_id, type, content, publication_id, creation_time)
+		VALUES ($1, $2, $3, $4, $5)`
+
+
+	var cleanPublicationId sql.NullInt64
+
+	if publicationId < 1 {
+		cleanPublicationId = sql.NullInt64{Int64:0, Valid:false}
+	} else {
+		cleanPublicationId = sql.NullInt64{Int64:publicationId, Valid:true}
+	}
+
+	rows, err := db.Query(sqlQuery, userId, strings.ToLower(noteType), content, cleanPublicationId, creationTime)
 	if err != nil {
 		return convertPostgresError(err)
 	}

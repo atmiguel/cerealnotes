@@ -11,5 +11,6 @@ const (
 	UserApi    = "/api/user"
 	UsersApi    = "/api/users"
 	SessionApi = "/api/session"
+	NoteApi    = "/api/note"
 	NotesApi    = "/api/notes"
 )
