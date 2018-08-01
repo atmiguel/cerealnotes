@@ -39,10 +39,10 @@ const $createNote = function(note) {
 };
 
 $(function() {
-    $.get('/api/user', function(usersById) {
+    $.get('/api/users', function(usersById) {
         USERS_BY_ID = usersById;
 
-        $.get('/api/note', function(notes) {
+        $.get('/api/notes', function(notes) {
             const $notes = $('#notes');
 
             notes.forEach((note) => {

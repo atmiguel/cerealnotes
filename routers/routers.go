@@ -36,9 +36,12 @@ func DefineRoutes() http.Handler {
 	handleAuthenticated(mux, paths.NotesPage, handlers.HandleNotesPageRequest)
 
 	// api
+
 	mux.HandleFunc(paths.UserApi, handlers.HandleUserApiRequest)
 	mux.HandleFunc(paths.SessionApi, handlers.HandleSessionApiRequest)
-	mux.HandleFunc(paths.NoteApi, handlers.HandleNoteApiRequest)
+
+	handleAuthenticated(mux, paths.NotesApi, handlers.HandleNotesApiRequest)
+	handleAuthenticated(mux, paths.UsersApi, handlers.HandleUsersApiRequest)
 
 	return mux
 }

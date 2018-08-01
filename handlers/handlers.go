@@ -64,16 +64,11 @@ func HandleLoginOrSignupPageRequest(
 	}
 }
 
-func HandleUserApiRequest(
+func HandleUsersApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
+	userId models.UserId,
 ) {
-	type SignupForm struct {
-		DisplayName  string `json:"displayName"`
-		EmailAddress string `json:"emailAddress"`
-		Password     string `json:"password"`
-	}
-
 	switch request.Method {
 	case http.MethodGet:
 		user1 := models.User{"Adrian"}
@@ -93,7 +88,22 @@ func HandleUserApiRequest(
 		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)
 		fmt.Fprint(responseWriter, string(usersByIdJson))
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+	}
+}
 
+func HandleUserApiRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
+	type SignupForm struct {
+		DisplayName  string `json:"displayName"`
+		EmailAddress string `json:"emailAddress"`
+		Password     string `json:"password"`
+	}
+
+	switch request.Method {
 	case http.MethodPost:
 		signupForm := new(SignupForm)
 
@@ -121,7 +131,7 @@ func HandleUserApiRequest(
 		responseWriter.WriteHeader(statusCode)
 
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
 	}
 }
 
@@ -209,9 +219,10 @@ func HandleSessionApiRequest(
 	}
 }
 
-func HandleNoteApiRequest(
+func HandleNotesApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
+	userId models.UserId,
 ) {
 	switch request.Method {
 	case http.MethodGet:
