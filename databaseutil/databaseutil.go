@@ -43,7 +43,7 @@ func ConnectToDatabase(databaseUrl string) error {
 	return nil
 }
 
-func InsertIntoUsersTable(
+func InsertIntoUserTable(
 	displayName string,
 	emailAddress string,
 	password []byte,
@@ -81,6 +81,7 @@ func InsertIntoNoteTable(
 
 
 	var cleanPublicationId sql.NullInt64
+	var cleanNoteType sql.NullString
 
 	if publicationId < 1 {
 		cleanPublicationId = sql.NullInt64{Int64:0, Valid:false}
@@ -88,7 +89,13 @@ func InsertIntoNoteTable(
 		cleanPublicationId = sql.NullInt64{Int64:publicationId, Valid:true}
 	}
 
-	rows, err := db.Query(sqlQuery, userId, strings.ToLower(noteType), content, cleanPublicationId, creationTime)
+	if len(noteType) == 0 {
+		cleanNoteType = sql.NullString{String:"", Valid:false}
+	} else {
+		cleanNoteType = sql.NullString{String: strings.ToLower(noteType), Valid:true}
+	}
+
+	rows, err := db.Query(sqlQuery, userId, cleanNoteType, content, cleanPublicationId, creationTime)
 	if err != nil {
 		return convertPostgresError(err)
 	}

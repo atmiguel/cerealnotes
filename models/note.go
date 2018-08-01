@@ -35,7 +35,7 @@ func DecodeNoteType(input string) NoteType {
 
 func (noteType NoteType) String() string {
 	if noteType < MARGINALIA || noteType > PREDICTIONS {
-		return "Unknown"
+		return ""
 	}
 
 	return noteTypeStrings[noteType]
