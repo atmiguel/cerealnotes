@@ -61,9 +61,16 @@ func StoreNewNote(note *models.Note) error {
 }
 
 func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password string) error {
-	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(
-		emailAddress.String())
+	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(emailAddress.String())
 	if err != nil {
+		if err == databaseutil.QueryResultContainedMultipleRowsError {
+			return err // would normally throw a runtime here
+		}
+
+		if err == databaseutil.QueryResultContainedNoRowsError {
+			return CredentialsNotAuthorizedError
+		}
+
 		return err
 	}
 
@@ -84,6 +91,14 @@ func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password str
 func GetIdForUserWithEmailAddress(emailAddress *models.EmailAddress) (models.UserId, error) {
 	userIdAsInt, err := databaseutil.GetIdForUserWithEmailAddress(emailAddress.String())
 	if err != nil {
+		if err == databaseutil.QueryResultContainedMultipleRowsError {
+			return 0, err // would normally throw a runtime here
+		}
+
+		if err == databaseutil.QueryResultContainedNoRowsError {
+			return 0, err
+		}
+
 		return 0, err
 	}
 

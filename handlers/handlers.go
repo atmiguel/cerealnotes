@@ -64,35 +64,6 @@ func HandleLoginOrSignupPageRequest(
 	}
 }
 
-func HandleUsersApiRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-	userId models.UserId,
-) {
-	switch request.Method {
-	case http.MethodGet:
-		user1 := models.User{"Adrian"}
-		user2 := models.User{"Evan"}
-
-		usersById := map[models.UserId]models.User{
-			1: user1,
-			2: user2,
-		}
-
-		usersByIdJson, err := json.Marshal(usersById)
-		if err != nil {
-			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		responseWriter.Header().Set("Content-Type", "application/json")
-		responseWriter.WriteHeader(http.StatusOK)
-		fmt.Fprint(responseWriter, string(usersByIdJson))
-	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
-	}
-}
-
 func HandleUserApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -130,8 +101,34 @@ func HandleUserApiRequest(
 
 		responseWriter.WriteHeader(statusCode)
 
+	case http.MethodGet:
+
+		if _, err := getUserIdFromJwtToken(request); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
+		}
+
+		user1 := models.User{"Adrian"}
+		user2 := models.User{"Evan"}
+
+		usersById := map[models.UserId]models.User{
+			1: user1,
+			2: user2,
+		}
+
+		usersByIdJson, err := json.Marshal(usersById)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+		fmt.Fprint(responseWriter, string(usersByIdJson))
+
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost, http.MethodGet)
 	}
 }
 
@@ -169,8 +166,7 @@ func HandleSessionApiRequest(
 
 		// Set our cookie to have a valid JWT Token as the value
 		{
-			userId, err := userservice.GetIdForUserWithEmailAddress(
-				models.NewEmailAddress(loginForm.EmailAddress))
+			userId, err := userservice.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
@@ -219,7 +215,7 @@ func HandleSessionApiRequest(
 	}
 }
 
-func HandleNotesApiRequest(
+func HandleNoteApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -255,17 +251,6 @@ func HandleNotesApiRequest(
 
 		fmt.Fprint(responseWriter, string(notesInJson))
 
-	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
-	}
-}
-
-func HandleNoteApiRequest(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-	userId models.UserId,
-) {
-	switch request.Method {
 	case http.MethodPost:
 		type NoteForm struct {
 			Content  string `json:"content"`
@@ -293,8 +278,9 @@ func HandleNoteApiRequest(
 
 		responseWriter.WriteHeader(statusCode)
 
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
 	}
 }
 
@@ -383,15 +369,14 @@ func HandleNotesPageRequest(
 
 func respondWithMethodNotAllowed(
 	responseWriter http.ResponseWriter,
-	allowedMethods ...string,
+	allowedMethod string,
+	otherAllowedMethods ...string,
 ) {
-	if allowedMethods == nil {
-		panic("This should never happen")
-	}
-
+	allowedMethods := append([]string{allowedMethod}, otherAllowedMethods...)
 	allowedMethodsString := strings.Join(allowedMethods, ", ")
-	responseWriter.Header().Set("Allow", allowedMethodsString)
 
+	responseWriter.Header().Set("Allow", allowedMethodsString)
 	statusCode := http.StatusMethodNotAllowed
+
 	http.Error(responseWriter, http.StatusText(statusCode), statusCode)
 }

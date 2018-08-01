@@ -19,6 +19,12 @@ var db *sql.DB
 // UniqueConstraintError is returned when a uniqueness constraint is violated during an insert.
 var UniqueConstraintError = errors.New("postgres: unique constraint violation")
 
+// QueryResultContainedMultipleRowsError is returned when a query unexpectedly returns more than one row.
+var QueryResultContainedMultipleRowsError = errors.New("query result unexpectedly contained multiple rows")
+
+// QueryResultContainedNoRowsError is returned when a query unexpectedly returns no rows.
+var QueryResultContainedNoRowsError = errors.New("query result unexpectedly contained no rows")
+
 // ConnectToDatabase also pings the database to ensure a working connection.
 func ConnectToDatabase(databaseUrl string) error {
 	{
@@ -96,36 +102,58 @@ func InsertIntoNoteTable(
 }
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
-	var row *sql.Row
-	{
-		sqlQuery := `
-			SELECT password FROM users
-			WHERE email_address = $1`
+	sqlQuery := `
+		SELECT password FROM users
+		WHERE email_address = $1`
 
-		row = db.QueryRow(sqlQuery, emailAddress)
+	rows, err := db.Query(sqlQuery, emailAddress)
+	if err != nil {
+		return nil, convertPostgresError(err)
 	}
+	defer rows.Close()
 
 	var password []byte
-	if err := row.Scan(&password); err != nil {
-		return nil, err
+	for rows.Next() {
+		if password != nil {
+			return nil, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&password); err != nil {
+			return nil, err
+		}
+	}
+
+	if password == nil {
+		return nil, QueryResultContainedNoRowsError
 	}
 
 	return password, nil
 }
 
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
-	var row *sql.Row
-	{
-		sqlQuery := `
-			SELECT id FROM users
-			WHERE email_address = $1`
+	sqlQuery := `
+		SELECT id FROM users
+		WHERE email_address = $1`
 
-		row = db.QueryRow(sqlQuery, emailAddress)
+	rows, err := db.Query(sqlQuery, emailAddress)
+	if err != nil {
+		return 0, convertPostgresError(err)
 	}
+	defer rows.Close()
 
 	var userId int64
-	if err := row.Scan(&userId); err != nil {
-		return 0, err
+	for rows.Next() {
+		if userId != 0 {
+			return 0, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&userId); err != nil {
+			return 0, err
+		}
+	}
+
+	if userId == 0 {
+		return 0, QueryResultContainedNoRowsError
 	}
 
 	return userId, nil
