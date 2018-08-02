@@ -66,7 +66,6 @@ func InsertIntoUserTable(
 	return nil
 }
 
-
 func InsertIntoNoteTable(
 	userId int64,
 	noteType string,
@@ -79,20 +78,19 @@ func InsertIntoNoteTable(
 		INSERT INTO notes (author_id, type, content, publication_id, creation_time)
 		VALUES ($1, $2, $3, $4, $5)`
 
-
 	var cleanPublicationId sql.NullInt64
 	var cleanNoteType sql.NullString
 
 	if publicationId < 1 {
-		cleanPublicationId = sql.NullInt64{Int64:0, Valid:false}
+		cleanPublicationId = sql.NullInt64{Int64: 0, Valid: false}
 	} else {
-		cleanPublicationId = sql.NullInt64{Int64:publicationId, Valid:true}
+		cleanPublicationId = sql.NullInt64{Int64: publicationId, Valid: true}
 	}
 
 	if len(noteType) == 0 {
-		cleanNoteType = sql.NullString{String:"", Valid:false}
+		cleanNoteType = sql.NullString{String: "", Valid: false}
 	} else {
-		cleanNoteType = sql.NullString{String: strings.ToLower(noteType), Valid:true}
+		cleanNoteType = sql.NullString{String: strings.ToLower(noteType), Valid: true}
 	}
 
 	rows, err := db.Query(sqlQuery, userId, cleanNoteType, content, cleanPublicationId, creationTime)

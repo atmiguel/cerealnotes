@@ -47,11 +47,11 @@ func StoreNewUser(
 }
 
 func StoreNewNote(note *models.Note) error {
-	if err:= databaseutil.InsertIntoNoteTable(
-		int64(note.AuthorId), 
-		note.Type.String(), 
-		note.Content, 
-		int64(note.PublicationId), 
+	if err := databaseutil.InsertIntoNoteTable(
+		int64(note.AuthorId),
+		note.Type.String(),
+		note.Content,
+		int64(note.PublicationId),
 		note.CreationTime,
 	); err != nil {
 		return err

@@ -2,8 +2,8 @@ package models
 
 import (
 	"encoding/json"
-	"time"
 	"strings"
+	"time"
 )
 
 type NoteId int64
@@ -27,10 +27,10 @@ var noteTypeStrings = [...]string{
 func DecodeNoteType(input string) NoteType {
 	for i := 0; i < len(noteTypeStrings); i++ {
 		if strings.ToLower(input) == strings.ToLower(noteTypeStrings[i]) {
-			return NoteType(i);
+			return NoteType(i)
 		}
 	}
-	return NoteType(-1);
+	return NoteType(-1)
 }
 
 func (noteType NoteType) String() string {
@@ -41,14 +41,11 @@ func (noteType NoteType) String() string {
 	return noteTypeStrings[noteType]
 }
 
-
-
-
 func CreateNewNote(userId UserId, content string, noteType NoteType) *Note {
-	note := new(Note);
-	note.AuthorId = userId;
-	note.Content = content;
-	note.Type = noteType;
+	note := new(Note)
+	note.AuthorId = userId
+	note.Content = content
+	note.Type = noteType
 	note.CreationTime = time.Now()
 	note.PublicationId = -1
 

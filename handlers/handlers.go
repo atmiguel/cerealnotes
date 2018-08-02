@@ -105,7 +105,7 @@ func HandleUserApiRequest(
 
 		if _, err := getUserIdFromJwtToken(request); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
-				return
+			return
 		}
 
 		user1 := models.User{"Adrian"}
@@ -125,7 +125,6 @@ func HandleUserApiRequest(
 		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)
 		fmt.Fprint(responseWriter, string(usersByIdJson))
-
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodPost, http.MethodGet)
@@ -279,7 +278,6 @@ func HandleNoteApiRequest(
 		}
 
 		responseWriter.WriteHeader(statusCode)
-
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
