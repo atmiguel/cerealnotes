@@ -104,8 +104,8 @@ func HandleUserApiRequest(
 	case http.MethodGet:
 
 		if _, err := getUserIdFromJwtToken(request); err != nil {
-			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
-				return
+			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
+			return
 		}
 
 		user1 := models.User{"Adrian"}
@@ -125,7 +125,6 @@ func HandleUserApiRequest(
 		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)
 		fmt.Fprint(responseWriter, string(usersByIdJson))
-
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodPost, http.MethodGet)
