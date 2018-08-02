@@ -259,23 +259,22 @@ func HandleNoteApiRequest(
 		noteForm := new(NoteForm)
 
 		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
-			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
-		var statusCode int
 
 		if len(strings.TrimSpace(noteForm.Content)) == 0 {
 			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
 			return
 		}
-		note := models.CreateNewNote(userId, noteForm.Content, models.DecodeNoteType(noteForm.NoteType))
+		note := models.CreateNewNote(userId, noteForm.Content, models.DeserializeNoteType(noteForm.NoteType))
 
 		if err := userservice.StoreNewNote(note); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
-		} else {
-			statusCode = http.StatusCreated
 		}
+
+		statusCode := http.StatusCreated
 
 		responseWriter.WriteHeader(statusCode)
 

@@ -24,7 +24,7 @@ var noteTypeStrings = [...]string{
 	"Predictions",
 }
 
-func DecodeNoteType(input string) NoteType {
+func DeserializeNoteType(input string) NoteType {
 	for i := 0; i < len(noteTypeStrings); i++ {
 		if strings.ToLower(input) == strings.ToLower(noteTypeStrings[i]) {
 			return NoteType(i)
