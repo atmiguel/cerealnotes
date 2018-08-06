@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
 	"github.com/atmiguel/cerealnotes/services/userservice"
@@ -269,7 +270,7 @@ func HandleNoteApiRequest(
 		}
 		note := models.CreateNewNote(userId, noteForm.Content, models.DeserializeNoteType(noteForm.NoteType))
 
-		if err := userservice.StoreNewNote(note); err != nil {
+		if err := databaseutil.StoreNewNote(note); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}

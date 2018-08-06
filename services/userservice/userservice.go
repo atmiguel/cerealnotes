@@ -46,20 +46,6 @@ func StoreNewUser(
 	return nil
 }
 
-func StoreNewNote(note *models.Note) error {
-	if err := databaseutil.InsertIntoNoteTable(
-		int64(note.AuthorId),
-		note.Type.String(),
-		note.Content,
-		int64(note.PublicationId),
-		note.CreationTime,
-	); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password string) error {
 	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(emailAddress.String())
 	if err != nil {

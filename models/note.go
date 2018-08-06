@@ -47,7 +47,7 @@ func CreateNewNote(userId UserId, content string, noteType NoteType) *Note {
 	note.Content = content
 	note.Type = noteType
 	note.CreationTime = time.Now()
-	note.PublicationId = -1
+	note.PublicationId = 0
 
 	return note
 }
