@@ -10,21 +10,23 @@ type NoteId int64
 type NoteType int
 
 const (
-	MARGINALIA NoteType = iota
+	UNCATEGORIZED NoteType = iota
+	MARGINALIA
 	META
 	QUESTIONS
 	PREDICTIONS
 )
 
 var noteTypeStrings = [...]string{
-	"Marginalia",
-	"Meta",
-	"Questions",
-	"Predictions",
+	"uncategorized",
+	"marginalia",
+	"meta",
+	"questions",
+	"predictions",
 }
 
 func (noteType NoteType) String() string {
-	if noteType < MARGINALIA || noteType > PREDICTIONS {
+	if noteType < UNCATEGORIZED || noteType > PREDICTIONS {
 		return "Unknown"
 	}
 
@@ -32,11 +34,10 @@ func (noteType NoteType) String() string {
 }
 
 type Note struct {
-	AuthorId      UserId        `json:"authorId"`
-	Type          NoteType      `json:"type"`
-	Content       string        `json:"content"`
-	PublicationId PublicationId `json:"publicationId"`
-	CreationTime  time.Time     `json:"creationTime"`
+	AuthorId     UserId    `json:"authorId"`
+	Type         NoteType  `json:"type"`
+	Content      string    `json:"content"`
+	CreationTime time.Time `json:"creationTime"`
 }
 
 func (note *Note) MarshalJSON() ([]byte, error) {
