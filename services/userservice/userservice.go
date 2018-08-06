@@ -30,7 +30,7 @@ func StoreNewUser(
 
 	creationTime := time.Now().UTC()
 
-	if err := databaseutil.InsertIntoUsersTable(
+	if err := databaseutil.InsertIntoUserTable(
 		displayName,
 		emailAddress.String(),
 		hashedPassword,
