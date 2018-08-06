@@ -104,7 +104,7 @@ func HandleUserApiRequest(
 	case http.MethodGet:
 
 		if _, err := getUserIdFromJwtToken(request); err != nil {
-			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
