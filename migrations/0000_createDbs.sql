@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS note(
 	creation_time timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS publication_to_note_linkage(
+CREATE TABLE IF NOT EXISTS publication_to_note_relationship(
 	id bigserial PRIMARY KEY,
 	publication_id bigint references publication(id) NOT NULL,
-	note_id bigint references note(id) NOT NULL
+	note_id bigint UNIQUE references note(id) NOT NULL
 );
