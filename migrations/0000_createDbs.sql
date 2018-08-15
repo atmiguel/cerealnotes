@@ -1,8 +1,8 @@
 -- Types
-CREATE TYPE note_type AS ENUM ('predictions', 'marginalia', 'meta', 'questions');
+CREATE TYPE note_type AS ENUM ('uncategorized', 'predictions', 'marginalia', 'meta', 'questions');
 
 -- Tables
-CREATE TABLE IF NOT EXISTS users(
+CREATE TABLE IF NOT EXISTS user(
 	id bigserial PRIMARY KEY,
 	display_name text NOT NULL,
 	email_address text UNIQUE NOT NULL,
@@ -10,17 +10,22 @@ CREATE TABLE IF NOT EXISTS users(
 	creation_time timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS publications(
+CREATE TABLE IF NOT EXISTS publication(
 	id bigserial PRIMARY KEY,
-	author_id bigint references users(id) NOT NULL,
+	author_id bigint references user(id) NOT NULL,
 	creation_time timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS notes(
+CREATE TABLE IF NOT EXISTS note(
 	id bigserial PRIMARY KEY,
-	author_id bigint references users(id) NOT NULL,
+	author_id bigint references user(id) NOT NULL,
 	type note_type,
 	content text NOT NULL,
-	publication_id bigint references publications(id),
 	creation_time timestamp NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS publication_to_note_relationship(
+	id bigserial PRIMARY KEY,
+	publication_id bigint references publication(id) NOT NULL,
+	note_id bigint UNIQUE references note(id) NOT NULL
 );
