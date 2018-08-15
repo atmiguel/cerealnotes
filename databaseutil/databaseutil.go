@@ -8,7 +8,6 @@ package databaseutil
 import (
 	"database/sql"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/atmiguel/cerealnotes/models"
@@ -51,7 +50,7 @@ func InsertIntoUserTable(
 	creationTime time.Time,
 ) error {
 	sqlQuery := `
-		INSERT INTO users (display_name, email_address, password, creation_time)
+		INSERT INTO user (display_name, email_address, password, creation_time)
 		VALUES ($1, $2, $3, $4)`
 
 	rows, err := db.Query(sqlQuery, displayName, emailAddress, password, creationTime)
@@ -69,7 +68,7 @@ func InsertIntoUserTable(
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	sqlQuery := `
-		SELECT password FROM users
+		SELECT password FROM user
 		WHERE email_address = $1`
 
 	rows, err := db.Query(sqlQuery, emailAddress)
@@ -98,27 +97,16 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 
 func StoreNewNote(note *models.Note) error {
 	sqlQuery := `
-		INSERT INTO notes (author_id, type, content, publication_id, creation_time)
+		INSERT INTO notes (author_id, type, content, creation_time)
 		VALUES ($1, $2, $3, $4, $5)`
 
-	var cleanPublicationId sql.NullInt64
-	var cleanNoteType sql.NullString
+	noteTypeString, err := note.Type.String()
 
-	publicationId := int64(note.PublicationId)
-	if publicationId < 1 {
-		cleanPublicationId = sql.NullInt64{Int64: 0, Valid: false}
-	} else {
-		cleanPublicationId = sql.NullInt64{Int64: publicationId, Valid: true}
+	if err != nil {
+		return models.InvalidNoteTypeError
 	}
 
-	noteType := note.Type.String()
-	if len(noteType) == 0 {
-		cleanNoteType = sql.NullString{String: "", Valid: false}
-	} else {
-		cleanNoteType = sql.NullString{String: strings.ToLower(noteType), Valid: true}
-	}
-
-	rows, err := db.Query(sqlQuery, int64(note.AuthorId), cleanNoteType, note.Content, cleanPublicationId, note.CreationTime)
+	rows, err := db.Query(sqlQuery, int64(note.AuthorId), noteTypeString, note.Content, note.CreationTime)
 	if err != nil {
 		return convertPostgresError(err)
 	}
@@ -158,7 +146,7 @@ func GetAllPublishedNotes() ([]models.Note, error) {
 
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	sqlQuery := `
-		SELECT id FROM users
+		SELECT id FROM user
 		WHERE email_address = $1`
 
 	rows, err := db.Query(sqlQuery, emailAddress)
