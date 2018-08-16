@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
 	"github.com/atmiguel/cerealnotes/services/userservice"
@@ -222,19 +223,17 @@ func HandleNoteApiRequest(
 	switch request.Method {
 	case http.MethodGet:
 		note1 := &models.Note{
-			AuthorId:      1,
-			Type:          models.MARGINALIA,
-			Content:       "This is an example note.",
-			PublicationId: 1,
-			CreationTime:  time.Now().Add(-oneWeek).UTC(),
+			AuthorId:     1,
+			Type:         models.MARGINALIA,
+			Content:      "This is an example note.",
+			CreationTime: time.Now().Add(-oneWeek).UTC(),
 		}
 
 		note2 := &models.Note{
-			AuthorId:      2,
-			Type:          models.QUESTIONS,
-			Content:       "What is this site for?",
-			PublicationId: 1,
-			CreationTime:  time.Now().Add(-60 * 12).UTC(),
+			AuthorId:     2,
+			Type:         models.QUESTIONS,
+			Content:      "What is this site for?",
+			CreationTime: time.Now().Add(-60 * 12).UTC(),
 		}
 
 		notes := [2]*models.Note{note1, note2}
@@ -250,8 +249,44 @@ func HandleNoteApiRequest(
 
 		fmt.Fprint(responseWriter, string(notesInJson))
 
+	case http.MethodPost:
+		type NoteForm struct {
+			Content  string `json:"content"`
+			NoteType string `json:"noteType"`
+		}
+
+		noteForm := new(NoteForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if len(strings.TrimSpace(noteForm.Content)) == 0 {
+			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
+			return
+		}
+
+		var note *models.Note
+
+		if noteType, err := models.DeserializeNoteType(noteForm.NoteType); err == nil {
+			note = models.CreateNewNote(userId, noteForm.Content, noteType)
+		} else {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := databaseutil.StoreNewNote(note); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		statusCode := http.StatusCreated
+
+		responseWriter.WriteHeader(statusCode)
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
 	}
 }
 

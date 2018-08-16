@@ -10,6 +10,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/atmiguel/cerealnotes/models"
 	"github.com/lib/pq"
 )
 
@@ -42,14 +43,14 @@ func ConnectToDatabase(databaseUrl string) error {
 	return nil
 }
 
-func InsertIntoUsersTable(
+func InsertIntoUserTable(
 	displayName string,
 	emailAddress string,
 	password []byte,
 	creationTime time.Time,
 ) error {
 	sqlQuery := `
-		INSERT INTO users (display_name, email_address, password, creation_time)
+		INSERT INTO user (display_name, email_address, password, creation_time)
 		VALUES ($1, $2, $3, $4)`
 
 	rows, err := db.Query(sqlQuery, displayName, emailAddress, password, creationTime)
@@ -67,7 +68,7 @@ func InsertIntoUsersTable(
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	sqlQuery := `
-		SELECT password FROM users
+		SELECT password FROM user
 		WHERE email_address = $1`
 
 	rows, err := db.Query(sqlQuery, emailAddress)
@@ -94,9 +95,58 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
+func StoreNewNote(note *models.Note) error {
+	sqlQuery := `
+		INSERT INTO notes (author_id, type, content, creation_time)
+		VALUES ($1, $2, $3, $4, $5)`
+
+	noteTypeString, err := note.Type.String()
+
+	if err != nil {
+		return models.InvalidNoteTypeError
+	}
+
+	rows, err := db.Query(sqlQuery, int64(note.AuthorId), noteTypeString, note.Content, note.CreationTime)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+}
+
+func convertRowToNote(rows *sql.Rows) models.Note {
+	return models.Note{}
+}
+
+func GetAllPublishedNotes() ([]models.Note, error) {
+	sqlQuery := `
+		SELECT * FROM notes
+		WHERE publication_id != NULL
+		ORDER BY creation_time`
+
+	rows, err := db.Query(sqlQuery)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+	notes := make([]models.Note, 0)
+
+	for rows.Next() {
+		notes = append(notes, convertRowToNote(rows))
+	}
+
+	return notes, nil
+}
+
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	sqlQuery := `
-		SELECT id FROM users
+		SELECT id FROM user
 		WHERE email_address = $1`
 
 	rows, err := db.Query(sqlQuery, emailAddress)
