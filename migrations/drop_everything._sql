@@ -1,0 +1,11 @@
+DROP TYPE note_type CASCADE;
+
+DROP TABLE app_user CASCADE;
+
+DROP TABLE publication CASCADE;
+
+DROP TABLE note CASCADE;
+
+DROP TABLE publication_to_note_relationship CASCADE;
+
+DROP TABLE notetype_to_note_relationship CASCADE;

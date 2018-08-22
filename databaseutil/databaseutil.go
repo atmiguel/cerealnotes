@@ -49,7 +49,7 @@ func InsertIntoUserTable(
 	creationTime time.Time,
 ) error {
 	sqlQuery := `
-		INSERT INTO user (display_name, email_address, password, creation_time)
+		INSERT INTO app_user (display_name, email_address, password, creation_time)
 		VALUES ($1, $2, $3, $4)`
 
 	rows, err := db.Query(sqlQuery, displayName, emailAddress, password, creationTime)
@@ -67,7 +67,7 @@ func InsertIntoUserTable(
 
 func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	sqlQuery := `
-		SELECT password FROM user
+		SELECT password FROM app_user
 		WHERE email_address = $1`
 
 	rows, err := db.Query(sqlQuery, emailAddress)
@@ -96,7 +96,7 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	sqlQuery := `
-		SELECT id FROM user
+		SELECT id FROM app_user
 		WHERE email_address = $1`
 
 	rows, err := db.Query(sqlQuery, emailAddress)
