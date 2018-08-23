@@ -31,5 +31,5 @@ CREATE TABLE IF NOT EXISTS note_to_publication_relationship (
 
 CREATE TABLE IF NOT EXISTS note_to_type_relationship (
 	note_id bigint PRIMARY KEY references note(id),
-	type note_type
+	type note_type NOT NULL
 );
