@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS app_user (
 
 CREATE TABLE IF NOT EXISTS publication (
 	id bigserial PRIMARY KEY,
+	-- we need to have some sort of foreign key assurance that all note to publication relationships refer to the same author
 	author_id bigint references app_user(id) NOT NULL,
 	creation_time timestamp NOT NULL
 );
@@ -23,14 +24,12 @@ CREATE TABLE IF NOT EXISTS note (
 	creation_time timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS publication_to_note_relationship (
-	id bigserial PRIMARY KEY,
-	publication_id bigint references publication(id) NOT NULL,
-	note_id bigint UNIQUE references note(id) NOT NULL
+CREATE TABLE IF NOT EXISTS note_to_publication_relationship (
+	note_id bigint PRIMARY KEY references note(id),
+	publication_id bigint references publication(id) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS notetype_to_note_relationship (
-	id bigserial PRIMARY KEY,
-	type note_type,
-	note_id bigint UNIQUE references note(id) NOT NULL
+CREATE TABLE IF NOT EXISTS note_to_type_relationship (
+	note_id bigint PRIMARY KEY references note(id),
+	type note_type
 );

@@ -6,6 +6,6 @@ DROP TABLE publication CASCADE;
 
 DROP TABLE note CASCADE;
 
-DROP TABLE publication_to_note_relationship CASCADE;
+DROP TABLE note_to_type_relationship CASCADE;
 
-DROP TABLE notetype_to_note_relationship CASCADE;
+DROP TABLE note_to_publication_relationship CASCADE;
