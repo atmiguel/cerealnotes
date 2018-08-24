@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -17,10 +16,10 @@ const (
 )
 
 var noteTypeStrings = [...]string{
-	"Marginalia",
-	"Meta",
-	"Questions",
-	"Predictions",
+	"marginalia",
+	"meta",
+	"questions",
+	"predictions",
 }
 
 func (noteType NoteType) String() string {
@@ -32,21 +31,7 @@ func (noteType NoteType) String() string {
 }
 
 type Note struct {
-	AuthorId      UserId        `json:"authorId"`
-	Type          NoteType      `json:"type"`
-	Content       string        `json:"content"`
-	PublicationId PublicationId `json:"publicationId"`
-	CreationTime  time.Time     `json:"creationTime"`
-}
-
-func (note *Note) MarshalJSON() ([]byte, error) {
-	type Alias Note
-
-	return json.Marshal(&struct {
-		Type string `json:"type"`
-		*Alias
-	}{
-		Type:  note.Type.String(),
-		Alias: (*Alias)(note),
-	})
+	AuthorId     UserId    `json:"authorId"`
+	Content      string    `json:"content"`
+	CreationTime time.Time `json:"creationTime"`
 }

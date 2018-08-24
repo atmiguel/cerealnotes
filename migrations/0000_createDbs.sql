@@ -2,7 +2,7 @@
 CREATE TYPE note_type AS ENUM ('predictions', 'marginalia', 'meta', 'questions');
 
 -- Tables
-CREATE TABLE IF NOT EXISTS users(
+CREATE TABLE IF NOT EXISTS app_user (
 	id bigserial PRIMARY KEY,
 	display_name text NOT NULL,
 	email_address text UNIQUE NOT NULL,
@@ -10,17 +10,26 @@ CREATE TABLE IF NOT EXISTS users(
 	creation_time timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS publications(
+CREATE TABLE IF NOT EXISTS publication (
 	id bigserial PRIMARY KEY,
-	author_id bigint references users(id) NOT NULL,
+	-- we need to have some sort of foreign key assurance that all note to publication relationships refer to the same author
+	author_id bigint references app_user(id) NOT NULL,
 	creation_time timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS notes(
+CREATE TABLE IF NOT EXISTS note (
 	id bigserial PRIMARY KEY,
-	author_id bigint references users(id) NOT NULL,
-	type note_type,
+	author_id bigint references app_user(id) NOT NULL,
 	content text NOT NULL,
-	publication_id bigint references publications(id),
 	creation_time timestamp NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS note_to_publication_relationship (
+	note_id bigint PRIMARY KEY references note(id),
+	publication_id bigint references publication(id) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS note_to_type_relationship (
+	note_id bigint PRIMARY KEY references note(id),
+	type note_type NOT NULL
 );
