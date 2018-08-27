@@ -40,7 +40,7 @@ func (category Category) String() string {
 }
 
 type Note struct {
-	Id           int64     `json:"authorId"`
+	Id           int64     `json:"id"`
 	AuthorId     UserId    `json:"authorId"`
 	Content      string    `json:"content"`
 	CreationTime time.Time `json:"creationTime"`

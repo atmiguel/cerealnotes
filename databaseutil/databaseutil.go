@@ -98,7 +98,7 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 func StoreNewNote(authorId int64, content string, creationTime time.Time) (int64, error) {
 	sqlQuery := `
 		INSERT INTO note (author_id, content, creation_time)
-		VALUES ($1, $2, $3, $4, $5)
+		VALUES ($1, $2, $3)
 		RETURNING id`
 
 	rows, err := db.Query(sqlQuery, authorId, content, creationTime)
@@ -107,12 +107,23 @@ func StoreNewNote(authorId int64, content string, creationTime time.Time) (int64
 	}
 	defer rows.Close()
 
-	if err := rows.Err(); err != nil {
-		return -1, convertPostgresError(err)
+	var lastInsertId int64
+	for rows.Next() {
+
+		if lastInsertId != 0 {
+			return -1, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&lastInsertId); err != nil {
+			return -1, convertPostgresError(err)
+		}
 	}
 
-	var lastInsertId int64
-	if err := rows.Scan(&lastInsertId); err != nil {
+	if lastInsertId == 0 {
+		return -1, QueryResultContainedNoRowsError
+	}
+
+	if err := rows.Err(); err != nil {
 		return -1, convertPostgresError(err)
 	}
 
