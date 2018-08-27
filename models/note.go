@@ -28,7 +28,7 @@ var UnDeserializeableCategoryStringError = errors.New("String does not correspon
 
 func DeserializeCategory(input string) (Category, error) {
 	for i := 0; i < len(categoryStrings); i++ {
-		if strings.ToLower(input) == strings.ToLower(categoryStrings[i]) {
+		if input == categoryStrings[i] {
 			return Category(i), nil
 		}
 	}

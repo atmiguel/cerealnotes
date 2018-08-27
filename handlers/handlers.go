@@ -276,7 +276,7 @@ func HandleNoteApiRequest(
 
 		if !(noteForm.Category == "") {
 
-			category, err := models.DeserializeCategory(noteForm.Category)
+			category, err := models.DeserializeCategory(string.ToLower(noteForm.Category))
 
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusBadRequest)
@@ -290,9 +290,7 @@ func HandleNoteApiRequest(
 
 		}
 
-		statusCode := http.StatusCreated
-
-		responseWriter.WriteHeader(statusCode)
+		responseWriter.WriteHeader(http.StatusCreated)
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
