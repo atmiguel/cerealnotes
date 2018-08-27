@@ -223,12 +223,14 @@ func HandleNoteApiRequest(
 	switch request.Method {
 	case http.MethodGet:
 		note1 := &models.Note{
+			Id:           1,
 			AuthorId:     1,
 			Content:      "This is an example note.",
 			CreationTime: time.Now().Add(-oneWeek).UTC(),
 		}
 
 		note2 := &models.Note{
+			Id:           2,
 			AuthorId:     2,
 			Content:      "What is this site for?",
 			CreationTime: time.Now().Add(-60 * 12).UTC(),

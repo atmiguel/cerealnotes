@@ -95,12 +95,36 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
-func StoreNewNote(authorId int64, content string, creationTime time.Time) error {
+func StoreNewNote(authorId int64, content string, creationTime time.Time) (int64, error) {
 	sqlQuery := `
-		INSERT INTO notes (author_id, content, creation_time)
-		VALUES ($1, $2, $3, $4, $5)`
+		INSERT INTO note (author_id, content, creation_time)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id`
 
 	rows, err := db.Query(sqlQuery, authorId, content, creationTime)
+	if err != nil {
+		return -1, convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return -1, convertPostgresError(err)
+	}
+
+	var lastInsertId int64
+	if err := rows.Scan(&lastInsertId); err != nil {
+		return -1, convertPostgresError(err)
+	}
+
+	return lastInsertId, nil
+}
+
+func StoreNoteCategoryRelationship(noteId int64, category string) error {
+	sqlQuery := `
+		INSERT INTO note_to_category_relationship (note_id, type)
+		VALUES ($1, $2)`
+
+	rows, err := db.Query(sqlQuery, noteId, category)
 	if err != nil {
 		return convertPostgresError(err)
 	}
@@ -109,8 +133,6 @@ func StoreNewNote(authorId int64, content string, creationTime time.Time) error 
 	if err := rows.Err(); err != nil {
 		return convertPostgresError(err)
 	}
-
-	// Todo update note to contain the new note id
 
 	return nil
 }
