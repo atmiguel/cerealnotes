@@ -10,6 +10,7 @@ import (
 	"errors"
 	"time"
 
+	// "github.com/atmiguel/cerealnotes/models"
 	"github.com/lib/pq"
 )
 
@@ -92,6 +93,26 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	}
 
 	return password, nil
+}
+
+func StoreNewNote(authorId int64, content string, creationTime time.Time) error {
+	sqlQuery := `
+		INSERT INTO notes (author_id, content, creation_time)
+		VALUES ($1, $2, $3, $4, $5)`
+
+	rows, err := db.Query(sqlQuery, authorId, content, creationTime)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	// Todo update note to contain the new note id
+
+	return nil
 }
 
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {

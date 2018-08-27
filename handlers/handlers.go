@@ -10,6 +10,7 @@ import (
 
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
+	"github.com/atmiguel/cerealnotes/services/noteservice"
 	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -246,8 +247,53 @@ func HandleNoteApiRequest(
 
 		fmt.Fprint(responseWriter, string(notesInJson))
 
+	case http.MethodPost:
+		type NoteForm struct {
+			Content  string `json:"content"`
+			Category string `json:"category"`
+		}
+
+		noteForm := new(NoteForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if len(strings.TrimSpace(noteForm.Content)) == 0 {
+			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
+			return
+		}
+
+		note := models.CreateNewNote(userId, noteForm.Content)
+
+		if err := noteservice.StoreNewNote(note); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if !(noteForm.Category == "") {
+
+			category, err := models.DeserializeCategory(noteForm.Category)
+
+			if err != nil {
+				http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if err := noteservice.StoreNoteCategoryRelationship(note, category); err != nil {
+				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+		}
+
+		statusCode := http.StatusCreated
+
+		responseWriter.WriteHeader(statusCode)
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
 	}
 }
 
