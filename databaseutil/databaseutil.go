@@ -10,7 +10,6 @@ import (
 	"errors"
 	"time"
 
-	// "github.com/atmiguel/cerealnotes/models"
 	"github.com/lib/pq"
 )
 
