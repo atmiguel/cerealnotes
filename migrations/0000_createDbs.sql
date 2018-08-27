@@ -1,5 +1,5 @@
 -- Types
-CREATE TYPE note_type AS ENUM ('predictions', 'marginalia', 'meta', 'questions');
+CREATE TYPE category AS ENUM ('predictions', 'marginalia', 'meta', 'questions');
 
 -- Tables
 CREATE TABLE IF NOT EXISTS app_user (
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS note_to_publication_relationship (
 	publication_id bigint references publication(id) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS note_to_type_relationship (
+CREATE TABLE IF NOT EXISTS note_to_category_relationship (
 	note_id bigint PRIMARY KEY references note(id),
-	type note_type NOT NULL
+	type category NOT NULL
 );

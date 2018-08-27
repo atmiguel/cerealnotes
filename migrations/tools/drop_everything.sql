@@ -1,4 +1,4 @@
-DROP TYPE note_type CASCADE;
+DROP TYPE category CASCADE;
 
 DROP TABLE app_user CASCADE;
 

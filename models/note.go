@@ -6,28 +6,28 @@ import (
 
 type NoteId int64
 
-type NoteType int
+type Category int
 
 const (
-	MARGINALIA NoteType = iota
+	MARGINALIA Category = iota
 	META
 	QUESTIONS
 	PREDICTIONS
 )
 
-var noteTypeStrings = [...]string{
+var categoryStrings = [...]string{
 	"marginalia",
 	"meta",
 	"questions",
 	"predictions",
 }
 
-func (noteType NoteType) String() string {
-	if noteType < MARGINALIA || noteType > PREDICTIONS {
+func (category Category) String() string {
+	if category < MARGINALIA || category > PREDICTIONS {
 		return "Unknown"
 	}
 
-	return noteTypeStrings[noteType]
+	return categoryStrings[category]
 }
 
 type Note struct {
