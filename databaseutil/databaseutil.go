@@ -94,7 +94,29 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
-func GetNote(id int64) (int64, int64, string, time.Time, error) {
+type NoteData struct {
+	Id           int64
+	AuthorId     int64
+	Content      string
+	CreationTime time.Time
+}
+
+func returnNotes(rows *sql.Rows) ([]*NoteData, error) {
+	var notes []*NoteData = make([]*NoteData, 0, 10)
+
+	for rows.Next() {
+		note := &NoteData{}
+		if err := rows.Scan(&note.Id, &note.AuthorId, &note.Content, &note.CreationTime); err != nil {
+			return nil, err
+		}
+
+		notes = append(notes, note)
+	}
+
+	return notes, nil
+}
+
+func GetNote(id int64) (*NoteData, error) {
 
 	sqlQuery := `
 		SELECT id, author_id, content, creation_time FROM note
@@ -102,32 +124,26 @@ func GetNote(id int64) (int64, int64, string, time.Time, error) {
 
 	rows, err := db.Query(sqlQuery, id)
 	if err != nil {
-		return -1, -1, "", time.Time{}, convertPostgresError(err)
+		return nil, convertPostgresError(err)
 	}
 
 	defer rows.Close()
 
-	var db_id int64 = -1
-	var authorId int64 = -1
-	var content string
-	var creationTime time.Time
-
-	for rows.Next() {
-		if db_id >= 0 {
-			return -1, -1, "", time.Time{}, QueryResultContainedMultipleRowsError
-		}
-
-		if err := rows.Scan(&db_id, &authorId, &content, &creationTime); err != nil {
-			return -1, -1, "", time.Time{}, err
-		}
+	notes, err := returnNotes(rows)
+	if err != nil {
+		return nil, err
 	}
 
-	if db_id < 0 {
-		return -1, -1, "", time.Time{}, QueryResultContainedNoRowsError
+	if len(notes) > 1 {
+
+		return nil, QueryResultContainedMultipleRowsError
 	}
 
-	return db_id, authorId, content, creationTime, nil
-	// return -1, -1, "", time.Time{}, nil
+	if len(notes) < 1 {
+		return nil, QueryResultContainedNoRowsError
+	}
+
+	return notes[0], nil
 }
 
 func DeleteNote(id int64) error {

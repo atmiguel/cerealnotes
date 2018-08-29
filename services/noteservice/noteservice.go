@@ -31,17 +31,17 @@ func StoreNewNote(
 }
 
 func GetNoteById(id int64) (*models.Note, error) {
-	db_id, authorid, content, creationTime, err := databaseutil.GetNote(id)
+	noteData, err := databaseutil.GetNote(id)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &models.Note{
-			Id:           db_id,
-			AuthorId:     models.UserId(authorid),
-			Content:      content,
-			CreationTime: creationTime,
+			Id:           noteData.Id,
+			AuthorId:     models.UserId(noteData.AuthorId),
+			Content:      noteData.Content,
+			CreationTime: noteData.CreationTime,
 		},
 		nil
 }
