@@ -276,7 +276,7 @@ func HandleNoteApiRequest(
 
 		if !(noteForm.Category == "") {
 
-			category, err := models.DeserializeCategory(string.ToLower(noteForm.Category))
+			category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
 
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusBadRequest)
