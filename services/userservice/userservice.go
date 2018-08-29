@@ -46,6 +46,20 @@ func StoreNewUser(
 	return nil
 }
 
+func GetUsersById() (map[models.UserId]*models.User, error) {
+	userData, err := databaseutil.GetAllUserData()
+	if err != nil {
+		return nil, err
+	}
+
+	usersById := make(map[models.UserId]*models.User)
+	for _, userDatum := range userData {
+		usersById[models.UserId(userDatum.Id)] = &models.User{DisplayName: userDatum.DisplayName}
+	}
+
+	return usersById, nil
+}
+
 func AuthenticateUserCredentials(emailAddress *models.EmailAddress, password string) error {
 	storedHashedPassword, err := databaseutil.GetPasswordForUserWithEmailAddress(emailAddress.String())
 	if err != nil {

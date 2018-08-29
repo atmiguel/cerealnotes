@@ -110,12 +110,18 @@ func HandleUserApiRequest(
 			return
 		}
 
-		user1 := models.User{"Adrian"}
-		user2 := models.User{"Evan"}
+		// user1 := models.User{"Adrian"}
+		// user2 := models.User{"Evan"}
 
-		usersById := map[models.UserId]models.User{
-			1: user1,
-			2: user2,
+		// usersById := map[models.UserId]models.User{
+		// 	1: user1,
+		// 	2: user2,
+		// }
+
+		usersById, err := userservice.GetUsersById()
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		usersByIdJson, err := json.Marshal(usersById)

@@ -94,26 +94,70 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
+func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
+	sqlQuery := `
+		SELECT id FROM app_user
+		WHERE email_address = $1`
+
+	rows, err := db.Query(sqlQuery, emailAddress)
+	if err != nil {
+		return 0, convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	var userId int64
+	for rows.Next() {
+		if userId != 0 {
+			return 0, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&userId); err != nil {
+			return 0, err
+		}
+	}
+
+	if userId == 0 {
+		return 0, QueryResultContainedNoRowsError
+	}
+
+	return userId, nil
+}
+
+type UserData struct {
+	Id          int64
+	DisplayName string
+}
+
+func GetAllUserData() ([]*UserData, error) {
+	sqlQuery := `
+		SELECT id, display_name FROM app_user`
+
+	rows, err := db.Query(sqlQuery)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	var users []*UserData = make([]*UserData, 0, 10)
+
+	for rows.Next() {
+		user := &UserData{}
+		if err := rows.Scan(&user.Id, &user.DisplayName); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 type NoteData struct {
 	Id           int64
 	AuthorId     int64
 	Content      string
 	CreationTime time.Time
-}
-
-func returnNotes(rows *sql.Rows) ([]*NoteData, error) {
-	var notes []*NoteData = make([]*NoteData, 0, 10)
-
-	for rows.Next() {
-		note := &NoteData{}
-		if err := rows.Scan(&note.Id, &note.AuthorId, &note.Content, &note.CreationTime); err != nil {
-			return nil, err
-		}
-
-		notes = append(notes, note)
-	}
-
-	return notes, nil
 }
 
 func GetMyUnpublishedNotes(userId int64) ([]*NoteData, error) {
@@ -262,36 +306,21 @@ func StoreNoteCategoryRelationship(noteId int64, category string) error {
 	return nil
 }
 
-func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
-	sqlQuery := `
-		SELECT id FROM app_user
-		WHERE email_address = $1`
-
-	rows, err := db.Query(sqlQuery, emailAddress)
-	if err != nil {
-		return 0, convertPostgresError(err)
-	}
-	defer rows.Close()
-
-	var userId int64
-	for rows.Next() {
-		if userId != 0 {
-			return 0, QueryResultContainedMultipleRowsError
-		}
-
-		if err := rows.Scan(&userId); err != nil {
-			return 0, err
-		}
-	}
-
-	if userId == 0 {
-		return 0, QueryResultContainedNoRowsError
-	}
-
-	return userId, nil
-}
-
 // PRIVATE
+func returnNotes(rows *sql.Rows) ([]*NoteData, error) {
+	var notes []*NoteData = make([]*NoteData, 0, 10)
+
+	for rows.Next() {
+		note := &NoteData{}
+		if err := rows.Scan(&note.Id, &note.AuthorId, &note.Content, &note.CreationTime); err != nil {
+			return nil, err
+		}
+
+		notes = append(notes, note)
+	}
+
+	return notes, nil
+}
 
 func convertPostgresError(err error) error {
 	const uniqueConstraintErrorCode = "23505"
