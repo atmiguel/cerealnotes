@@ -110,14 +110,6 @@ func HandleUserApiRequest(
 			return
 		}
 
-		// user1 := models.User{"Adrian"}
-		// user2 := models.User{"Evan"}
-
-		// usersById := map[models.UserId]models.User{
-		// 	1: user1,
-		// 	2: user2,
-		// }
-
 		usersById, err := userservice.GetUsersById()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
@@ -243,20 +235,6 @@ func HandleNoteApiRequest(
 
 		fmt.Println("number of unpublished notes")
 		fmt.Println(len(myUnpublishedNotes))
-
-		// note1 := &models.Note{
-		// 	Id:           1,
-		// 	AuthorId:     1,
-		// 	Content:      "This is an example note.",
-		// 	CreationTime: time.Now().Add(-oneWeek).UTC(),
-		// }
-
-		// note2 := &models.Note{
-		// 	Id:           2,
-		// 	AuthorId:     2,
-		// 	Content:      "What is this site for?",
-		// 	CreationTime: time.Now().Add(-60 * 12).UTC(),
-		// }
 
 		allNotes := append(publishedNotes, myUnpublishedNotes...)
 
