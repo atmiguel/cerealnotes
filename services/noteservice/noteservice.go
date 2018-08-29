@@ -30,6 +30,48 @@ func StoreNewNote(
 	return nil
 }
 
+func GetAllPublishedNotes() ([]*models.Note, error) {
+
+	noteData, err := databaseutil.GetAllPublishedNotes()
+	if err != nil {
+		return nil, err
+	}
+
+	var notes []*models.Note = make([]*models.Note, len(noteData), len(noteData))
+
+	for index, noteDatum := range noteData {
+		notes[index] = noteDateToNote(noteDatum)
+	}
+
+	return notes, nil
+}
+
+func noteDateToNote(noteDatum *databaseutil.NoteData) *models.Note {
+	return &models.Note{
+		Id:           noteDatum.Id,
+		AuthorId:     models.UserId(noteDatum.AuthorId),
+		Content:      noteDatum.Content,
+		CreationTime: noteDatum.CreationTime,
+	}
+
+}
+
+func GetMyUnpublishedNotes(userId models.UserId) ([]*models.Note, error) {
+
+	noteData, err := databaseutil.GetMyUnpublishedNotes(int64(userId))
+	if err != nil {
+		return nil, err
+	}
+
+	var notes []*models.Note = make([]*models.Note, len(noteData), len(noteData))
+
+	for index, noteDatum := range noteData {
+		notes[index] = noteDateToNote(noteDatum)
+	}
+
+	return notes, nil
+}
+
 func GetNoteById(id int64) (*models.Note, error) {
 	noteData, err := databaseutil.GetNote(id)
 
@@ -37,13 +79,7 @@ func GetNoteById(id int64) (*models.Note, error) {
 		return nil, err
 	}
 
-	return &models.Note{
-			Id:           noteData.Id,
-			AuthorId:     models.UserId(noteData.AuthorId),
-			Content:      noteData.Content,
-			CreationTime: noteData.CreationTime,
-		},
-		nil
+	return noteDateToNote(noteData), nil
 }
 
 func DeleteNoteById(id int64) error {

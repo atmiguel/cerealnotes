@@ -223,23 +223,38 @@ func HandleNoteApiRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		note1 := &models.Note{
-			Id:           1,
-			AuthorId:     1,
-			Content:      "This is an example note.",
-			CreationTime: time.Now().Add(-oneWeek).UTC(),
+
+		publishedNotes, err := noteservice.GetAllPublishedNotes()
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		note2 := &models.Note{
-			Id:           2,
-			AuthorId:     2,
-			Content:      "What is this site for?",
-			CreationTime: time.Now().Add(-60 * 12).UTC(),
-		}
+		fmt.Println("number of published notes")
+		fmt.Println(len(publishedNotes))
 
-		notes := [2]*models.Note{note1, note2}
+		myUnpublishedNotes, err := noteservice.GetMyUnpublishedNotes(userId)
 
-		notesInJson, err := json.Marshal(notes)
+		fmt.Println("number of unpublished notes")
+		fmt.Println(len(myUnpublishedNotes))
+
+		// note1 := &models.Note{
+		// 	Id:           1,
+		// 	AuthorId:     1,
+		// 	Content:      "This is an example note.",
+		// 	CreationTime: time.Now().Add(-oneWeek).UTC(),
+		// }
+
+		// note2 := &models.Note{
+		// 	Id:           2,
+		// 	AuthorId:     2,
+		// 	Content:      "What is this site for?",
+		// 	CreationTime: time.Now().Add(-60 * 12).UTC(),
+		// }
+
+		allNotes := append(publishedNotes, myUnpublishedNotes...)
+
+		notesInJson, err := json.Marshal(allNotes)
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return

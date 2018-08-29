@@ -116,6 +116,51 @@ func returnNotes(rows *sql.Rows) ([]*NoteData, error) {
 	return notes, nil
 }
 
+func GetMyUnpublishedNotes(userId int64) ([]*NoteData, error) {
+
+	sqlQuery := `
+		SELECT id, author_id, content, creation_time FROM note
+		LEFT OUTER JOIN note_to_publication_relationship AS note2pub
+			ON note.id = note2pub.note_id
+		WHERE note2pub.note_id is NULL AND note.author_id = $1`
+
+	rows, err := db.Query(sqlQuery, userId)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	notes, err := returnNotes(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return notes, nil
+}
+
+func GetAllPublishedNotes() ([]*NoteData, error) {
+
+	sqlQuery := `
+		SELECT id, author_id, content, creation_time FROM note
+		INNER JOIN note_to_publication_relationship AS note2pub
+			ON note.id = note2pub.note_id`
+
+	rows, err := db.Query(sqlQuery)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	notes, err := returnNotes(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return notes, nil
+}
+
 func GetNote(id int64) (*NoteData, error) {
 
 	sqlQuery := `
