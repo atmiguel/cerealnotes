@@ -30,6 +30,26 @@ func StoreNewNote(
 	return nil
 }
 
+func GetNoteById(id int64) (*models.Note, error) {
+	db_id, authorid, content, creationTime, err := databaseutil.GetNote(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.Note{
+			Id:           db_id,
+			AuthorId:     models.UserId(authorid),
+			Content:      content,
+			CreationTime: creationTime,
+		},
+		nil
+}
+
+func DeleteNoteById(id int64) error {
+	return databaseutil.DeleteNote(id)
+}
+
 func StoreNoteCategoryRelationship(
 	note *models.Note,
 	category models.Category,

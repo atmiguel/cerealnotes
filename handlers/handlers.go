@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -292,8 +293,34 @@ func HandleNoteApiRequest(
 
 		responseWriter.WriteHeader(http.StatusCreated)
 
+	case http.MethodDelete:
+
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		note, err := noteservice.GetNoteById(id)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if note.AuthorId != userId {
+			errorString := "You are not the author of this note. you are only allowed to delete your own notes"
+			http.Error(responseWriter, errorString, http.StatusUnauthorized)
+			return
+		}
+
+		err = noteservice.DeleteNoteById(note.Id)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost, http.MethodDelete)
 	}
 }
 

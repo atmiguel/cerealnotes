@@ -19,17 +19,17 @@ CREATE TABLE IF NOT EXISTS publication (
 
 CREATE TABLE IF NOT EXISTS note (
 	id bigserial PRIMARY KEY,
-	author_id bigint references app_user(id) NOT NULL,
+	author_id bigint references app_user(id) NOT NULL ON DELETE CASCADE,
 	content text NOT NULL,
 	creation_time timestamp NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS note_to_publication_relationship (
-	note_id bigint PRIMARY KEY references note(id),
-	publication_id bigint references publication(id) NOT NULL
+	note_id bigint PRIMARY KEY references note(id) ON DELETE CASCADE,
+	publication_id bigint references publication(id) NOT NULL ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS note_to_category_relationship (
-	note_id bigint PRIMARY KEY references note(id),
+	note_id bigint PRIMARY KEY references note(id) ON DELETE CASCADE,
 	type category NOT NULL
 );

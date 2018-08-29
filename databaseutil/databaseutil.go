@@ -94,6 +94,60 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
+func GetNote(id int64) (int64, int64, string, time.Time, error) {
+
+	sqlQuery := `
+		SELECT id, author_id, content, creation_time FROM note
+		WHERE id = $1`
+
+	rows, err := db.Query(sqlQuery, id)
+	if err != nil {
+		return -1, -1, "", time.Time{}, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	var db_id int64 = -1
+	var authorId int64 = -1
+	var content string
+	var creationTime time.Time
+
+	for rows.Next() {
+		if db_id >= 0 {
+			return -1, -1, "", time.Time{}, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&db_id, &authorId, &content, &creationTime); err != nil {
+			return -1, -1, "", time.Time{}, err
+		}
+	}
+
+	if db_id < 0 {
+		return -1, -1, "", time.Time{}, QueryResultContainedNoRowsError
+	}
+
+	return db_id, authorId, content, creationTime, nil
+	// return -1, -1, "", time.Time{}, nil
+}
+
+func DeleteNote(id int64) error {
+	sqlQuery := `
+		DELETE FROM note
+		WHERE id = $1`
+
+	rows, err := db.Query(sqlQuery, id)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+}
+
 func StoreNewNote(authorId int64, content string, creationTime time.Time) (int64, error) {
 	sqlQuery := `
 		INSERT INTO note (author_id, content, creation_time)
