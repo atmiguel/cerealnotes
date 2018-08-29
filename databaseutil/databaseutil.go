@@ -8,6 +8,7 @@ package databaseutil
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/lib/pq"
@@ -305,6 +306,76 @@ func StoreNoteCategoryRelationship(noteId int64, category string) error {
 
 	return nil
 }
+
+func StoreNewPublication(authorId int64, creationTime time.Time) (int64, error) {
+	sqlQuery := `
+		INSERT INTO publication (author_id, creation_time)
+		VALUES ($1, $2)
+		RETURNING id`
+
+	rows, err := db.Query(sqlQuery, authorId, creationTime)
+	if err != nil {
+		return -1, convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	var lastInsertId int64
+	for rows.Next() {
+
+		if lastInsertId != 0 {
+			return -1, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&lastInsertId); err != nil {
+			return -1, convertPostgresError(err)
+		}
+	}
+
+	if lastInsertId == 0 {
+		return -1, QueryResultContainedNoRowsError
+	}
+
+	if err := rows.Err(); err != nil {
+		return -1, convertPostgresError(err)
+	}
+
+	return lastInsertId, nil
+
+}
+
+func StorePublicationNoteRelationship(publication_id int64, noteIds []int64) error {
+	sqlQuery := `
+		INSERT INTO note_to_publication_relationship (publication_id, note_id) 
+		VALUES ($1, $2)`
+
+	values := make([]interface{}, len(noteIds)*2, len(noteIds)*2)
+	values[0] = publication_id
+	values[1] = noteIds[0]
+
+	for index, noteId := range noteIds {
+		if index == 0 {
+			continue
+		}
+		sqlQuery += ", ($" + strconv.Itoa(2*index+1) + ", $" + strconv.Itoa((2*index)+2) + ")"
+		values[2*index] = publication_id
+		values[(2*index)+1] = noteId
+	}
+
+	rows, err := db.Query(sqlQuery, values...)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+
+}
+
+// -----------------------------------------------------------------------
 
 // PRIVATE
 func returnNotes(rows *sql.Rows) ([]*NoteData, error) {
