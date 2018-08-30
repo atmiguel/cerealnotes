@@ -160,6 +160,14 @@ type NoteData struct {
 	CreationTime time.Time
 }
 
+type ExtendedNoteData struct {
+	Id               int64
+	AuthorId         int64
+	Content          string
+	CreationTime     time.Time
+	PublicationIssue int64
+}
+
 func GetMyUnpublishedNotes(userId int64) ([]*NoteData, error) {
 
 	sqlQuery := `
@@ -200,6 +208,69 @@ func GetAllPublishedNotes() ([]*NoteData, error) {
 	notes, err := returnNotes(rows)
 	if err != nil {
 		return nil, err
+	}
+
+	return notes, nil
+}
+
+func GetAllNotesPublishedInIssueSmallerThanOrEqualTo(publictionIssueNumber int) ([]*ExtendedNoteData, error) {
+	sqlQuery := `
+		SELECT
+		note.id,
+		note.author_id,
+		note.content,
+		note.creation_time,
+		filtered_pubs.rank AS publication_issue
+		FROM   (SELECT *,
+					   Rank()
+						 OVER(
+						   partition BY pub.author_id
+						   ORDER BY pub.creation_time)
+				FROM   publication AS pub) filtered_pubs
+			   INNER JOIN note_to_publication_relationship AS note2pub
+					   ON note2pub.publication_id = filtered_pubs.id
+			   INNER JOIN note
+					   ON note.id = note2pub.note_id
+		WHERE  rank <= ($1)`
+
+	// sqlQuery2 := `
+	// 	SELECT
+	// 	note.id,
+	// 	note.author_id,
+	// 	note.content,
+	// 	note.creation_time,
+	// 	note2cat.type      AS category,
+	// 	filtered_pubs.rank AS publication_issue
+	// 	FROM   (SELECT *,
+	// 	               Rank()
+	// 	                 OVER(
+	// 	                   partition BY pub.author_id
+	// 	                   ORDER BY pub.creation_time)
+	// 	        FROM   publication AS pub) filtered_pubs
+	// 	       INNER JOIN note_to_publication_relationship AS note2pub
+	// 	               ON note2pub.publication_id = filtered_pubs.id
+	// 	       INNER JOIN note
+	// 	               ON note.id = note2pub.note_id
+	// 	       LEFT OUTER JOIN note_to_category_relationship AS note2cat
+	// 	                    ON note.id = note2cat.note_id
+	// 	WHERE  rank <= ($1)`
+
+	rows, err := db.Query(sqlQuery, publictionIssueNumber)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	var notes []*NoteData = make([]*NoteData, 0, 10)
+
+	for rows.Next() {
+		note := &ExtendedNoteData{}
+		if err := rows.Scan(&note.Id, &note.AuthorId, &note.Content, &note.CreationTime, &note.PublicationIssue); err != nil {
+			return nil, err
+		}
+
+		notes = append(notes, note)
 	}
 
 	return notes, nil
