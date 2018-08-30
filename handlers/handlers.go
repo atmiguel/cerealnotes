@@ -355,8 +355,72 @@ func HandleNoteApiRequest(
 
 		responseWriter.WriteHeader(http.StatusOK)
 
+	case http.MethodPut:
+
+		type NoteForm struct {
+			Id       int64  `json:"id"`
+			Content  string `json:"content"`
+			Category string `json:"category"`
+		}
+
+		noteForm := new(NoteForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if noteForm.Id < 1 {
+			http.Error(responseWriter, "Invalid Note Id", http.StatusBadRequest)
+			return
+		}
+
+		note, err := noteservice.GetNoteById(noteForm.Id)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if note.AuthorId != userId {
+			http.Error(responseWriter, "You can only edit notes of which you are the author", http.StatusUnauthorized)
+			return
+		}
+
+		if len(strings.TrimSpace(noteForm.Content)) == 0 {
+			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
+			return
+		}
+
+		if err := noteservice.UpdateContent(noteForm.Id, noteForm.Content); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if noteForm.Category != "" {
+
+			category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
+
+			if err != nil {
+				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if err := noteservice.UpdateCategory(noteForm.Id, category); err != nil {
+				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+		} else {
+			if err := noteservice.DeleteCategory(noteForm.Id); err != nil {
+				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		responseWriter.WriteHeader(http.StatusOK)
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost, http.MethodDelete)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut)
 	}
 }
 
