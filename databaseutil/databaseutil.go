@@ -240,10 +240,6 @@ func GetNoteCategory(id int64) (string, error) {
 	return category, nil
 }
 
-// INSERT INTO distributors (did, dname)
-//     VALUES (5, 'Gizmo Transglobal'), (6, 'Associated Computing, Inc')
-//     ON CONFLICT (did) DO UPDATE SET dname = EXCLUDED.dname;
-
 type NoteData struct {
 	Id           int64
 	AuthorId     int64
