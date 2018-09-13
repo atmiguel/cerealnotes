@@ -12,6 +12,7 @@ import (
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
 	"github.com/atmiguel/cerealnotes/services/noteservice"
+	"github.com/atmiguel/cerealnotes/services/publicationservice"
 	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -214,6 +215,36 @@ func HandleSessionApiRequest(
 	}
 }
 
+func HandlePublicationApiRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodPost:
+		myUnpublishedNotes, err := noteservice.GetMyUnpublishedNotes(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if len(myUnpublishedNotes) == 0 {
+			http.Error(responseWriter, "Can't publish if you have no unpublished notes", http.StatusBadRequest)
+			return
+		}
+
+		if err := publicationservice.CreateAndPublishNotes(userId, myUnpublishedNotes); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusCreated)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+	}
+}
+
 func HandleNoteApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
@@ -232,6 +263,10 @@ func HandleNoteApiRequest(
 		fmt.Println(len(publishedNotes))
 
 		myUnpublishedNotes, err := noteservice.GetMyUnpublishedNotes(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		fmt.Println("number of unpublished notes")
 		fmt.Println(len(myUnpublishedNotes))
@@ -317,6 +352,8 @@ func HandleNoteApiRequest(
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		responseWriter.WriteHeader(http.StatusOK)
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost, http.MethodDelete)
