@@ -274,7 +274,7 @@ func HandleNoteApiRequest(
 			return
 		}
 
-		if !(noteForm.Category == "") {
+		if noteForm.Category != "" {
 
 			category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
 
@@ -283,7 +283,7 @@ func HandleNoteApiRequest(
 				return
 			}
 
-			if err := noteservice.StoreNoteCategoryRelationship(note, category); err != nil {
+			if err := noteservice.StoreNewNoteCategoryRelationship(note, category); err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
 			}

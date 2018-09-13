@@ -16,7 +16,7 @@ func StoreNewNote(
 	note *models.Note,
 ) error {
 
-	id, err := databaseutil.StoreNewNote(int64(note.AuthorId), note.Content, note.CreationTime)
+	id, err := databaseutil.InsertNewNote(int64(note.AuthorId), note.Content, note.CreationTime)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func StoreNewNote(
 	return nil
 }
 
-func StoreNoteCategoryRelationship(
+func StoreNewNoteCategoryRelationship(
 	note *models.Note,
 	category models.Category,
 ) error {
@@ -39,7 +39,7 @@ func StoreNoteCategoryRelationship(
 		return NoteIdNotSet
 	}
 
-	if err := databaseutil.StoreNoteCategoryRelationship(int64(note.Id), category.String()); err != nil {
+	if err := databaseutil.InsertNoteCategoryRelationship(int64(note.Id), category.String()); err != nil {
 		return err
 	}
 

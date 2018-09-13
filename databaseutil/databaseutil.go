@@ -94,7 +94,7 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
-func StoreNewNote(authorId int64, content string, creationTime time.Time) (int64, error) {
+func InsertNewNote(authorId int64, content string, creationTime time.Time) (int64, error) {
 	sqlQuery := `
 		INSERT INTO note (author_id, content, creation_time)
 		VALUES ($1, $2, $3)
@@ -102,34 +102,34 @@ func StoreNewNote(authorId int64, content string, creationTime time.Time) (int64
 
 	rows, err := db.Query(sqlQuery, authorId, content, creationTime)
 	if err != nil {
-		return -1, convertPostgresError(err)
+		return 0, convertPostgresError(err)
 	}
 	defer rows.Close()
 
-	var lastInsertId int64
+	var noteId int64 = 0
 	for rows.Next() {
 
-		if lastInsertId != 0 {
-			return -1, QueryResultContainedMultipleRowsError
+		if noteId != 0 {
+			return 0, QueryResultContainedMultipleRowsError
 		}
 
-		if err := rows.Scan(&lastInsertId); err != nil {
-			return -1, convertPostgresError(err)
+		if err := rows.Scan(&noteId); err != nil {
+			return 0, convertPostgresError(err)
 		}
 	}
 
-	if lastInsertId == 0 {
-		return -1, QueryResultContainedNoRowsError
+	if noteId == 0 {
+		return 0, QueryResultContainedNoRowsError
 	}
 
 	if err := rows.Err(); err != nil {
-		return -1, convertPostgresError(err)
+		return 0, convertPostgresError(err)
 	}
 
-	return lastInsertId, nil
+	return noteId, nil
 }
 
-func StoreNoteCategoryRelationship(noteId int64, category string) error {
+func InsertNoteCategoryRelationship(noteId int64, category string) error {
 	sqlQuery := `
 		INSERT INTO note_to_category_relationship (note_id, type)
 		VALUES ($1, $2)`

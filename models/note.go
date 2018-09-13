@@ -23,7 +23,7 @@ var categoryStrings = [...]string{
 	"predictions",
 }
 
-var UnDeserializeableCategoryStringError = errors.New("String does not correspond to a Note Category")
+var CannotDeserializeCategoryStringError = errors.New("String does not correspond to a Note Category")
 
 func DeserializeCategory(input string) (Category, error) {
 	for i := 0; i < len(categoryStrings); i++ {
@@ -31,7 +31,7 @@ func DeserializeCategory(input string) (Category, error) {
 			return Category(i), nil
 		}
 	}
-	return MARGINALIA, UnDeserializeableCategoryStringError
+	return MARGINALIA, CannotDeserializeCategoryStringError
 }
 
 func (category Category) String() string {
