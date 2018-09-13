@@ -154,6 +154,92 @@ func GetAllUserData() ([]*UserData, error) {
 	return users, nil
 }
 
+// ==================================
+
+func UpdateNoteContent(id int64, content string) error {
+	sqlQuery := `
+		UPDATE note SET content = ($2) WHERE id = ($1)`
+
+	rows, err := db.Query(sqlQuery, id, content)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+
+}
+
+func UpdateNoteCategory(id int64, category string) error {
+	sqlQuery := `
+		INSERT INTO note_to_category_relationship (note_id, type)
+		VALUES ($1, $2)
+		ON CONFLICT (note_id) DO UPDATE SET type = ($2)`
+
+	rows, err := db.Query(sqlQuery, id, category)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+}
+
+func DeleteNoteCategory(id int64) error {
+	sqlQuery := `
+		DELETE FROM note_to_category_relationship
+		WHERE note_id = $1`
+
+	rows, err := db.Query(sqlQuery, id)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+}
+
+func GetNoteCategory(id int64) (string, error) {
+	sqlQuery := `
+		SELECT type FROM note_to_category_relationship
+		WHERE note_id = $1`
+
+	rows, err := db.Query(sqlQuery, id)
+	if err != nil {
+		return "", convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	var category string = "N/A"
+	for rows.Next() {
+		if category != "N/A" {
+			return "", QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&category); err != nil {
+			return "", err
+		}
+	}
+
+	if category == "N/A" {
+		return "", QueryResultContainedNoRowsError
+	}
+
+	return category, nil
+}
+
 type NoteData struct {
 	Id           int64
 	AuthorId     int64
