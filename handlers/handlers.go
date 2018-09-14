@@ -334,8 +334,9 @@ func AuthenticateOrReturnUnauthorized(
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
+
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
-			responseWriter.Header().Set("WWW-Authenticate", "Please log in to see this page")
+			responseWriter.Header().Set("WWW-Authenticate", `Bearer realm="`+request.URL.Path+`"`)
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
