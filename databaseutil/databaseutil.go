@@ -131,7 +131,7 @@ func InsertNewNote(authorId int64, content string, creationTime time.Time) (int6
 
 func InsertNoteCategoryRelationship(noteId int64, category string) error {
 	sqlQuery := `
-		INSERT INTO note_to_category_relationship (note_id, type)
+		INSERT INTO note_to_category_relationship (note_id, category)
 		VALUES ($1, $2)`
 
 	rows, err := db.Query(sqlQuery, noteId, category)
