@@ -10,9 +10,20 @@ import (
 	"github.com/atmiguel/cerealnotes/paths"
 )
 
+type routeHandler struct {
+	*http.ServeMux
+}
+
+func (mux *routeHandler) handleAuthenticated(
+	pattern string,
+	handlerFunc handlers.AuthentictedRequestHandlerType,
+) {
+	mux.HandleFunc(pattern, handlers.AuthenticateOrRedirectToLogin(handlerFunc))
+}
+
 // DefineRoutes returns a new servemux with all the required path and handler pairs attached.
 func DefineRoutes() http.Handler {
-	mux := http.NewServeMux()
+	mux := &routeHandler{http.NewServeMux()}
 	// static files
 	{
 		staticDirectoryName := "static"
@@ -32,23 +43,15 @@ func DefineRoutes() http.Handler {
 	// pages
 	mux.HandleFunc(paths.LoginOrSignupPage, handlers.HandleLoginOrSignupPageRequest)
 
-	handleAuthenticated(mux, paths.HomePage, handlers.HandleHomePageRequest)
-	handleAuthenticated(mux, paths.NotesPage, handlers.HandleNotesPageRequest)
+	mux.handleAuthenticated(paths.HomePage, handlers.HandleHomePageRequest)
+	mux.handleAuthenticated(paths.NotesPage, handlers.HandleNotesPageRequest)
 
 	// api
 
 	mux.HandleFunc(paths.UserApi, handlers.HandleUserApiRequest)
 	mux.HandleFunc(paths.SessionApi, handlers.HandleSessionApiRequest)
 
-	handleAuthenticated(mux, paths.NoteApi, handlers.HandleNoteApiRequest)
+	mux.handleAuthenticated(paths.NoteApi, handlers.HandleNoteApiRequest)
 
 	return mux
-}
-
-func handleAuthenticated(
-	mux *http.ServeMux,
-	pattern string,
-	handlerFunc handlers.AuthentictedRequestHandlerType,
-) {
-	mux.HandleFunc(pattern, handlers.AuthenticateOrRedirectToLogin(handlerFunc))
 }
