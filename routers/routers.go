@@ -18,7 +18,7 @@ func (mux *routeHandler) handleAuthenticated(
 	pattern string,
 	handlerFunc handlers.AuthentictedRequestHandlerType,
 ) {
-	mux.HandleFunc(pattern, handlers.AuthenticateOrRedirectToLogin(handlerFunc))
+	mux.HandleFunc(pattern, handlers.AuthenticateOrRedirect(handlerFunc, paths.LoginOrSignupPage))
 }
 
 // DefineRoutes returns a new servemux with all the required path and handler pairs attached.

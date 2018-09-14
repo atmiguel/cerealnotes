@@ -256,17 +256,25 @@ type AuthentictedRequestHandlerType func(
 	*http.Request,
 	models.UserId)
 
-func AuthenticateOrRedirectToLogin(
+func AuthenticateOrRedirect(
 	authenticatedHandlerFunc AuthentictedRequestHandlerType,
+	redirectPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
+			switch request.Method {
 			// If not logged in, redirect to login page
-			http.Redirect(
-				responseWriter,
-				request,
-				paths.LoginOrSignupPage,
-				http.StatusTemporaryRedirect)
+			case http.MethodGet:
+				http.Redirect(
+					responseWriter,
+					request,
+					redirectPath,
+					http.StatusUnauthorized)
+				return
+			default:
+				http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
+				return
+			}
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
 		}
