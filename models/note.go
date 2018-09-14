@@ -39,17 +39,7 @@ func (category Category) String() string {
 }
 
 type Note struct {
-	Id           int64     `json:"id"`
 	AuthorId     UserId    `json:"authorId"`
 	Content      string    `json:"content"`
 	CreationTime time.Time `json:"creationTime"`
-}
-
-func CreateNewNote(userId UserId, content string) *Note {
-	return &Note{
-		Id:           -1,
-		AuthorId:     userId,
-		Content:      content,
-		CreationTime: time.Now().UTC(),
-	}
 }

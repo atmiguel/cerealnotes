@@ -4,44 +4,45 @@ Package noteservice handles interactions with database layer.
 package noteservice
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
 
 	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/models"
 )
 
-var NoteIdNotSet error = errors.New("The NoteId was not set")
-
 func StoreNewNote(
 	note *models.Note,
-) error {
+) (models.NoteId, error) {
 
 	id, err := databaseutil.InsertNewNote(int64(note.AuthorId), note.Content, note.CreationTime)
 	if err != nil {
-		return err
+		return models.NoteId(0), err
 	}
 
-	note.Id = id
+	return models.NoteId(id), nil
+}
 
-	if note.Id < 0 {
-		return NoteIdNotSet
+func StoreNewNoteCategoryRelationship(
+	noteId models.NoteId,
+	category models.Category,
+) error {
+	if err := databaseutil.InsertNoteCategoryRelationship(int64(noteId), category.String()); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func StoreNewNoteCategoryRelationship(
-	note *models.Note,
-	category models.Category,
-) error {
+type NoteMap map[models.NoteId]*models.Note
 
-	if note.Id < 0 {
-		return NoteIdNotSet
+func (noteMap NoteMap) ToJson() ([]byte, error) {
+	// json doesn't support int indexed maps
+	datas := make(map[string]models.Note, len(noteMap))
+
+	for id, note := range noteMap {
+		datas[fmt.Sprint(id)] = *note
 	}
 
-	if err := databaseutil.InsertNoteCategoryRelationship(int64(note.Id), category.String()); err != nil {
-		return err
-	}
-
-	return nil
+	return json.Marshal(datas)
 }

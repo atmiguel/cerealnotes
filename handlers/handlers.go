@@ -222,23 +222,22 @@ func HandleNoteApiRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		note1 := &models.Note{
-			Id:           1,
+
+		var noteMap noteservice.NoteMap = make(map[models.NoteId]*models.Note, 2)
+
+		noteMap[models.NoteId(1)] = &models.Note{
 			AuthorId:     1,
 			Content:      "This is an example note.",
 			CreationTime: time.Now().Add(-oneWeek).UTC(),
 		}
 
-		note2 := &models.Note{
-			Id:           2,
+		noteMap[models.NoteId(2)] = &models.Note{
 			AuthorId:     2,
 			Content:      "What is this site for?",
 			CreationTime: time.Now().Add(-60 * 12).UTC(),
 		}
 
-		notes := [2]*models.Note{note1, note2}
-
-		notesInJson, err := json.Marshal(notes)
+		notesInJson, err := noteMap.ToJson()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -267,9 +266,14 @@ func HandleNoteApiRequest(
 			return
 		}
 
-		note := models.CreateNewNote(userId, noteForm.Content)
+		note := &models.Note{
+			AuthorId:     models.UserId(userId),
+			Content:      noteForm.Content,
+			CreationTime: time.Now().UTC(),
+		}
 
-		if err := noteservice.StoreNewNote(note); err != nil {
+		noteId, err := noteservice.StoreNewNote(note)
+		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -283,7 +287,7 @@ func HandleNoteApiRequest(
 				return
 			}
 
-			if err := noteservice.StoreNewNoteCategoryRelationship(note, category); err != nil {
+			if err := noteservice.StoreNewNoteCategoryRelationship(noteId, category); err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
 			}
