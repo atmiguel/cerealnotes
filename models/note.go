@@ -35,6 +35,11 @@ func DeserializeCategory(input string) (Category, error) {
 }
 
 func (category Category) String() string {
+
+	if category < MARGINALIA || category > PREDICTIONS {
+		return "Unknown"
+	}
+
 	return categoryStrings[category]
 }
 

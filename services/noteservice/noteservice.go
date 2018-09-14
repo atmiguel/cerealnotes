@@ -38,11 +38,11 @@ type NoteMap map[models.NoteId]*models.Note
 
 func (noteMap NoteMap) ToJson() ([]byte, error) {
 	// json doesn't support int indexed maps
-	datas := make(map[string]models.Note, len(noteMap))
+	notesByIdString := make(map[string]models.Note, len(noteMap))
 
 	for id, note := range noteMap {
-		datas[fmt.Sprint(id)] = *note
+		notesByIdString[fmt.Sprint(id)] = *note
 	}
 
-	return json.Marshal(datas)
+	return json.Marshal(notesByIdString)
 }
