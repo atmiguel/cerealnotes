@@ -301,22 +301,42 @@ func HandleNoteApiRequest(
 	}
 }
 
-type AuthentictedRequestHandlerType func(
+type AuthenticatedRequestHandlerType func(
 	http.ResponseWriter,
 	*http.Request,
 	models.UserId)
 
-func AuthenticateOrRedirectToLogin(
-	authenticatedHandlerFunc AuthentictedRequestHandlerType,
+func AuthenticateOrRedirect(
+	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
+	redirectPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
+			switch request.Method {
 			// If not logged in, redirect to login page
-			http.Redirect(
-				responseWriter,
-				request,
-				paths.LoginOrSignupPage,
-				http.StatusTemporaryRedirect)
+			case http.MethodGet:
+				http.Redirect(
+					responseWriter,
+					request,
+					redirectPath,
+					http.StatusTemporaryRedirect)
+				return
+			default:
+				respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+			}
+		} else {
+			authenticatedHandlerFunc(responseWriter, request, userId)
+		}
+	}
+}
+
+func AuthenticateOrReturnUnauthorized(
+	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
+) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		if userId, err := getUserIdFromJwtToken(request); err != nil {
+			responseWriter.Header().Set("WWW-Authenticate", "Please log in to see this page")
+			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
 		}
