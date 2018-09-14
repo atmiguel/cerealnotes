@@ -269,12 +269,23 @@ func AuthenticateOrRedirect(
 					responseWriter,
 					request,
 					redirectPath,
-					http.StatusUnauthorized)
+					http.StatusTemporaryRedirect)
 				return
 			default:
-				http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
-				return
+				respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 			}
+		} else {
+			authenticatedHandlerFunc(responseWriter, request, userId)
+		}
+	}
+}
+
+func AuthenticateOrUnauthorized(
+	authenticatedHandlerFunc AuthentictedRequestHandlerType,
+) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		if userId, err := getUserIdFromJwtToken(request); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
 		}

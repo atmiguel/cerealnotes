@@ -21,6 +21,13 @@ func (mux *routeHandler) handleAuthenticated(
 	mux.HandleFunc(pattern, handlers.AuthenticateOrRedirect(handlerFunc, paths.LoginOrSignupPage))
 }
 
+func (mux *routeHandler) handleAuthenticatedApi(
+	pattern string,
+	handlerFunc handlers.AuthentictedRequestHandlerType,
+) {
+	mux.HandleFunc(pattern, handlers.AuthenticateOrUnauthorized(handlerFunc))
+}
+
 // DefineRoutes returns a new servemux with all the required path and handler pairs attached.
 func DefineRoutes() http.Handler {
 	mux := &routeHandler{http.NewServeMux()}
@@ -38,6 +45,7 @@ func DefineRoutes() http.Handler {
 
 	// Redirects
 	mux.HandleFunc("/", handlers.RedirectToPathHandler(paths.HomePage))
+	mux.HandleFunc("/api/", http.NotFound)
 	mux.HandleFunc("/favicon.ico", handlers.RedirectToPathHandler("/static/favicon.ico"))
 
 	// pages
@@ -51,7 +59,7 @@ func DefineRoutes() http.Handler {
 	mux.HandleFunc(paths.UserApi, handlers.HandleUserApiRequest)
 	mux.HandleFunc(paths.SessionApi, handlers.HandleSessionApiRequest)
 
-	mux.handleAuthenticated(paths.NoteApi, handlers.HandleNoteApiRequest)
+	mux.handleAuthenticatedApi(paths.NoteApi, handlers.HandleNoteApiRequest)
 
 	return mux
 }
