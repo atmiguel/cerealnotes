@@ -251,13 +251,13 @@ func HandleNoteApiRequest(
 	}
 }
 
-type AuthentictedRequestHandlerType func(
+type AuthenticatedRequestHandlerType func(
 	http.ResponseWriter,
 	*http.Request,
 	models.UserId)
 
 func AuthenticateOrRedirect(
-	authenticatedHandlerFunc AuthentictedRequestHandlerType,
+	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 	redirectPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
@@ -280,11 +280,12 @@ func AuthenticateOrRedirect(
 	}
 }
 
-func AuthenticateOrUnauthorized(
-	authenticatedHandlerFunc AuthentictedRequestHandlerType,
+func AuthenticateOrReturnUnauthorized(
+	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
+			responseWriter.Header().Set("WWW-Authenticate", "Please log in to see this page")
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
