@@ -69,7 +69,7 @@ func (db *DB) AuthenticateUserCredentials(emailAddress *EmailAddress, password s
 		SELECT password FROM app_user
 		WHERE email_address = $1`
 
-	rows, err := db.Query(sqlQuery, emailAddress)
+	rows, err := db.Query(sqlQuery, emailAddress.String())
 	if err != nil {
 		return convertPostgresError(err)
 	}
