@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -250,8 +251,7 @@ func HandleNoteApiRequest(
 
 	case http.MethodPost:
 		type NoteForm struct {
-			Content  string `json:"content"`
-			Category string `json:"category"`
+			Content string `json:"content"`
 		}
 
 		noteForm := new(NoteForm)
@@ -278,27 +278,52 @@ func HandleNoteApiRequest(
 			return
 		}
 
-		if noteForm.Category != "" {
-
-			category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
-
-			if err != nil {
-				http.Error(responseWriter, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			if err := noteservice.StoreNewNoteCategoryRelationship(noteId, category); err != nil {
-				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		}
-
+		responseWriter.Write([]byte(`{NoteId: "` + strconv.FormatInt(int64(noteId), 10) + `"}`))
 		responseWriter.WriteHeader(http.StatusCreated)
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
 	}
+}
+
+func HandleCategoryApiRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodPost:
+
+		type CategoryForm struct {
+			NoteId   int64  `json:"noteId"`
+			Category string `json:"category"`
+		}
+
+		noteForm := new(CategoryForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
+
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := noteservice.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusCreated)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+	}
+
 }
 
 type AuthenticatedRequestHandlerType func(
