@@ -11,8 +11,6 @@ import (
 
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
-	"github.com/atmiguel/cerealnotes/services/noteservice"
-	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -28,10 +26,20 @@ type JwtTokenClaim struct {
 	jwt.StandardClaims
 }
 
+type Environment struct {
+	Db models.Datastore
+}
+
 var tokenSigningKey []byte
 
 func SetTokenSigningKey(key []byte) {
 	tokenSigningKey = key
+}
+
+var environment *Environment
+
+func SetEnvironment(env *Environment) {
+	environment = env
 }
 
 // UNAUTHENTICATED HANDLERS
@@ -86,12 +94,12 @@ func HandleUserApiRequest(
 		}
 
 		var statusCode int
-		if err := userservice.StoreNewUser(
+		if err := environment.Db.StoreNewUser(
 			signupForm.DisplayName,
 			models.NewEmailAddress(signupForm.EmailAddress),
 			signupForm.Password,
 		); err != nil {
-			if err == userservice.EmailAddressAlreadyInUseError {
+			if err == models.EmailAddressAlreadyInUseError {
 				statusCode = http.StatusConflict
 			} else {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
@@ -153,12 +161,12 @@ func HandleSessionApiRequest(
 			return
 		}
 
-		if err := userservice.AuthenticateUserCredentials(
+		if err := environment.Db.AuthenticateUserCredentials(
 			models.NewEmailAddress(loginForm.EmailAddress),
 			loginForm.Password,
 		); err != nil {
 			statusCode := http.StatusInternalServerError
-			if err == userservice.CredentialsNotAuthorizedError {
+			if err == models.CredentialsNotAuthorizedError {
 				statusCode = http.StatusUnauthorized
 			}
 			http.Error(responseWriter, err.Error(), statusCode)
@@ -167,7 +175,7 @@ func HandleSessionApiRequest(
 
 		// Set our cookie to have a valid JWT Token as the value
 		{
-			userId, err := userservice.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
+			userId, err := environment.Db.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
@@ -224,7 +232,7 @@ func HandleNoteApiRequest(
 	switch request.Method {
 	case http.MethodGet:
 
-		var notesById noteservice.NoteMap = make(map[models.NoteId]*models.Note, 2)
+		var notesById models.NoteMap = make(map[models.NoteId]*models.Note, 2)
 
 		notesById[models.NoteId(1)] = &models.Note{
 			AuthorId:     1,
@@ -272,7 +280,7 @@ func HandleNoteApiRequest(
 			CreationTime: time.Now().UTC(),
 		}
 
-		noteId, err := noteservice.StoreNewNote(note)
+		noteId, err := environment.Db.StoreNewNote(note)
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -313,7 +321,7 @@ func HandleCategoryApiRequest(
 			return
 		}
 
-		if err := noteservice.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
+		if err := environment.Db.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
