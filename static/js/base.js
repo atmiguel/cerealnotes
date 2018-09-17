@@ -17,4 +17,16 @@ $(function() {
       });
     };
   });
+
+  jQuery.prototype.getDOM = function() {
+    if (this.length === 1) {
+        return this[0];
+    }
+
+    if (this.length === 0) {
+      throw "jQuery object is empty"
+    }
+    throw "jQuery Object contains more than 1 object";
+  };
+
 });
