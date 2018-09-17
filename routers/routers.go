@@ -12,26 +12,35 @@ import (
 
 type routeHandler struct {
 	*http.ServeMux
-	Env *handlers.Environment
 }
 
 func (mux *routeHandler) handleAuthenticatedPage(
+	env *handlers.Environment,
 	pattern string,
 	handlerFunc handlers.AuthenticatedRequestHandlerType,
 ) {
-	mux.HandleFunc(pattern, mux.Env.AuthenticateOrRedirect(handlerFunc, paths.LoginOrSignupPage))
+	mux.HandleFunc(pattern, handlers.AuthenticateOrRedirect(env, handlerFunc, paths.LoginOrSignupPage))
 }
 
 func (mux *routeHandler) handleAuthenticatedApi(
+	env *handlers.Environment,
 	pattern string,
 	handlerFunc handlers.AuthenticatedRequestHandlerType,
 ) {
-	mux.HandleFunc(pattern, mux.Env.AuthenticateOrReturnUnauthorized(handlerFunc))
+	mux.HandleFunc(pattern, handlers.AuthenticateOrReturnUnauthorized(env, handlerFunc))
+}
+
+func (mux *routeHandler) handleUnAutheticedRequest(
+	env *handlers.Environment,
+	pattern string,
+	handlerFunc handlers.UnauthenticatedEndpointHandlerType,
+) {
+	mux.HandleFunc(pattern, handlers.WrapUnauthenticatedEndpoint(env, handlerFunc))
 }
 
 // DefineRoutes returns a new servemux with all the required path and handler pairs attached.
 func DefineRoutes(env *handlers.Environment) http.Handler {
-	mux := &routeHandler{http.NewServeMux(), env}
+	mux := &routeHandler{http.NewServeMux()}
 	// static files
 	{
 		staticDirectoryName := "static"
@@ -50,18 +59,18 @@ func DefineRoutes(env *handlers.Environment) http.Handler {
 	mux.HandleFunc("/favicon.ico", handlers.RedirectToPathHandler("/static/favicon.ico"))
 
 	// pages
-	mux.HandleFunc(paths.LoginOrSignupPage, env.HandleLoginOrSignupPageRequest)
+	mux.handleUnAutheticedRequest(env, paths.LoginOrSignupPage, handlers.HandleLoginOrSignupPageRequest)
 
-	mux.handleAuthenticatedPage(paths.HomePage, env.HandleHomePageRequest)
-	mux.handleAuthenticatedPage(paths.NotesPage, env.HandleNotesPageRequest)
+	mux.handleAuthenticatedPage(env, paths.HomePage, handlers.HandleHomePageRequest)
+	mux.handleAuthenticatedPage(env, paths.NotesPage, handlers.HandleNotesPageRequest)
 
 	// api
 
-	mux.HandleFunc(paths.UserApi, env.HandleUserApiRequest)
-	mux.HandleFunc(paths.SessionApi, env.HandleSessionApiRequest)
+	mux.handleUnAutheticedRequest(env, paths.UserApi, handlers.HandleUserApiRequest)
+	mux.handleUnAutheticedRequest(env, paths.SessionApi, handlers.HandleSessionApiRequest)
 
-	mux.handleAuthenticatedApi(paths.NoteApi, env.HandleNoteApiRequest)
-	mux.handleAuthenticatedApi(paths.CategoryApi, env.HandleCategoryApiRequest)
+	mux.handleAuthenticatedApi(env, paths.NoteApi, handlers.HandleNoteApiRequest)
+	mux.handleAuthenticatedApi(env, paths.CategoryApi, handlers.HandleCategoryApiRequest)
 
 	return mux
 }

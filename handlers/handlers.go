@@ -31,11 +31,18 @@ type Environment struct {
 	TokenSigningKey []byte
 }
 
+func WrapUnauthenticatedEndpoint(env *Environment, handler UnauthenticatedEndpointHandlerType) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		handler(env, responseWriter, request)
+	}
+}
+
 // UNAUTHENTICATED HANDLERS
 
 // HandleLoginOrSignupPageRequest responds to unauthenticated GET requests with the login or signup page.
 // For authenticated requests, it redirects to the home page.
-func (env *Environment) HandleLoginOrSignupPageRequest(
+func HandleLoginOrSignupPageRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -63,7 +70,8 @@ func (env *Environment) HandleLoginOrSignupPageRequest(
 	}
 }
 
-func (env *Environment) HandleUserApiRequest(
+func HandleUserApiRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -132,7 +140,8 @@ func (env *Environment) HandleUserApiRequest(
 
 // HandleSessionApiRequest responds to POST requests by authenticating and responding with a JWT.
 // It responds to DELETE requests by expiring the client's cookie.
-func (env *Environment) HandleSessionApiRequest(
+func HandleSessionApiRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -213,7 +222,8 @@ func (env *Environment) HandleSessionApiRequest(
 	}
 }
 
-func (env *Environment) HandleNoteApiRequest(
+func HandleNoteApiRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -283,7 +293,8 @@ func (env *Environment) HandleNoteApiRequest(
 	}
 }
 
-func (env *Environment) HandleCategoryApiRequest(
+func HandleCategoryApiRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -324,11 +335,20 @@ func (env *Environment) HandleCategoryApiRequest(
 }
 
 type AuthenticatedRequestHandlerType func(
+	*Environment,
 	http.ResponseWriter,
 	*http.Request,
-	models.UserId)
+	models.UserId,
+)
 
-func (env *Environment) AuthenticateOrRedirect(
+type UnauthenticatedEndpointHandlerType func(
+	*Environment,
+	http.ResponseWriter,
+	*http.Request,
+)
+
+func AuthenticateOrRedirect(
+	env *Environment,
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 	redirectPath string,
 ) http.HandlerFunc {
@@ -347,12 +367,13 @@ func (env *Environment) AuthenticateOrRedirect(
 				respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 			}
 		} else {
-			authenticatedHandlerFunc(responseWriter, request, userId)
+			authenticatedHandlerFunc(env, responseWriter, request, userId)
 		}
 	}
 }
 
-func (env *Environment) AuthenticateOrReturnUnauthorized(
+func AuthenticateOrReturnUnauthorized(
+	env *Environment,
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
@@ -361,7 +382,7 @@ func (env *Environment) AuthenticateOrReturnUnauthorized(
 			responseWriter.Header().Set("WWW-Authenticate", `Bearer realm="`+request.URL.Path+`"`)
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
-			authenticatedHandlerFunc(responseWriter, request, userId)
+			authenticatedHandlerFunc(env, responseWriter, request, userId)
 		}
 	}
 }
@@ -386,7 +407,8 @@ func RedirectToPathHandler(
 
 // AUTHENTICATED HANDLERS
 
-func (env *Environment) HandleHomePageRequest(
+func HandleHomePageRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -405,7 +427,8 @@ func (env *Environment) HandleHomePageRequest(
 	}
 }
 
-func (env *Environment) HandleNotesPageRequest(
+func HandleNotesPageRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
