@@ -48,7 +48,7 @@ func HandleLoginOrSignupPageRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		if _, err := env.getUserIdFromJwtToken(request); err == nil {
+		if _, err := getUserIdFromJwtToken(env, request); err == nil {
 			http.Redirect(
 				responseWriter,
 				request,
@@ -110,7 +110,7 @@ func HandleUserApiRequest(
 
 	case http.MethodGet:
 
-		if _, err := env.getUserIdFromJwtToken(request); err != nil {
+		if _, err := getUserIdFromJwtToken(env, request); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -179,7 +179,7 @@ func HandleSessionApiRequest(
 				return
 			}
 
-			token, err := env.createTokenAsString(userId, credentialTimeoutDuration)
+			token, err := CreateTokenAsString(env, userId, credentialTimeoutDuration)
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
@@ -353,7 +353,7 @@ func AuthenticateOrRedirect(
 	redirectPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		if userId, err := env.getUserIdFromJwtToken(request); err != nil {
+		if userId, err := getUserIdFromJwtToken(env, request); err != nil {
 			switch request.Method {
 			// If not logged in, redirect to login page
 			case http.MethodGet:
@@ -378,7 +378,7 @@ func AuthenticateOrReturnUnauthorized(
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 
-		if userId, err := env.getUserIdFromJwtToken(request); err != nil {
+		if userId, err := getUserIdFromJwtToken(env, request); err != nil {
 			responseWriter.Header().Set("WWW-Authenticate", `Bearer realm="`+request.URL.Path+`"`)
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {

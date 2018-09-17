@@ -12,7 +12,7 @@ import (
 
 var InvalidJWTokenError = errors.New("Token was invalid or unreadable")
 
-func (env *Environment) parseTokenFromString(tokenAsString string) (*jwt.Token, error) {
+func ParseTokenFromString(env *Environment, tokenAsString string) (*jwt.Token, error) {
 	return jwt.ParseWithClaims(
 		strings.TrimSpace(tokenAsString),
 		&JwtTokenClaim{},
@@ -21,7 +21,8 @@ func (env *Environment) parseTokenFromString(tokenAsString string) (*jwt.Token, 
 		})
 }
 
-func (env *Environment) createTokenAsString(
+func CreateTokenAsString(
+	env *Environment,
 	userId models.UserId,
 	durationTilExpiration time.Duration,
 ) (string, error) {
@@ -37,13 +38,13 @@ func (env *Environment) createTokenAsString(
 	return token.SignedString(env.TokenSigningKey)
 }
 
-func (env *Environment) getUserIdFromJwtToken(request *http.Request) (models.UserId, error) {
+func getUserIdFromJwtToken(env *Environment, request *http.Request) (models.UserId, error) {
 	cookie, err := request.Cookie(cerealNotesCookieName)
 	if err != nil {
 		return 0, err
 	}
 
-	token, err := env.parseTokenFromString(cookie.Value)
+	token, err := ParseTokenFromString(env, cookie.Value)
 	if err != nil {
 		return 0, err
 	}
@@ -54,27 +55,3 @@ func (env *Environment) getUserIdFromJwtToken(request *http.Request) (models.Use
 
 	return 0, InvalidJWTokenError
 }
-
-// func tokenTest1() {
-// 	var num models.UserId = 32
-// 	bob, err := createTokenAsString(num, 1)
-// 	if err != nil {
-// 		fmt.Println("create error")
-// 		log.Fatal(err)
-// 	}
-
-// 	token, err := parseTokenFromString(bob)
-// 	if err != nil {
-// 		fmt.Println("parse error")
-// 		log.Fatal(err)
-// 	}
-// 	fmt.Println(bob)
-// 	if claims, ok := token.Claims.(*JwtTokenClaim); ok && token.Valid {
-// 		if claims.UserId != 32 {
-// 			log.Fatal("error in token")
-// 		}
-// 		fmt.Printf("%v %v", claims.UserId, claims.StandardClaims.ExpiresAt)
-// 	} else {
-// 		fmt.Println("Token claims could not be read")
-// 	}
-// }
