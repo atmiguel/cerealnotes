@@ -3,6 +3,7 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
@@ -52,60 +53,90 @@ func TestAuthenticatedFlow(t *testing.T) {
 	}
 
 	// Test login
-	theEmail := "justsomeemail@gmail.com"
-	thePassword := "worldsBestPassword"
+	userIdAsInt := int64(1)
+	{
+		theEmail := "justsomeemail@gmail.com"
+		thePassword := "worldsBestPassword"
 
-	mockDb.Func_AuthenticateUserCredentials = func(email *models.EmailAddress, password string) error {
-		if email.String() == theEmail && password == thePassword {
-			return nil
+		mockDb.Func_AuthenticateUserCredentials = func(email *models.EmailAddress, password string) error {
+			if email.String() == theEmail && password == thePassword {
+				return nil
+			}
+
+			return models.CredentialsNotAuthorizedError
 		}
 
-		return models.CredentialsNotAuthorizedError
+		mockDb.Func_GetIdForUserWithEmailAddress = func(email *models.EmailAddress) (models.UserId, error) {
+			return models.UserId(userIdAsInt), nil
+		}
+
+		userValues := map[string]string{"emailAddress": theEmail, "password": thePassword}
+
+		userJsonValue, _ := json.Marshal(userValues)
+
+		resp, err := client.Post(server.URL+paths.SessionApi, "application/json", bytes.NewBuffer(userJsonValue))
+
+		ok(t, err)
+
+		equals(t, http.StatusCreated, resp.StatusCode)
 	}
-
-	mockDb.Func_GetIdForUserWithEmailAddress = func(email *models.EmailAddress) (models.UserId, error) {
-		return models.UserId(1), nil
-	}
-
-	userValues := map[string]string{"emailAddress": theEmail, "password": thePassword}
-
-	userJsonValue, _ := json.Marshal(userValues)
-
-	resp, err := client.Post(server.URL+paths.SessionApi, "application/json", bytes.NewBuffer(userJsonValue))
-
-	ok(t, err)
-
-	equals(t, http.StatusCreated, resp.StatusCode)
 
 	// Test Add Note
-	noteValues := map[string]string{"content": "Dude I just said something cool"}
 	noteIdAsInt := int64(33)
 
-	mockDb.Func_StoreNewNote = func(*models.Note) (models.NoteId, error) {
-		return models.NoteId(noteIdAsInt), nil
+	{
+		noteValues := map[string]string{"content": "Dude I just said something cool"}
+
+		mockDb.Func_StoreNewNote = func(*models.Note) (models.NoteId, error) {
+			return models.NoteId(noteIdAsInt), nil
+		}
+
+		noteJsonValue, _ := json.Marshal(noteValues)
+
+		resp, err := client.Post(server.URL+paths.NoteApi, "application/json", bytes.NewBuffer(noteJsonValue))
+		ok(t, err)
+		equals(t, http.StatusCreated, resp.StatusCode)
+
+		type NoteResponse struct {
+			NoteId int64 `json:"noteId"`
+		}
+
+		jsonNoteReponse := &NoteResponse{}
+
+		err = json.NewDecoder(resp.Body).Decode(jsonNoteReponse)
+		ok(t, err)
+
+		equals(t, noteIdAsInt, jsonNoteReponse.NoteId)
+
+		resp.Body.Close()
 	}
 
-	noteJsonValue, _ := json.Marshal(noteValues)
+	// Test Add category
+	{
+		type CategoryForm struct {
+			NoteId   int64  `json:"noteId"`
+			Category string `json:"category"`
+		}
 
-	resp, err = client.Post(server.URL+paths.NoteApi, "application/json", bytes.NewBuffer(noteJsonValue))
-	ok(t, err)
-	equals(t, http.StatusCreated, resp.StatusCode)
+		metaCategory := models.META
 
-	type NoteResponse struct {
-		NoteId int64 `json:"noteId"`
+		categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: metaCategory.String()}
+
+		mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.Category) error {
+			if int64(noteId) == noteIdAsInt && cat == metaCategory {
+				return nil
+			}
+
+			return errors.New("Incorrect Data arrived")
+		}
+
+		jsonValue, _ := json.Marshal(categoryForm)
+
+		resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+		ok(t, err)
+		equals(t, http.StatusCreated, resp.StatusCode)
+
 	}
-
-	jsonNoteReponse := &NoteResponse{}
-
-	err = json.NewDecoder(resp.Body).Decode(jsonNoteReponse)
-	ok(t, err)
-
-	// bodyBytes, err := ioutil.ReadAll(resp.Body)
-	// fmt.Println(string(bodyBytes))
-
-	equals(t, noteIdAsInt, jsonNoteReponse.NoteId)
-
-	resp.Body.Close()
 
 }
 
