@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -285,8 +284,20 @@ func HandleNoteApiRequest(
 			return
 		}
 
-		responseWriter.Write([]byte(`{NoteId: "` + strconv.FormatInt(int64(noteId), 10) + `"}`))
+		type NoteResponse struct {
+			NoteId int64 `json:"noteId"`
+		}
+
+		noteString, err := json.Marshal(&NoteResponse{NoteId: int64(noteId)})
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusCreated)
+
+		fmt.Fprint(responseWriter, string(noteString))
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)

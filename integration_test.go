@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"path/filepath"
 	"reflect"
@@ -28,16 +29,29 @@ func TestLoginOrSignUpPage(t *testing.T) {
 	ok(t, err)
 
 	// fmt.Println(ioutil.ReadAll(resp.Body))
-	equals(t, 200, resp.StatusCode)
+	equals(t, http.StatusOK, resp.StatusCode)
 }
 
-func TestLoginApi(t *testing.T) {
+func TestAuthenticatedFlow(t *testing.T) {
 	mockDb := &DiyMockDataStore{}
 	env := &handlers.Environment{mockDb, []byte("")}
 
 	server := httptest.NewServer(routers.DefineRoutes(env))
 	defer server.Close()
 
+	// Create testing client
+	// jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	jar, err := cookiejar.New(&cookiejar.Options{})
+
+	if err != nil {
+		panic(err)
+	}
+
+	client := &http.Client{
+		Jar: jar,
+	}
+
+	// Test login
 	theEmail := "justsomeemail@gmail.com"
 	thePassword := "worldsBestPassword"
 
@@ -53,16 +67,46 @@ func TestLoginApi(t *testing.T) {
 		return models.UserId(1), nil
 	}
 
-	values := map[string]string{"emailAddress": theEmail, "password": thePassword}
+	userValues := map[string]string{"emailAddress": theEmail, "password": thePassword}
 
-	jsonValue, _ := json.Marshal(values)
+	userJsonValue, _ := json.Marshal(userValues)
 
-	resp, err := http.Post(server.URL+paths.SessionApi, "application/json", bytes.NewBuffer(jsonValue))
+	resp, err := client.Post(server.URL+paths.SessionApi, "application/json", bytes.NewBuffer(userJsonValue))
 
 	ok(t, err)
 
-	// fmt.Println(ioutil.ReadAll(resp.Body))
-	equals(t, 201, resp.StatusCode)
+	equals(t, http.StatusCreated, resp.StatusCode)
+
+	// Test Add Note
+	noteValues := map[string]string{"content": "Dude I just said something cool"}
+	noteIdAsInt := int64(33)
+
+	mockDb.Func_StoreNewNote = func(*models.Note) (models.NoteId, error) {
+		return models.NoteId(noteIdAsInt), nil
+	}
+
+	noteJsonValue, _ := json.Marshal(noteValues)
+
+	resp, err = client.Post(server.URL+paths.NoteApi, "application/json", bytes.NewBuffer(noteJsonValue))
+	ok(t, err)
+	equals(t, http.StatusCreated, resp.StatusCode)
+
+	type NoteResponse struct {
+		NoteId int64 `json:"noteId"`
+	}
+
+	jsonNoteReponse := &NoteResponse{}
+
+	err = json.NewDecoder(resp.Body).Decode(jsonNoteReponse)
+	ok(t, err)
+
+	// bodyBytes, err := ioutil.ReadAll(resp.Body)
+	// fmt.Println(string(bodyBytes))
+
+	equals(t, noteIdAsInt, jsonNoteReponse.NoteId)
+
+	resp.Body.Close()
+
 }
 
 // Helpers
