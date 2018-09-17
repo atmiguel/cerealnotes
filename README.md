@@ -24,3 +24,7 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 
 # Run DB migrations
 More db information in `migrations/README.md`
+
+# Setup Testing
+1. `psql < /migrations/tools/createTestDatabase.sql`
+2. run all migrations on `psql test_db`
