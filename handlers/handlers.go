@@ -27,32 +27,21 @@ type JwtTokenClaim struct {
 }
 
 type Environment struct {
-	Db models.Datastore
-}
-
-var tokenSigningKey []byte
-
-func SetTokenSigningKey(key []byte) {
-	tokenSigningKey = key
-}
-
-var environment *Environment
-
-func SetEnvironment(env *Environment) {
-	environment = env
+	Db              models.Datastore
+	TokenSigningKey []byte
 }
 
 // UNAUTHENTICATED HANDLERS
 
 // HandleLoginOrSignupPageRequest responds to unauthenticated GET requests with the login or signup page.
 // For authenticated requests, it redirects to the home page.
-func HandleLoginOrSignupPageRequest(
+func (env *Environment) HandleLoginOrSignupPageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		if _, err := getUserIdFromJwtToken(request); err == nil {
+		if _, err := env.getUserIdFromJwtToken(request); err == nil {
 			http.Redirect(
 				responseWriter,
 				request,
@@ -74,7 +63,7 @@ func HandleLoginOrSignupPageRequest(
 	}
 }
 
-func HandleUserApiRequest(
+func (env *Environment) HandleUserApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -94,7 +83,7 @@ func HandleUserApiRequest(
 		}
 
 		var statusCode int
-		if err := environment.Db.StoreNewUser(
+		if err := env.Db.StoreNewUser(
 			signupForm.DisplayName,
 			models.NewEmailAddress(signupForm.EmailAddress),
 			signupForm.Password,
@@ -113,7 +102,7 @@ func HandleUserApiRequest(
 
 	case http.MethodGet:
 
-		if _, err := getUserIdFromJwtToken(request); err != nil {
+		if _, err := env.getUserIdFromJwtToken(request); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -143,7 +132,7 @@ func HandleUserApiRequest(
 
 // HandleSessionApiRequest responds to POST requests by authenticating and responding with a JWT.
 // It responds to DELETE requests by expiring the client's cookie.
-func HandleSessionApiRequest(
+func (env *Environment) HandleSessionApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -161,7 +150,7 @@ func HandleSessionApiRequest(
 			return
 		}
 
-		if err := environment.Db.AuthenticateUserCredentials(
+		if err := env.Db.AuthenticateUserCredentials(
 			models.NewEmailAddress(loginForm.EmailAddress),
 			loginForm.Password,
 		); err != nil {
@@ -175,13 +164,13 @@ func HandleSessionApiRequest(
 
 		// Set our cookie to have a valid JWT Token as the value
 		{
-			userId, err := environment.Db.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
+			userId, err := env.Db.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			token, err := createTokenAsString(userId, credentialTimeoutDuration)
+			token, err := env.createTokenAsString(userId, credentialTimeoutDuration)
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
@@ -224,7 +213,7 @@ func HandleSessionApiRequest(
 	}
 }
 
-func HandleNoteApiRequest(
+func (env *Environment) HandleNoteApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -280,7 +269,7 @@ func HandleNoteApiRequest(
 			CreationTime: time.Now().UTC(),
 		}
 
-		noteId, err := environment.Db.StoreNewNote(note)
+		noteId, err := env.Db.StoreNewNote(note)
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -294,7 +283,7 @@ func HandleNoteApiRequest(
 	}
 }
 
-func HandleCategoryApiRequest(
+func (env *Environment) HandleCategoryApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -321,7 +310,7 @@ func HandleCategoryApiRequest(
 			return
 		}
 
-		if err := environment.Db.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
+		if err := env.Db.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -339,12 +328,12 @@ type AuthenticatedRequestHandlerType func(
 	*http.Request,
 	models.UserId)
 
-func AuthenticateOrRedirect(
+func (env *Environment) AuthenticateOrRedirect(
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 	redirectPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		if userId, err := getUserIdFromJwtToken(request); err != nil {
+		if userId, err := env.getUserIdFromJwtToken(request); err != nil {
 			switch request.Method {
 			// If not logged in, redirect to login page
 			case http.MethodGet:
@@ -363,12 +352,12 @@ func AuthenticateOrRedirect(
 	}
 }
 
-func AuthenticateOrReturnUnauthorized(
+func (env *Environment) AuthenticateOrReturnUnauthorized(
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 
-		if userId, err := getUserIdFromJwtToken(request); err != nil {
+		if userId, err := env.getUserIdFromJwtToken(request); err != nil {
 			responseWriter.Header().Set("WWW-Authenticate", `Bearer realm="`+request.URL.Path+`"`)
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
@@ -397,7 +386,7 @@ func RedirectToPathHandler(
 
 // AUTHENTICATED HANDLERS
 
-func HandleHomePageRequest(
+func (env *Environment) HandleHomePageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -416,7 +405,7 @@ func HandleHomePageRequest(
 	}
 }
 
-func HandleNotesPageRequest(
+func (env *Environment) HandleNotesPageRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,

@@ -19,12 +19,9 @@ import (
 
 func TestLoginOrSignUpPage(t *testing.T) {
 	mockDb := &DiyMockDataStore{}
-	env := &handlers.Environment{mockDb}
+	env := &handlers.Environment{mockDb, []byte("")}
 
-	handlers.SetEnvironment(env)
-	handlers.SetTokenSigningKey([]byte(""))
-
-	server := httptest.NewServer(routers.DefineRoutes())
+	server := httptest.NewServer(routers.DefineRoutes(env))
 	defer server.Close()
 
 	resp, err := http.Get(server.URL)
@@ -36,12 +33,9 @@ func TestLoginOrSignUpPage(t *testing.T) {
 
 func TestLoginApi(t *testing.T) {
 	mockDb := &DiyMockDataStore{}
-	env := &handlers.Environment{mockDb}
+	env := &handlers.Environment{mockDb, []byte("")}
 
-	handlers.SetEnvironment(env)
-	handlers.SetTokenSigningKey([]byte(""))
-
-	server := httptest.NewServer(routers.DefineRoutes())
+	server := httptest.NewServer(routers.DefineRoutes(env))
 	defer server.Close()
 
 	theEmail := "justsomeemail@gmail.com"

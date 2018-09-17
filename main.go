@@ -78,12 +78,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		handlers.SetTokenSigningKey(tokenSigningKey)
-	}
-
-	{
-		handlers.SetEnvironment(env)
+		env.TokenSigningKey = tokenSigningKey
 	}
 
 	// Start server
@@ -95,7 +90,7 @@ func main() {
 
 		log.Printf("Listening on %s...\n", port)
 
-		if err := http.ListenAndServe(port, routers.DefineRoutes()); err != nil {
+		if err := http.ListenAndServe(port, routers.DefineRoutes(env)); err != nil {
 			log.Fatal(err)
 		}
 	}
