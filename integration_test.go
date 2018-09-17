@@ -83,7 +83,6 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 	// Test Add Note
 	noteIdAsInt := int64(33)
-
 	{
 		noteValues := map[string]string{"content": "Dude I just said something cool"}
 
@@ -127,7 +126,7 @@ func TestAuthenticatedFlow(t *testing.T) {
 				return nil
 			}
 
-			return errors.New("Incorrect Data arrived")
+			return errors.New("Incorrect Data Arrived")
 		}
 
 		jsonValue, _ := json.Marshal(categoryForm)
@@ -135,7 +134,6 @@ func TestAuthenticatedFlow(t *testing.T) {
 		resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
 		ok(t, err)
 		equals(t, http.StatusCreated, resp.StatusCode)
-
 	}
 
 }

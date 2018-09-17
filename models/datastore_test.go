@@ -14,12 +14,18 @@ import (
 
 var postgresUrl = "postgresql://localhost/test_db?sslmode=disable"
 
+const noteTable = "note"
+const publicationTable = "publication"
+const noteToPublicationTable = "note_to_publication_relationship"
+const noteToCategoryTable = "note_to_category_relationship"
+const userTable = "app_user"
+
 var tables = []string{
-	"note_to_publication_relationship",
-	"publication",
-	"note_to_category_relationship",
-	"note",
-	"app_user",
+	noteToPublicationTable,
+	publicationTable,
+	noteToCategoryTable,
+	noteTable,
+	userTable,
 }
 
 func ClearAllValuesInTable(db *models.DB) {
@@ -28,7 +34,6 @@ func ClearAllValuesInTable(db *models.DB) {
 			panic(err)
 		}
 	}
-
 }
 
 func ClearValuesInTable(db *models.DB, table string) error {
@@ -46,7 +51,7 @@ func ClearValuesInTable(db *models.DB, table string) error {
 func TestUser(t *testing.T) {
 	db, err := models.ConnectToDatabase(postgresUrl)
 	ok(t, err)
-	ClearAllValuesInTable(db)
+	ClearValuesInTable(db, userTable)
 
 	displayName := "boby"
 	password := "aPassword"
@@ -65,7 +70,8 @@ func TestUser(t *testing.T) {
 func TestNote(t *testing.T) {
 	db, err := models.ConnectToDatabase(postgresUrl)
 	ok(t, err)
-	ClearAllValuesInTable(db)
+	ClearValuesInTable(db, userTable)
+	ClearValuesInTable(db, noteTable)
 
 	displayName := "bob"
 	password := "aPassword"
@@ -86,7 +92,9 @@ func TestNote(t *testing.T) {
 func TestCategory(t *testing.T) {
 	db, err := models.ConnectToDatabase(postgresUrl)
 	ok(t, err)
-	ClearAllValuesInTable(db)
+	ClearValuesInTable(db, userTable)
+	ClearValuesInTable(db, noteTable)
+	ClearValuesInTable(db, noteToCategoryTable)
 
 	displayName := "bob"
 	password := "aPassword"
