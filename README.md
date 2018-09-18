@@ -1,8 +1,6 @@
 # Installation
 ## Locally
-* postgres server installed and running
-	* `brew install postgres`
-	* `pg_ctl -D /usr/local/var/postgres start`
+* postgres server installed and running: please refer to `migrations/README.md` for more info
 * heroku cli installed
 	* `brew install heroku`
 * golang installed
@@ -20,11 +18,4 @@ Assuming your local environment is setup correctly with Golang standards, you ca
 
 1. `cd to this repo`
 2. `go install && heroku local`
-3. Visit `localhost:8080/login-or-signup`
-
-# Run DB migrations
-More db information in `migrations/README.md`
-
-# Setup Testing
-1. `psql < /migrations/tools/createTestDatabase.sql`
-2. run all migrations on `psql test_db`
+3. Visit `localhost:8080/`

@@ -12,7 +12,7 @@ import (
 	"github.com/atmiguel/cerealnotes/models"
 )
 
-var postgresUrl = "postgresql://localhost/test_db?sslmode=disable"
+var postgresUrl = "postgresql://localhost/cerealnotes_test?sslmode=disable"
 
 const noteTable = "note"
 const publicationTable = "publication"
