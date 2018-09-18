@@ -49,7 +49,7 @@ func (db *DB) StoreNewNoteCategoryRelationship(
 		INSERT INTO note_to_category_relationship (note_id, category)
 		VALUES ($1, $2)`
 
-	if err := db.execNoResults(sqlQuery, int64(noteId), category.String()); err != nil {
+	if _, err := db.execNoResults(sqlQuery, int64(noteId), category.String()); err != nil {
 		if err == UniqueConstraintError {
 			return NoteAlreadyContainsCategoryError
 		}

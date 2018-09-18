@@ -60,16 +60,17 @@ func (db *DB) execOneResult(sqlQuery string, object interface{}, args ...interfa
 	return nil
 }
 
-func (db *DB) execNoResults(sqlQuery string, args ...interface{}) error {
+func (db *DB) execNoResults(sqlQuery string, args ...interface{}) (int64, error) {
 
-	rows, err := db.Query(sqlQuery, args...)
+	res, err := db.Exec(sqlQuery, args...)
 	if err != nil {
-	}
-	defer rows.Close()
-
-	if err := rows.Err(); err != nil {
-		return convertPostgresError(err)
+		return 0, convertPostgresError(err)
 	}
 
-	return nil
+	numAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, convertPostgresError(err)
+	}
+
+	return numAffected, nil
 }

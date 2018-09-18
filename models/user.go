@@ -51,7 +51,7 @@ func (db *DB) StoreNewUser(
 		INSERT INTO app_user (display_name, email_address, password, creation_time)
 		VALUES ($1, $2, $3, $4)`
 
-	if err := db.execNoResults(sqlQuery, displayName, emailAddress.String(), hashedPassword, creationTime); err != nil {
+	if _, err := db.execNoResults(sqlQuery, displayName, emailAddress.String(), hashedPassword, creationTime); err != nil {
 		if err == UniqueConstraintError {
 			return EmailAddressAlreadyInUseError
 		}
