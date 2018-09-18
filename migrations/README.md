@@ -1,7 +1,7 @@
 # Locally:
 1. install & setup postgres
 	* `brew install postgres`
-	* `createdb ``whoami`` `
+	* ``createdb `whoami` ``
 2. Run postgres daemon. 
 	* `pg_ctl start -D /usr/local/var/postgres`
 3. Create cerealnotes databases
