@@ -28,8 +28,6 @@ func TestLoginOrSignUpPage(t *testing.T) {
 
 	resp, err := http.Get(server.URL)
 	ok(t, err)
-
-	// fmt.Println(ioutil.ReadAll(resp.Body))
 	equals(t, http.StatusOK, resp.StatusCode)
 }
 
@@ -41,15 +39,16 @@ func TestAuthenticatedFlow(t *testing.T) {
 	defer server.Close()
 
 	// Create testing client
-	// jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	jar, err := cookiejar.New(&cookiejar.Options{})
+	client := &http.Client{}
+	{
+		// jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+		jar, err := cookiejar.New(&cookiejar.Options{})
 
-	if err != nil {
-		panic(err)
-	}
+		if err != nil {
+			panic(err)
+		}
 
-	client := &http.Client{
-		Jar: jar,
+		client.Jar = jar
 	}
 
 	// Test login
@@ -83,8 +82,9 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 	// Test Add Note
 	noteIdAsInt := int64(33)
+	content := "Duuude I just said something cool"
 	{
-		noteValues := map[string]string{"content": "Dude I just said something cool"}
+		noteValues := map[string]string{"content": content}
 
 		mockDb.Func_StoreNewNote = func(*models.Note) (models.NoteId, error) {
 			return models.NoteId(noteIdAsInt), nil
@@ -108,6 +108,15 @@ func TestAuthenticatedFlow(t *testing.T) {
 		equals(t, noteIdAsInt, jsonNoteReponse.NoteId)
 
 		resp.Body.Close()
+	}
+
+	// Test get notes
+	{
+		resp, err := client.Get(server.URL + paths.NoteApi)
+		ok(t, err)
+		equals(t, http.StatusOK, resp.StatusCode)
+
+		// TODO when we implement a real get notes feature we should enhance this code.
 	}
 
 	// Test Add category

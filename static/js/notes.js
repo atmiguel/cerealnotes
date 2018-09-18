@@ -45,7 +45,6 @@ $(function() {
         $.get('/api/note', function(notes) {
             const $notes = $('#notes');
 
-
             for (const key of Object.keys(notes)) {
                 $notes.append($createNote(key, notes[key]));
             }
