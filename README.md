@@ -1,18 +1,28 @@
 # Installation
 ## Locally
 * postgres server installed and running
-	* `brew install postgres`
-	* `pg_ctl -D /usr/local/var/postgres start`
-* heroku cli installed
-	* `brew install heroku`
+    * `brew install postgres`
+    * `pg_ctl start -D /usr/local/var/postgres`
 * golang installed
-	* `brew install go`
-* godep installed: 
-	* `go get github.com/tools/godep`
+    * `brew install go`
+* godep installed:
+    * `go get github.com/tools/godep`
+* create database
+    * `psql -d postgres -c "create database cerealnotes_test"`
+    * Refer to `migrations/README.md` to create relevant database tables
+* export environment variables
+    ```
+    export DATABASE_URL=postgres://localhost:5432/cerealnotes_test?sslmode=disable
+    export TOKEN_SIGNING_KEY=abcdefg
+    export PORT=8000
+    ```
+* run the app
+    * `go build && ./cerealnotes`
 
 ## Heroku
+* heroku cli installed
+    * `brew install heroku`
 * heroku instance
-* instance connected to postgres db
 
 # Running CerealNotes
 
