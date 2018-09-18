@@ -45,12 +45,9 @@ $(function() {
         $.get('/api/note', function(notes) {
             const $notes = $('#notes');
 
-            for (var key in notes) {
-                if (notes.hasOwnProperty(key)) {
-                    $notes.append(
-                        $createNote(key, notes[key])
-                    );
-                }
+
+            for (const key of Object.keys(notes)) {
+                $notes.append($createNote(key, notes[key]));
             }
         });
     });
