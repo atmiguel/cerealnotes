@@ -1,9 +1,12 @@
 # Locally:
-1. first make sure that postgres is running. 
-	* If installed via homebrew on a macOS: `pg_ctl start -D /usr/local/var/postgres`
-2. then make sure you have the neccisary databases
+1. install & setup postgres
+	* `brew install postgres`
+	* `createdb ``whoami`` `
+2. Run postgres daemon. 
+	* `pg_ctl start -D /usr/local/var/postgres`
+3. Create cerealnotes databases
 	* `psql < tools/createDatabases.sql`
-3. then run all the migrations on both unittest database (`cerealnotes_test`) and as well as the "live" (`cerealnotes`)database. 
+3. Run all the migrations on both "unittest" database (`cerealnotes_test`) and as well as the "live" (`cerealnotes`)database. 
 	* `psql [DATABASENAME] < [MIGRATION_NAME]`
 
 # On Heroku:
