@@ -27,31 +27,9 @@ func (db *DB) StoreNewNote(
 		VALUES ($1, $2, $3)
 		RETURNING id`
 
-	rows, err := db.Query(sqlQuery, authorId, content, creationTime)
-	if err != nil {
-		return 0, convertPostgresError(err)
-	}
-	defer rows.Close()
-
 	var noteId int64 = 0
-	for rows.Next() {
-
-		if noteId != 0 {
-			return 0, QueryResultContainedMultipleRowsError
-		}
-
-		if err := rows.Scan(&noteId); err != nil {
-			return 0, convertPostgresError(err)
-		}
+	if err := db.execOneResult(sqlQuery, &noteId, authorId, content, creationTime); err != nil {
+		return 0, err
 	}
-
-	if noteId == 0 {
-		return 0, QueryResultContainedNoRowsError
-	}
-
-	if err := rows.Err(); err != nil {
-		return 0, convertPostgresError(err)
-	}
-
 	return NoteId(noteId), nil
 }
