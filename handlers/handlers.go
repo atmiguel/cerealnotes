@@ -447,8 +447,55 @@ func HandleCategoryApiRequest(
 
 		responseWriter.WriteHeader(http.StatusCreated)
 
+	case http.MethodPut:
+		type CategoryForm struct {
+			NoteId   int64  `json:"noteId"`
+			Category string `json:"category"`
+		}
+
+		noteForm := new(CategoryForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
+
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := env.Db.UpdateNoteCategory(models.NoteId(noteForm.NoteId), category); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusCreated)
+
+	case http.MethodDelete:
+
+		type DeleteForm struct {
+			NoteId int64 `json:"noteId"`
+		}
+
+		deleteForm := new(DeleteForm)
+
+		if err := json.NewDecoder(request.Body).Decode(deleteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := env.Db.DeleteNoteCategory(models.NoteId(deleteForm.NoteId)); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusCreated)
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost, http.MethodPut, http.MethodDelete)
 	}
 
 }

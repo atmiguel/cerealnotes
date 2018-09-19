@@ -204,10 +204,72 @@ func (db *DB) UpdateNoteContent(noteId NoteId, content string) error {
 	}
 
 	if rowsAffected > 1 {
-		return WrongNumberOfRowsAffectedError
+		return TooManyRowsAffectedError
 	}
 
 	return nil
+}
+
+func (db *DB) UpdateNoteCategory(noteId NoteId, category Category) error {
+	sqlQuery := `
+		INSERT INTO note_to_category_relationship (note_id, type)
+		VALUES ($1, $2)
+		ON CONFLICT (note_id) DO UPDATE SET type = ($2)`
+
+	rowsAffected, err := db.execNoResults(sqlQuery, int64(noteId), category.String())
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return NoNoteFoundError
+	}
+
+	if rowsAffected > 1 {
+		return TooManyRowsAffectedError
+	}
+
+	return nil
+}
+
+func (db *DB) DeleteNoteCategory(noteId NoteId) error {
+	sqlQuery := `
+		DELETE FROM note_to_category_relationship
+		WHERE note_id = $1`
+
+	num, err := db.execNoResults(sqlQuery, int64(noteId))
+	if err != nil {
+		return err
+	}
+
+	if num == 0 {
+		return NoNoteFoundError
+	}
+
+	if num != 1 {
+		return TooManyRowsAffectedError
+	}
+
+	return nil
+}
+
+func (db *DB) GetNoteCategory(noteId NoteId) (Category, error) {
+
+	sqlQuery := `
+		SELECT type FROM note_to_category_relationship
+		WHERE note_id = $1`
+
+	var categoryString string
+	if err := db.execOneResult(sqlQuery, &categoryString, int64(noteId)); err != nil {
+		return 0, err
+	}
+
+	category, err := DeserializeCategory(categoryString)
+	if err != nil {
+		return 0, err
+	}
+
+	return category, nil
 }
 
 func (db *DB) DeleteNoteById(noteId NoteId) error {
@@ -225,7 +287,7 @@ func (db *DB) DeleteNoteById(noteId NoteId) error {
 	}
 
 	if num != 1 {
-		return errors.New("somehow more than 1 note was deleted")
+		return TooManyRowsAffectedError
 	}
 
 	return nil

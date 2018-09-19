@@ -303,6 +303,9 @@ type DiyMockDataStore struct {
 	Func_StoreNewPublication              func(*models.Publication) (models.PublicationId, error)
 	Func_GetNoteById                      func(models.NoteId) (*models.Note, error)
 	Func_UpdateNoteContent                func(models.NoteId, string) error
+	Func_UpdateNoteCategory               func(models.NoteId, models.Category) error
+	Func_DeleteNoteCategory               func(models.NoteId) error
+	Func_GetNoteCategory                  func(models.NoteId) (models.Category, error)
 }
 
 func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, error) {
@@ -356,8 +359,21 @@ func (mock *DiyMockDataStore) StoreNewPublication(publication *models.Publicatio
 func (mock *DiyMockDataStore) GetNoteById(noteId models.NoteId) (*models.Note, error) {
 	return mock.Func_GetNoteById(noteId)
 }
+
 func (mock *DiyMockDataStore) UpdateNoteContent(noteId models.NoteId, content string) error {
 	return mock.Func_UpdateNoteContent(noteId, content)
+}
+
+func (mock *DiyMockDataStore) UpdateNoteCategory(noteId models.NoteId, category models.Category) error {
+	return mock.Func_UpdateNoteCategory(noteId, category)
+}
+
+func (mock *DiyMockDataStore) DeleteNoteCategory(noteId models.NoteId) error {
+	return mock.Func_DeleteNoteCategory(noteId)
+}
+
+func (mock *DiyMockDataStore) GetNoteCategory(noteId models.NoteId) (models.Category, error) {
+	return mock.Func_GetNoteCategory(noteId)
 }
 
 // assert fails the test if the condition is false.

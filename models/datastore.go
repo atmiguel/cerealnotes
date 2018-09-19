@@ -19,20 +19,30 @@ func ConnectToDatabase(databaseUrl string) (*DB, error) {
 }
 
 type Datastore interface {
-	StoreNewNote(*Note) (NoteId, error)
-	StoreNewNoteCategoryRelationship(NoteId, Category) error
-	StoreNewUser(string, *EmailAddress, string) error
+	// User Actions
 	AuthenticateUserCredentials(*EmailAddress, string) error
 	GetIdForUserWithEmailAddress(*EmailAddress) (UserId, error)
+	StoreNewUser(string, *EmailAddress, string) error
+	GetAllUsersById() (UserMap, error)
+
+	// Cateogry Actions
+	StoreNewNoteCategoryRelationship(NoteId, Category) error
+	UpdateNoteCategory(NoteId, Category) error
+	DeleteNoteCategory(NoteId) error
+	GetNoteCategory(NoteId) (Category, error)
+
+	// Note Actions
 	GetUsersNotes(UserId) (NoteMap, error)
 	DeleteNoteById(NoteId) error
 	GetMyUnpublishedNotes(UserId) (NoteMap, error)
-	GetAllUsersById() (UserMap, error)
+	StoreNewNote(*Note) (NoteId, error)
 	GetAllPublishedNotesVisibleBy(UserId) (map[int64]NoteMap, error)
-	PublishNotes(UserId) error
-	StoreNewPublication(*Publication) (PublicationId, error)
 	GetNoteById(NoteId) (*Note, error)
 	UpdateNoteContent(NoteId, string) error
+
+	// Publication Actions
+	PublishNotes(UserId) error
+	StoreNewPublication(*Publication) (PublicationId, error)
 }
 
 type DB struct {
