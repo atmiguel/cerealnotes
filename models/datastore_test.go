@@ -176,7 +176,23 @@ func TestCategory(t *testing.T) {
 	noteId, err := db.StoreNewNote(note)
 	ok(t, err)
 
-	err = db.StoreNewNoteCategoryRelationship(noteId, models.META)
+	assignedCategory := models.META
+	err = db.StoreNewNoteCategoryRelationship(noteId, assignedCategory)
+	ok(t, err)
+
+	retrievedCategory, err := db.GetNoteCategory(noteId)
+	ok(t, err)
+	equals(t, assignedCategory, retrievedCategory)
+
+	newAssignedCategory := models.PREDICTIONS
+	err = db.UpdateNoteCategory(noteId, newAssignedCategory)
+	ok(t, err)
+
+	newRetrievedCategory, err := db.GetNoteCategory(noteId)
+	ok(t, err)
+	equals(t, newAssignedCategory, newRetrievedCategory)
+
+	err = db.DeleteNoteCategory(noteId)
 	ok(t, err)
 }
 
