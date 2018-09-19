@@ -94,6 +94,65 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
+func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
+	sqlQuery := `
+		SELECT id FROM app_user
+		WHERE email_address = $1`
+
+	rows, err := db.Query(sqlQuery, emailAddress)
+	if err != nil {
+		return 0, convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	var userId int64
+	for rows.Next() {
+		if userId != 0 {
+			return 0, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&userId); err != nil {
+			return 0, err
+		}
+	}
+
+	if userId == 0 {
+		return 0, QueryResultContainedNoRowsError
+	}
+
+	return userId, nil
+}
+
+type UserData struct {
+	Id          int64
+	DisplayName string
+}
+
+func GetAllUserData() ([]*UserData, error) {
+	sqlQuery := `
+		SELECT id, display_name FROM app_user`
+
+	rows, err := db.Query(sqlQuery)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	var users []*UserData = make([]*UserData, 0, 10)
+
+	for rows.Next() {
+		user := &UserData{}
+		if err := rows.Scan(&user.Id, &user.DisplayName); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 type NoteData struct {
 	Id           int64
 	AuthorId     int64
@@ -101,12 +160,113 @@ type NoteData struct {
 	CreationTime time.Time
 }
 
-func returnNotes(rows *sql.Rows) ([]*NoteData, error) {
+type ExtendedNoteData struct {
+	Id               int64
+	AuthorId         int64
+	Content          string
+	CreationTime     time.Time
+	PublicationIssue int64
+}
+
+func GetMyUnpublishedNotes(userId int64) ([]*NoteData, error) {
+
+	sqlQuery := `
+		SELECT id, author_id, content, creation_time FROM note
+		LEFT OUTER JOIN note_to_publication_relationship AS note2pub
+			ON note.id = note2pub.note_id
+		WHERE note2pub.note_id is NULL AND note.author_id = $1`
+
+	rows, err := db.Query(sqlQuery, userId)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	notes, err := returnNotes(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return notes, nil
+}
+
+func GetAllPublishedNotes() ([]*NoteData, error) {
+
+	sqlQuery := `
+		SELECT id, author_id, content, creation_time FROM note
+		INNER JOIN note_to_publication_relationship AS note2pub
+			ON note.id = note2pub.note_id`
+
+	rows, err := db.Query(sqlQuery)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	notes, err := returnNotes(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return notes, nil
+}
+
+func GetAllNotesPublishedInIssueSmallerThanOrEqualTo(publictionIssueNumber int) ([]*ExtendedNoteData, error) {
+	sqlQuery := `
+		SELECT
+		note.id,
+		note.author_id,
+		note.content,
+		note.creation_time,
+		filtered_pubs.rank AS publication_issue
+		FROM   (SELECT *,
+					   Rank()
+						 OVER(
+						   partition BY pub.author_id
+						   ORDER BY pub.creation_time)
+				FROM   publication AS pub) filtered_pubs
+			   INNER JOIN note_to_publication_relationship AS note2pub
+					   ON note2pub.publication_id = filtered_pubs.id
+			   INNER JOIN note
+					   ON note.id = note2pub.note_id
+		WHERE  rank <= ($1)`
+
+	// sqlQuery2 := `
+	// 	SELECT
+	// 	note.id,
+	// 	note.author_id,
+	// 	note.content,
+	// 	note.creation_time,
+	// 	note2cat.type      AS category,
+	// 	filtered_pubs.rank AS publication_issue
+	// 	FROM   (SELECT *,
+	// 	               Rank()
+	// 	                 OVER(
+	// 	                   partition BY pub.author_id
+	// 	                   ORDER BY pub.creation_time)
+	// 	        FROM   publication AS pub) filtered_pubs
+	// 	       INNER JOIN note_to_publication_relationship AS note2pub
+	// 	               ON note2pub.publication_id = filtered_pubs.id
+	// 	       INNER JOIN note
+	// 	               ON note.id = note2pub.note_id
+	// 	       LEFT OUTER JOIN note_to_category_relationship AS note2cat
+	// 	                    ON note.id = note2cat.note_id
+	// 	WHERE  rank <= ($1)`
+
+	rows, err := db.Query(sqlQuery, publictionIssueNumber)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
 	var notes []*NoteData = make([]*NoteData, 0, 10)
 
 	for rows.Next() {
-		note := &NoteData{}
-		if err := rows.Scan(&note.Id, &note.AuthorId, &note.Content, &note.CreationTime); err != nil {
+		note := &ExtendedNoteData{}
+		if err := rows.Scan(&note.Id, &note.AuthorId, &note.Content, &note.CreationTime, &note.PublicationIssue); err != nil {
 			return nil, err
 		}
 
@@ -217,36 +377,21 @@ func StoreNoteCategoryRelationship(noteId int64, category string) error {
 	return nil
 }
 
-func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
-	sqlQuery := `
-		SELECT id FROM app_user
-		WHERE email_address = $1`
-
-	rows, err := db.Query(sqlQuery, emailAddress)
-	if err != nil {
-		return 0, convertPostgresError(err)
-	}
-	defer rows.Close()
-
-	var userId int64
-	for rows.Next() {
-		if userId != 0 {
-			return 0, QueryResultContainedMultipleRowsError
-		}
-
-		if err := rows.Scan(&userId); err != nil {
-			return 0, err
-		}
-	}
-
-	if userId == 0 {
-		return 0, QueryResultContainedNoRowsError
-	}
-
-	return userId, nil
-}
-
 // PRIVATE
+func returnNotes(rows *sql.Rows) ([]*NoteData, error) {
+	var notes []*NoteData = make([]*NoteData, 0, 10)
+
+	for rows.Next() {
+		note := &NoteData{}
+		if err := rows.Scan(&note.Id, &note.AuthorId, &note.Content, &note.CreationTime); err != nil {
+			return nil, err
+		}
+
+		notes = append(notes, note)
+	}
+
+	return notes, nil
+}
 
 func convertPostgresError(err error) error {
 	const uniqueConstraintErrorCode = "23505"
