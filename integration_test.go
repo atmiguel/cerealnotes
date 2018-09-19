@@ -221,13 +221,6 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 		// Delete category
 		{
-			type DeleteForm struct {
-				NoteId int64 `json:"noteId"`
-			}
-
-			deleteForm := &DeleteForm{NoteId: noteIdAsInt}
-			jsonValue, _ := json.Marshal(deleteForm)
-
 			mockDb.Func_DeleteNoteCategory = func(noteId models.NoteId) error {
 				if int64(noteId) == noteIdAsInt {
 					return nil
@@ -236,7 +229,8 @@ func TestAuthenticatedFlow(t *testing.T) {
 				return errors.New("Incorrect Data Arrived")
 			}
 
-			resp, err := sendDeleteRequest(client, server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+			resp, err := sendDeleteUrl(client, server.URL+paths.CategoryApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
+
 			ok(t, err)
 			equals(t, http.StatusOK, resp.StatusCode)
 

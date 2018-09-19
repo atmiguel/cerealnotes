@@ -501,18 +501,15 @@ func HandleCategoryApiRequest(
 
 	case http.MethodDelete:
 
-		type DeleteForm struct {
-			NoteId int64 `json:"noteId"`
-		}
-
-		deleteForm := new(DeleteForm)
-
-		if err := json.NewDecoder(request.Body).Decode(deleteForm); err != nil {
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if err := env.Db.DeleteNoteCategory(models.NoteId(deleteForm.NoteId)); err != nil {
+		noteId := models.NoteId(id)
+
+		if err := env.Db.DeleteNoteCategory(noteId); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
