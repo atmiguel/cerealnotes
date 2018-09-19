@@ -115,15 +115,13 @@ func HandleUserApiRequest(
 			return
 		}
 
-		user1 := models.User{"Adrian"}
-		user2 := models.User{"Evan"}
-
-		usersById := map[models.UserId]models.User{
-			1: user1,
-			2: user2,
+		usersById, err := env.Db.GetAllUsersById()
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		usersByIdJson, err := json.Marshal(usersById)
+		usersByIdJson, err := usersById.ToJson()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -231,21 +229,24 @@ func HandleNoteApiRequest(
 	switch request.Method {
 	case http.MethodGet:
 
-		var notesById models.NoteMap = make(map[models.NoteId]*models.Note, 2)
-
-		notesById[models.NoteId(1)] = &models.Note{
-			AuthorId:     1,
-			Content:      "This is an example note.",
-			CreationTime: time.Now().Add(-oneWeek).UTC(),
+		publishedNotes, err := env.Db.GetAllPublishedNotesVisibleBy(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		notesById[models.NoteId(2)] = &models.Note{
-			AuthorId:     2,
-			Content:      "What is this site for?",
-			CreationTime: time.Now().Add(-60 * 12).UTC(),
+		myUnpublishedNotes, err := env.Db.GetMyUnpublishedNotes(userId)
+
+		fmt.Println("number of published notes")
+		fmt.Println(len(publishedNotes))
+		fmt.Println("number of unpublished notes")
+		fmt.Println(len(myUnpublishedNotes))
+
+		for id, note := range myUnpublishedNotes {
+			publishedNotes[id] = note
 		}
 
-		notesInJson, err := notesById.ToJson()
+		notesInJson, err := publishedNotes.ToJson()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return

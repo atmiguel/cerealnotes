@@ -64,6 +64,14 @@ func (db *DB) GetUsersNotes(userId UserId) (NoteMap, error) {
 	return noteMap, nil
 }
 
+func (db *DB) GetAllPublishedNotesVisibleBy(userId UserId) (NoteMap, error) {
+	return nil, errors.New("Not implemented")
+}
+
+func (db *DB) GetMyUnpublishedNotes(userId UserId) (NoteMap, error) {
+	return nil, errors.New("Not implimented")
+}
+
 func (db *DB) DeleteNoteById(noteId NoteId) error {
 	sqlQuery := `
 		DELETE FROM note
