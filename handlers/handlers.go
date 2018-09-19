@@ -245,7 +245,12 @@ func HandleNoteApiRequest(
 	request *http.Request,
 	userId models.UserId,
 ) {
+
+	type NoteForm struct {
+		Content string `json:"content"`
+	}
 	switch request.Method {
+
 	case http.MethodGet:
 
 		publishedNotes, err := env.Db.GetAllPublishedNotesVisibleBy(userId)
@@ -288,9 +293,6 @@ func HandleNoteApiRequest(
 		fmt.Fprint(responseWriter, string(notesInJson))
 
 	case http.MethodPost:
-		type NoteForm struct {
-			Content string `json:"content"`
-		}
 
 		noteForm := new(NoteForm)
 
@@ -332,10 +334,9 @@ func HandleNoteApiRequest(
 		fmt.Fprint(responseWriter, string(noteString))
 
 	case http.MethodPut:
-		type NoteForm struct {
-			Id      int64  `json:"id"`
-			Content string `json:"content"`
-		}
+
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		noteId := models.NoteId(id)
 
 		noteForm := new(NoteForm)
 		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
@@ -343,12 +344,11 @@ func HandleNoteApiRequest(
 			return
 		}
 
-		if noteForm.Id < 1 {
+		if noteId < 1 {
 			http.Error(responseWriter, "Invalid Note Id", http.StatusBadRequest)
 			return
 		}
 
-		noteId := models.NoteId(noteForm.Id)
 		note, err := env.Db.GetNoteById(noteId)
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
@@ -473,8 +473,10 @@ func HandleCategoryApiRequest(
 		responseWriter.WriteHeader(http.StatusCreated)
 
 	case http.MethodPut:
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		noteId := models.NoteId(id)
+
 		type CategoryForm struct {
-			NoteId   int64  `json:"noteId"`
 			Category string `json:"category"`
 		}
 
@@ -492,7 +494,7 @@ func HandleCategoryApiRequest(
 			return
 		}
 
-		if err := env.Db.UpdateNoteCategory(models.NoteId(noteForm.NoteId), category); err != nil {
+		if err := env.Db.UpdateNoteCategory(noteId, category); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
