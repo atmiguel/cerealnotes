@@ -1,7 +1,9 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -30,6 +32,19 @@ func (emailAddress *EmailAddress) String() string {
 var EmailAddressAlreadyInUseError = errors.New("Email address already in use")
 
 var CredentialsNotAuthorizedError = errors.New("The provided credentials were not found")
+
+type UserMap map[UserId]*User
+
+func (userMap UserMap) ToJson() ([]byte, error) {
+	// json doesn't support int indexed maps
+	userByIdString := make(map[string]User, len(userMap))
+
+	for id, user := range userMap {
+		userByIdString[fmt.Sprint(id)] = *user
+	}
+
+	return json.Marshal(userByIdString)
+}
 
 //
 
@@ -101,4 +116,32 @@ func (db *DB) GetIdForUserWithEmailAddress(emailAddress *EmailAddress) (UserId, 
 	}
 
 	return UserId(userId), nil
+}
+
+func (db *DB) GetAllUsersById() (UserMap, error) {
+	sqlQuery := `
+		SELECT id, display_name FROM app_user`
+
+	rows, err := db.Query(sqlQuery)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	var userMap UserMap = make(map[UserId]*User)
+
+	for rows.Next() {
+		var tempId int64
+		user := &User{}
+		if err := rows.Scan(&tempId, &user.DisplayName); err != nil {
+			return nil, convertPostgresError(err)
+		}
+
+		userMap[UserId(tempId)] = user
+
+	}
+
+	return userMap, nil
+
 }

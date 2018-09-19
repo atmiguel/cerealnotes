@@ -38,27 +38,132 @@ func (db *DB) StoreNewNote(
 }
 
 func (db *DB) GetUsersNotes(userId UserId) (NoteMap, error) {
+	sqlQuery := `
+		SELECT id, author_id, content, creation_time FROM note
+		WHERE author_id = $1`
+
+	noteMap, err := db.getNoteMap(sqlQuery, int64(userId))
+	if err != nil {
+		return nil, err
+	}
+
+	return noteMap, nil
+}
+
+func (db *DB) GetAllPublishedNotesVisibleBy(userId UserId) (map[int64]NoteMap, error) {
+
+	sqlQueryIssueNumber := `
+		SELECT COUNT(*) AS IssueNumber FROM publication
+		WHERE publication.author_id = $1`
+
+	var publictionIssueNumber int64
+	if err := db.execOneResult(sqlQueryIssueNumber, &publictionIssueNumber, int64(userId)); err != nil {
+		return nil, err
+	}
+
+	sqlQueryGetNotes := `
+		SELECT
+		note.id,
+		note.author_id,
+		note.content,
+		note.creation_time,
+		filtered_pubs.rank AS publication_issue
+		FROM   (SELECT *,
+					   Rank()
+						 OVER(
+						   partition BY pub.author_id
+						   ORDER BY pub.creation_time)
+				FROM   publication AS pub) filtered_pubs
+			   INNER JOIN note_to_publication_relationship AS note2pub
+					   ON note2pub.publication_id = filtered_pubs.id
+			   INNER JOIN note
+					   ON note.id = note2pub.note_id
+		WHERE  rank <= ($1)`
+
+	// sqlQueryGetNotes := `
+	// 	SELECT
+	// 	note.id,
+	// 	note.author_id,
+	// 	note.content,
+	// 	note.creation_time,
+	// 	note2cat.type      AS category,
+	// 	filtered_pubs.rank AS publication_issue
+	// 	FROM   (SELECT *,
+	// 	               Rank()
+	// 	                 OVER(
+	// 	                   partition BY pub.author_id
+	// 	                   ORDER BY pub.creation_time)
+	// 	        FROM   publication AS pub) filtered_pubs
+	// 	       INNER JOIN note_to_publication_relationship AS note2pub
+	// 	               ON note2pub.publication_id = filtered_pubs.id
+	// 	       INNER JOIN note
+	// 	               ON note.id = note2pub.note_id
+	// 	       LEFT OUTER JOIN note_to_category_relationship AS note2cat
+	// 	                    ON note.id = note2cat.note_id
+	// 	WHERE  rank <= ($1)`
+
+	rows, err := db.Query(sqlQueryGetNotes, publictionIssueNumber)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+
+	defer rows.Close()
+
+	pubToNoteMap := make(map[int64]NoteMap)
+
+	for rows.Next() {
+		var publicationNumber int64
+		var noteId int64
+		note := &Note{}
+		if err := rows.Scan(&noteId, &note.AuthorId, &note.Content, &note.CreationTime, &publicationNumber); err != nil {
+			return nil, err
+		}
+
+		noteMap, ok := pubToNoteMap[publicationNumber]
+		if !ok {
+			pubToNoteMap[publicationNumber] = make(map[NoteId]*Note)
+		}
+
+		noteMap[NoteId(noteId)] = note
+
+	}
+
+	return pubToNoteMap, nil
+}
+
+func (db *DB) GetMyUnpublishedNotes(userId UserId) (NoteMap, error) {
+	sqlQuery := `
+		SELECT id, author_id, content, creation_time FROM note
+		LEFT OUTER JOIN note_to_publication_relationship AS note2pub
+			ON note.id = note2pub.note_id
+		WHERE note2pub.note_id is NULL AND note.author_id = $1`
+
+	noteMap, err := db.getNoteMap(sqlQuery, int64(userId))
+	if err != nil {
+		return nil, err
+	}
+
+	return noteMap, nil
+}
+
+func (db *DB) getNoteMap(sqlQuery string, args ...interface{}) (NoteMap, error) {
+
 	noteMap := make(map[NoteId]*Note)
 
-	{
-		sqlQuery := `
-			SELECT id, author_id, content, creation_time FROM note
-			WHERE author_id = $1`
-		rows, err := db.Query(sqlQuery, int64(userId))
-		if err != nil {
+	rows, err := db.Query(sqlQuery, args...)
+	if err != nil {
+		return nil, convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tempId int64
+		tempNote := &Note{}
+		if err := rows.Scan(&tempId, &tempNote.AuthorId, &tempNote.Content, &tempNote.CreationTime); err != nil {
 			return nil, convertPostgresError(err)
 		}
-		defer rows.Close()
 
-		for rows.Next() {
-			var tempId int64
-			tempNote := &Note{}
-			if err := rows.Scan(&tempId, &tempNote.AuthorId, &tempNote.Content, &tempNote.CreationTime); err != nil {
-				return nil, convertPostgresError(err)
-			}
-
-			noteMap[NoteId(tempId)] = tempNote
-		}
+		noteMap[NoteId(tempId)] = tempNote
 	}
 
 	return noteMap, nil
@@ -79,7 +184,7 @@ func (db *DB) DeleteNoteById(noteId NoteId) error {
 	}
 
 	if num != 1 {
-		return errors.New("Somewhere we more than 1 note was deleted")
+		return errors.New("somehow more than 1 note was deleted")
 	}
 
 	return nil

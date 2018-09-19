@@ -26,6 +26,9 @@ type Datastore interface {
 	GetIdForUserWithEmailAddress(*EmailAddress) (UserId, error)
 	GetUsersNotes(UserId) (NoteMap, error)
 	DeleteNoteById(NoteId) error
+	GetMyUnpublishedNotes(UserId) (NoteMap, error)
+	GetAllUsersById() (UserMap, error)
+	GetAllPublishedNotesVisibleBy(UserId) (map[int64]NoteMap, error)
 }
 
 type DB struct {
