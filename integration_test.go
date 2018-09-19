@@ -117,11 +117,40 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 	// Test get notes
 	{
+
+		mockDb.Func_GetMyUnpublishedNotes = func(userId models.UserId) (models.NoteMap, error) {
+			if userIdAsInt != int64(userId) {
+				return nil, errors.New("Invalid userId passed in")
+			}
+
+			return models.NoteMap(map[models.NoteId]*models.Note{
+				models.NoteId(noteIdAsInt): &models.Note{
+					AuthorId:     models.UserId(userIdAsInt),
+					Content:      content,
+					CreationTime: time.Now(),
+				},
+			}), nil
+
+		}
+
+		mockDb.Func_GetAllPublishedNotesVisibleBy = func(userId models.UserId) (models.NoteMap, error) {
+			if userIdAsInt != int64(userId) {
+				return nil, errors.New("Invalid userId passed in")
+			}
+
+			return models.NoteMap(map[models.NoteId]*models.Note{
+				models.NoteId(44): &models.Note{
+					AuthorId:     models.UserId(99),
+					Content:      "another note",
+					CreationTime: time.Now(),
+				},
+			}), nil
+
+		}
+
 		resp, err := client.Get(server.URL + paths.NoteApi)
 		ok(t, err)
 		equals(t, http.StatusOK, resp.StatusCode)
-
-		// TODO when we implement a real get notes feature we should enhance this code.
 	}
 
 	// Test Add category
@@ -215,6 +244,9 @@ type DiyMockDataStore struct {
 	Func_GetIdForUserWithEmailAddress     func(*models.EmailAddress) (models.UserId, error)
 	Func_GetUsersNotes                    func(models.UserId) (models.NoteMap, error)
 	Func_DeleteNoteById                   func(models.NoteId) error
+	Func_GetMyUnpublishedNotes            func(models.UserId) (models.NoteMap, error)
+	Func_GetAllUsersById                  func() (models.UserMap, error)
+	Func_GetAllPublishedNotesVisibleBy    func(models.UserId) (models.NoteMap, error)
 }
 
 func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, error) {
@@ -243,6 +275,18 @@ func (mock *DiyMockDataStore) GetUsersNotes(userId models.UserId) (models.NoteMa
 
 func (mock *DiyMockDataStore) DeleteNoteById(noteId models.NoteId) error {
 	return mock.Func_DeleteNoteById(noteId)
+}
+
+func (mock *DiyMockDataStore) GetMyUnpublishedNotes(userId models.UserId) (models.NoteMap, error) {
+	return mock.Func_GetMyUnpublishedNotes(userId)
+}
+
+func (mock *DiyMockDataStore) GetAllUsersById() (models.UserMap, error) {
+	return mock.Func_GetAllUsersById()
+}
+
+func (mock *DiyMockDataStore) GetAllPublishedNotesVisibleBy(userId models.UserId) (models.NoteMap, error) {
+	return mock.Func_GetAllPublishedNotesVisibleBy(userId)
 }
 
 // assert fails the test if the condition is false.
