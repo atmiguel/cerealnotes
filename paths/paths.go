@@ -8,8 +8,9 @@ const (
 	HomePage          = "/home"
 	NotesPage         = "/notes"
 
-	UserApi     = "/api/user"
-	SessionApi  = "/api/session"
-	NoteApi     = "/api/note"
-	CategoryApi = "/api/Category"
+	UserApi        = "/api/user"
+	SessionApi     = "/api/session"
+	NoteApi        = "/api/note"
+	CategoryApi    = "/api/category"
+	PublicationApi = "/api/publication"
 )

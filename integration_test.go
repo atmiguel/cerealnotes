@@ -117,7 +117,6 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 	// Test get notes
 	{
-
 		mockDb.Func_GetMyUnpublishedNotes = func(userId models.UserId) (models.NoteMap, error) {
 			if userIdAsInt != int64(userId) {
 				return nil, errors.New("Invalid userId passed in")
@@ -177,6 +176,18 @@ func TestAuthenticatedFlow(t *testing.T) {
 		jsonValue, _ := json.Marshal(categoryForm)
 
 		resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+		ok(t, err)
+		equals(t, http.StatusCreated, resp.StatusCode)
+	}
+
+	// Test publish notes
+	{
+		mockDb.Func_PublishNotes = func(userId models.UserId) error {
+			return nil
+		}
+		// publish new api
+		resp, err := client.Post(server.URL+paths.PublicationApi, "", nil)
+		printBody(resp)
 		ok(t, err)
 		equals(t, http.StatusCreated, resp.StatusCode)
 	}
@@ -249,6 +260,8 @@ type DiyMockDataStore struct {
 	Func_GetMyUnpublishedNotes            func(models.UserId) (models.NoteMap, error)
 	Func_GetAllUsersById                  func() (models.UserMap, error)
 	Func_GetAllPublishedNotesVisibleBy    func(models.UserId) (map[int64]models.NoteMap, error)
+	Func_PublishNotes                     func(models.UserId) error
+	Func_StoreNewPublication              func(*models.Publication) (models.PublicationId, error)
 }
 
 func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, error) {
@@ -289,6 +302,14 @@ func (mock *DiyMockDataStore) GetAllUsersById() (models.UserMap, error) {
 
 func (mock *DiyMockDataStore) GetAllPublishedNotesVisibleBy(userId models.UserId) (map[int64]models.NoteMap, error) {
 	return mock.Func_GetAllPublishedNotesVisibleBy(userId)
+}
+
+func (mock *DiyMockDataStore) PublishNotes(userId models.UserId) error {
+	return mock.Func_PublishNotes(userId)
+}
+
+func (mock *DiyMockDataStore) StoreNewPublication(publication *models.Publication) (models.PublicationId, error) {
+	return mock.Func_StoreNewPublication(publication)
 }
 
 // assert fails the test if the condition is false.

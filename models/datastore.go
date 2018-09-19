@@ -29,6 +29,8 @@ type Datastore interface {
 	GetMyUnpublishedNotes(UserId) (NoteMap, error)
 	GetAllUsersById() (UserMap, error)
 	GetAllPublishedNotesVisibleBy(UserId) (map[int64]NoteMap, error)
+	PublishNotes(UserId) error
+	StoreNewPublication(*Publication) (PublicationId, error)
 }
 
 type DB struct {

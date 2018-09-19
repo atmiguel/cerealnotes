@@ -122,6 +122,7 @@ func (db *DB) GetAllPublishedNotesVisibleBy(userId UserId) (map[int64]NoteMap, e
 		noteMap, ok := pubToNoteMap[publicationNumber]
 		if !ok {
 			pubToNoteMap[publicationNumber] = make(map[NoteId]*Note)
+			noteMap = pubToNoteMap[publicationNumber]
 		}
 
 		noteMap[NoteId(noteId)] = note

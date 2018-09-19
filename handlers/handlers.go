@@ -220,6 +220,25 @@ func HandleSessionApiRequest(
 	}
 }
 
+func HandlePublicationApiRequest(
+	env *Environment,
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodPost:
+		if err := env.Db.PublishNotes(userId); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		responseWriter.WriteHeader(http.StatusCreated)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+	}
+}
+
 func HandleNoteApiRequest(
 	env *Environment,
 	responseWriter http.ResponseWriter,
@@ -236,6 +255,10 @@ func HandleNoteApiRequest(
 		}
 
 		myUnpublishedNotes, err := env.Db.GetMyUnpublishedNotes(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		fmt.Println("number of published notes")
 		fmt.Println(len(publishedNotes))
@@ -245,6 +268,7 @@ func HandleNoteApiRequest(
 		allNotes := myUnpublishedNotes
 
 		// TODO figure out how to surface the publication number
+
 		// for publicationNumber, noteMap := range publishedNotes {
 		for _, noteMap := range publishedNotes {
 			for id, note := range noteMap {
