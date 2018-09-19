@@ -153,30 +153,94 @@ func TestAuthenticatedFlow(t *testing.T) {
 		equals(t, http.StatusOK, resp.StatusCode)
 	}
 
-	// Test Add category
+	// Test Category
 	{
 		type CategoryForm struct {
 			NoteId   int64  `json:"noteId"`
 			Category string `json:"category"`
 		}
 
-		metaCategory := models.META
+		// Add category
+		{
+			metaCategory := models.META
 
-		categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: metaCategory.String()}
+			categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: metaCategory.String()}
 
-		mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.Category) error {
-			if int64(noteId) == noteIdAsInt && cat == metaCategory {
-				return nil
+			mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.Category) error {
+				if int64(noteId) == noteIdAsInt && cat == metaCategory {
+					return nil
+				}
+
+				return errors.New("Incorrect Data Arrived")
 			}
 
-			return errors.New("Incorrect Data Arrived")
+			jsonValue, _ := json.Marshal(categoryForm)
+
+			resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+			ok(t, err)
+			equals(t, http.StatusCreated, resp.StatusCode)
+
 		}
 
-		jsonValue, _ := json.Marshal(categoryForm)
+		// Get Cateogry
+		{
 
-		resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
-		ok(t, err)
-		equals(t, http.StatusCreated, resp.StatusCode)
+			mockDb.Func_GetNoteCategory = func(noteId models.NoteId) (models.Category, error) {
+				if int64(noteId) == noteIdAsInt {
+					return models.META, nil
+				}
+
+				return 0, errors.New("Incorrect data")
+			}
+
+			resp, err := client.Get(server.URL + paths.NoteApi + "?id=" + strconv.FormatInt(noteIdAsInt, 10))
+			ok(t, err)
+			equals(t, http.StatusOK, resp.StatusCode)
+
+		}
+
+		// Update cateogry
+		{
+			questionCateogry := models.QUESTIONS
+			categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: questionCateogry.String()}
+			jsonValue, _ := json.Marshal(categoryForm)
+
+			mockDb.Func_UpdateNoteCategory = func(noteId models.NoteId, cat models.Category) error {
+				if int64(noteId) == noteIdAsInt && cat == questionCateogry {
+					return nil
+				}
+
+				return errors.New("Incorrect Data Arrived")
+			}
+
+			resp, err := sendPutRequest(client, server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+			ok(t, err)
+			equals(t, http.StatusOK, resp.StatusCode)
+
+		}
+
+		// Delete category
+		{
+			type DeleteForm struct {
+				NoteId int64 `json:"noteId"`
+			}
+
+			deleteForm := &DeleteForm{NoteId: noteIdAsInt}
+			jsonValue, _ := json.Marshal(deleteForm)
+
+			mockDb.Func_DeleteNoteCategory = func(noteId models.NoteId) error {
+				if int64(noteId) == noteIdAsInt {
+					return nil
+				}
+
+				return errors.New("Incorrect Data Arrived")
+			}
+
+			resp, err := sendDeleteRequest(client, server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+			ok(t, err)
+			equals(t, http.StatusOK, resp.StatusCode)
+
+		}
 	}
 
 	// Test publish notes
@@ -243,15 +307,24 @@ func TestAuthenticatedFlow(t *testing.T) {
 			return errors.New("Somehow you didn't get the correct error")
 		}
 
-		resp, err := sendDeleteRequest(client, server.URL+paths.NoteApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
+		resp, err := sendDeleteUrl(client, server.URL+paths.NoteApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
 		ok(t, err)
 		equals(t, http.StatusOK, resp.StatusCode)
 	}
 
 }
 
-// func sendDeleteRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
-func sendDeleteRequest(client *http.Client, myUrl string) (resp *http.Response, err error) {
+func sendDeleteRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequest("DELETE", myUrl, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+	return client.Do(req)
+}
+func sendDeleteUrl(client *http.Client, myUrl string) (resp *http.Response, err error) {
 
 	req, err := http.NewRequest("DELETE", myUrl, nil)
 

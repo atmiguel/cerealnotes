@@ -260,10 +260,10 @@ func HandleNoteApiRequest(
 			return
 		}
 
-		fmt.Println("number of published notes")
-		fmt.Println(len(publishedNotes))
-		fmt.Println("number of unpublished notes")
-		fmt.Println(len(myUnpublishedNotes))
+		// fmt.Println("number of published notes")
+		// fmt.Println(len(publishedNotes))
+		// fmt.Println("number of unpublished notes")
+		// fmt.Println(len(myUnpublishedNotes))
 
 		allNotes := myUnpublishedNotes
 
@@ -419,6 +419,31 @@ func HandleCategoryApiRequest(
 	userId models.UserId,
 ) {
 	switch request.Method {
+	case http.MethodGet:
+
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		noteId := models.NoteId(id)
+
+		category, err := env.Db.GetNoteCategory(noteId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		type categoryObj struct {
+			Category string `json:"category"`
+		}
+
+		jsonValue, err := json.Marshal(&categoryObj{Category: category.String()})
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+
+		fmt.Fprint(responseWriter, string(jsonValue))
 	case http.MethodPost:
 
 		type CategoryForm struct {
@@ -472,7 +497,7 @@ func HandleCategoryApiRequest(
 			return
 		}
 
-		responseWriter.WriteHeader(http.StatusCreated)
+		responseWriter.WriteHeader(http.StatusOK)
 
 	case http.MethodDelete:
 
@@ -492,7 +517,7 @@ func HandleCategoryApiRequest(
 			return
 		}
 
-		responseWriter.WriteHeader(http.StatusCreated)
+		responseWriter.WriteHeader(http.StatusOK)
 
 	default:
 		respondWithMethodNotAllowed(responseWriter, http.MethodPost, http.MethodPut, http.MethodDelete)
