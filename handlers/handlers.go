@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -299,8 +300,38 @@ func HandleNoteApiRequest(
 
 		fmt.Fprint(responseWriter, string(noteString))
 
+	case http.MethodDelete:
+
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		noteId := models.NoteId(id)
+
+		noteMap, err := env.Db.GetUsersNotes(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, ok := noteMap[noteId]; !ok {
+			errorString := "No note with that Id written by you was found"
+			http.Error(responseWriter, errorString, http.StatusBadRequest)
+			return
+		}
+
+		err = env.Db.DeleteNoteById(noteId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusOK)
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost, http.MethodDelete)
 	}
 }
 

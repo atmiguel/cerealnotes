@@ -8,10 +8,15 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"strconv"
+	// "net/url"
+	// "io"
+	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/atmiguel/cerealnotes/handlers"
 	"github.com/atmiguel/cerealnotes/models"
@@ -145,6 +150,59 @@ func TestAuthenticatedFlow(t *testing.T) {
 		equals(t, http.StatusCreated, resp.StatusCode)
 	}
 
+	// Delete note
+	{
+		mockDb.Func_GetUsersNotes = func(userId models.UserId) (models.NoteMap, error) {
+			return models.NoteMap(map[models.NoteId]*models.Note{
+				models.NoteId(noteIdAsInt): &models.Note{
+					AuthorId:     models.UserId(userIdAsInt),
+					Content:      content,
+					CreationTime: time.Now(),
+				},
+			}), nil
+		}
+
+		mockDb.Func_DeleteNoteById = func(noteid models.NoteId) error {
+			if int64(noteid) == noteIdAsInt {
+				return nil
+			}
+
+			return errors.New("Somehow you didn't get the correct error")
+		}
+
+		resp, err := sendDeleteRequest(client, server.URL+paths.NoteApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
+		ok(t, err)
+		// printBody(resp)
+
+		equals(t, http.StatusOK, resp.StatusCode)
+	}
+
+}
+
+// func sendDeleteRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
+func sendDeleteRequest(client *http.Client, myUrl string) (resp *http.Response, err error) {
+
+	req, err := http.NewRequest("DELETE", myUrl, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Do(req)
+
+}
+
+func printBody(resp *http.Response) {
+	buf, bodyErr := ioutil.ReadAll(resp.Body)
+	if bodyErr != nil {
+		fmt.Print("bodyErr ", bodyErr.Error())
+		return
+	}
+
+	rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	fmt.Printf("BODY: %q", rdr1)
+	resp.Body = rdr2
 }
 
 // Helpers
@@ -155,6 +213,8 @@ type DiyMockDataStore struct {
 	Func_StoreNewUser                     func(string, *models.EmailAddress, string) error
 	Func_AuthenticateUserCredentials      func(*models.EmailAddress, string) error
 	Func_GetIdForUserWithEmailAddress     func(*models.EmailAddress) (models.UserId, error)
+	Func_GetUsersNotes                    func(models.UserId) (models.NoteMap, error)
+	Func_DeleteNoteById                   func(models.NoteId) error
 }
 
 func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, error) {
@@ -175,6 +235,14 @@ func (mock *DiyMockDataStore) AuthenticateUserCredentials(email *models.EmailAdd
 
 func (mock *DiyMockDataStore) GetIdForUserWithEmailAddress(email *models.EmailAddress) (models.UserId, error) {
 	return mock.Func_GetIdForUserWithEmailAddress(email)
+}
+
+func (mock *DiyMockDataStore) GetUsersNotes(userId models.UserId) (models.NoteMap, error) {
+	return mock.Func_GetUsersNotes(userId)
+}
+
+func (mock *DiyMockDataStore) DeleteNoteById(noteId models.NoteId) error {
+	return mock.Func_DeleteNoteById(noteId)
 }
 
 // assert fails the test if the condition is false.
