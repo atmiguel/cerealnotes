@@ -31,6 +31,8 @@ type Datastore interface {
 	GetAllPublishedNotesVisibleBy(UserId) (map[int64]NoteMap, error)
 	PublishNotes(UserId) error
 	StoreNewPublication(*Publication) (PublicationId, error)
+	GetNoteById(NoteId) (*Note, error)
+	UpdateNoteContent(NoteId, string) error
 }
 
 type DB struct {

@@ -306,7 +306,7 @@ func HandleNoteApiRequest(
 
 		note := &models.Note{
 			AuthorId:     models.UserId(userId),
-			Content:      noteForm.Content,
+			Content:      strings.TrimSpace(noteForm.Content),
 			CreationTime: time.Now().UTC(),
 		}
 
@@ -331,6 +331,52 @@ func HandleNoteApiRequest(
 
 		fmt.Fprint(responseWriter, string(noteString))
 
+	case http.MethodPut:
+		type NoteForm struct {
+			Id      int64  `json:"id"`
+			Content string `json:"content"`
+		}
+
+		noteForm := new(NoteForm)
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if noteForm.Id < 1 {
+			http.Error(responseWriter, "Invalid Note Id", http.StatusBadRequest)
+			return
+		}
+
+		noteId := models.NoteId(noteForm.Id)
+		note, err := env.Db.GetNoteById(noteId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if note.AuthorId != userId {
+			http.Error(responseWriter, "You can only edit notes of which you are the author", http.StatusUnauthorized)
+			return
+		}
+
+		content := strings.TrimSpace(noteForm.Content)
+		if len(content) == 0 {
+			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
+			return
+		}
+
+		if content == note.Content {
+			http.Error(responseWriter, "Note content is the same as existing content", http.StatusBadRequest)
+			return
+		}
+
+		if err := env.Db.UpdateNoteContent(noteId, content); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusOK)
 	case http.MethodDelete:
 
 		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)

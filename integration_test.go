@@ -5,16 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
-	"strconv"
-	// "net/url"
-	// "io"
-	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"testing"
 	"time"
 
@@ -126,7 +125,7 @@ func TestAuthenticatedFlow(t *testing.T) {
 				models.NoteId(noteIdAsInt): &models.Note{
 					AuthorId:     models.UserId(userIdAsInt),
 					Content:      content,
-					CreationTime: time.Now(),
+					CreationTime: time.Now().UTC(),
 				},
 			}), nil
 
@@ -187,9 +186,41 @@ func TestAuthenticatedFlow(t *testing.T) {
 		}
 		// publish new api
 		resp, err := client.Post(server.URL+paths.PublicationApi, "", nil)
-		printBody(resp)
 		ok(t, err)
 		equals(t, http.StatusCreated, resp.StatusCode)
+	}
+
+	// Test edit notes
+	{
+		type NoteUpdateForm struct {
+			NoteId  int64  `json:"id"`
+			Content string `json:"content"`
+		}
+
+		mockDb.Func_GetNoteById = func(models.NoteId) (*models.Note, error) {
+			return &models.Note{
+				AuthorId:     models.UserId(userIdAsInt),
+				Content:      content,
+				CreationTime: time.Now().UTC(),
+			}, nil
+		}
+
+		mockDb.Func_UpdateNoteContent = func(models.NoteId, string) error {
+			return nil
+		}
+
+		noteForm := &NoteUpdateForm{
+			NoteId:  3,
+			Content: "anything else",
+		}
+
+		jsonValue, _ := json.Marshal(noteForm)
+
+		resp, err := sendPutRequest(client, server.URL+paths.NoteApi, "application/json", bytes.NewBuffer(jsonValue))
+
+		ok(t, err)
+		equals(t, http.StatusOK, resp.StatusCode)
+
 	}
 
 	// Delete note
@@ -214,8 +245,6 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 		resp, err := sendDeleteRequest(client, server.URL+paths.NoteApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
 		ok(t, err)
-		// printBody(resp)
-
 		equals(t, http.StatusOK, resp.StatusCode)
 	}
 
@@ -231,7 +260,17 @@ func sendDeleteRequest(client *http.Client, myUrl string) (resp *http.Response, 
 	}
 
 	return client.Do(req)
+}
 
+func sendPutRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequest("PUT", myUrl, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+	return client.Do(req)
 }
 
 func printBody(resp *http.Response) {
@@ -262,6 +301,8 @@ type DiyMockDataStore struct {
 	Func_GetAllPublishedNotesVisibleBy    func(models.UserId) (map[int64]models.NoteMap, error)
 	Func_PublishNotes                     func(models.UserId) error
 	Func_StoreNewPublication              func(*models.Publication) (models.PublicationId, error)
+	Func_GetNoteById                      func(models.NoteId) (*models.Note, error)
+	Func_UpdateNoteContent                func(models.NoteId, string) error
 }
 
 func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, error) {
@@ -310,6 +351,13 @@ func (mock *DiyMockDataStore) PublishNotes(userId models.UserId) error {
 
 func (mock *DiyMockDataStore) StoreNewPublication(publication *models.Publication) (models.PublicationId, error) {
 	return mock.Func_StoreNewPublication(publication)
+}
+
+func (mock *DiyMockDataStore) GetNoteById(noteId models.NoteId) (*models.Note, error) {
+	return mock.Func_GetNoteById(noteId)
+}
+func (mock *DiyMockDataStore) UpdateNoteContent(noteId models.NoteId, content string) error {
+	return mock.Func_UpdateNoteContent(noteId, content)
 }
 
 // assert fails the test if the condition is false.
