@@ -133,18 +133,20 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 		}
 
-		mockDb.Func_GetAllPublishedNotesVisibleBy = func(userId models.UserId) (models.NoteMap, error) {
+		mockDb.Func_GetAllPublishedNotesVisibleBy = func(userId models.UserId) (map[int64]models.NoteMap, error) {
 			if userIdAsInt != int64(userId) {
 				return nil, errors.New("Invalid userId passed in")
 			}
 
-			return models.NoteMap(map[models.NoteId]*models.Note{
-				models.NoteId(44): &models.Note{
-					AuthorId:     models.UserId(99),
-					Content:      "another note",
-					CreationTime: time.Now(),
-				},
-			}), nil
+			return map[int64]models.NoteMap{
+				1: models.NoteMap(map[models.NoteId]*models.Note{
+					models.NoteId(44): &models.Note{
+						AuthorId:     models.UserId(99),
+						Content:      "another note",
+						CreationTime: time.Now(),
+					},
+				}),
+			}, nil
 
 		}
 
@@ -246,7 +248,7 @@ type DiyMockDataStore struct {
 	Func_DeleteNoteById                   func(models.NoteId) error
 	Func_GetMyUnpublishedNotes            func(models.UserId) (models.NoteMap, error)
 	Func_GetAllUsersById                  func() (models.UserMap, error)
-	Func_GetAllPublishedNotesVisibleBy    func(models.UserId) (models.NoteMap, error)
+	Func_GetAllPublishedNotesVisibleBy    func(models.UserId) (map[int64]models.NoteMap, error)
 }
 
 func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, error) {
@@ -285,7 +287,7 @@ func (mock *DiyMockDataStore) GetAllUsersById() (models.UserMap, error) {
 	return mock.Func_GetAllUsersById()
 }
 
-func (mock *DiyMockDataStore) GetAllPublishedNotesVisibleBy(userId models.UserId) (models.NoteMap, error) {
+func (mock *DiyMockDataStore) GetAllPublishedNotesVisibleBy(userId models.UserId) (map[int64]models.NoteMap, error) {
 	return mock.Func_GetAllPublishedNotesVisibleBy(userId)
 }
 

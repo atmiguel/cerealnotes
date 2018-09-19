@@ -242,11 +242,17 @@ func HandleNoteApiRequest(
 		fmt.Println("number of unpublished notes")
 		fmt.Println(len(myUnpublishedNotes))
 
-		for id, note := range myUnpublishedNotes {
-			publishedNotes[id] = note
+		allNotes := myUnpublishedNotes
+
+		// TODO figure out how to surface the publication number
+		// for publicationNumber, noteMap := range publishedNotes {
+		for _, noteMap := range publishedNotes {
+			for id, note := range noteMap {
+				allNotes[id] = note
+			}
 		}
 
-		notesInJson, err := publishedNotes.ToJson()
+		notesInJson, err := allNotes.ToJson()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return

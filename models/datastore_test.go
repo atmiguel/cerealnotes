@@ -60,11 +60,21 @@ func TestUser(t *testing.T) {
 	err = db.StoreNewUser(displayName, emailAddress, password)
 	ok(t, err)
 
-	_, err = db.GetIdForUserWithEmailAddress(emailAddress)
+	id, err := db.GetIdForUserWithEmailAddress(emailAddress)
 	ok(t, err)
 
 	err = db.AuthenticateUserCredentials(emailAddress, password)
 	ok(t, err)
+
+	userMap, err := db.GetAllUsersById()
+	ok(t, err)
+
+	equals(t, 1, len(userMap))
+
+	user, isOk := userMap[id]
+	assert(t, isOk, "Expected UserId missing")
+
+	equals(t, displayName, user.DisplayName)
 }
 
 func TestNote(t *testing.T) {
@@ -87,6 +97,52 @@ func TestNote(t *testing.T) {
 	id, err := db.StoreNewNote(note)
 	ok(t, err)
 	assert(t, int64(id) > 0, "Note Id was not a valid index: "+strconv.Itoa(int(id)))
+
+	notemap, err := db.GetMyUnpublishedNotes(userId)
+	ok(t, err)
+
+	retrievedNote, isOk := notemap[id]
+	assert(t, isOk, "Expected NoteId missing")
+
+	equals(t, note.AuthorId, retrievedNote.AuthorId)
+	equals(t, note.Content, retrievedNote.Content)
+
+	err = db.DeleteNoteById(id)
+	ok(t, err)
+}
+
+func TestPublication(t *testing.T) {
+	db, err := models.ConnectToDatabase(postgresUrl)
+	ok(t, err)
+	ClearValuesInTable(db, userTable)
+	ClearValuesInTable(db, noteTable)
+	ClearValuesInTable(db, publicationTable)
+	ClearValuesInTable(db, noteToPublicationTable)
+
+	displayName := "bob"
+	password := "aPassword"
+	emailAddress := models.NewEmailAddress("thisIsMyEmail@gmail.com")
+
+	err = db.StoreNewUser(displayName, emailAddress, password)
+	ok(t, err)
+
+	userId, err := db.GetIdForUserWithEmailAddress(emailAddress)
+	ok(t, err)
+
+	note := &models.Note{AuthorId: userId, Content: "I'm a note", CreationTime: time.Now()}
+	id, err := db.StoreNewNote(note)
+	ok(t, err)
+	assert(t, int64(id) > 0, "Note Id was not a valid index: "+strconv.Itoa(int(id)))
+
+	fmt.Println(userId)
+	publicationToNoteMap, err := db.GetAllPublishedNotesVisibleBy(userId)
+	ok(t, err)
+
+	equals(t, 0, len(publicationToNoteMap))
+
+	// TODO once we implement publication publishing, test publication adding,
+	// and that GetAllPublishedNotesVisibleBy has non-zero rows
+
 }
 
 func TestCategory(t *testing.T) {

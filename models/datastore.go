@@ -28,7 +28,7 @@ type Datastore interface {
 	DeleteNoteById(NoteId) error
 	GetMyUnpublishedNotes(UserId) (NoteMap, error)
 	GetAllUsersById() (UserMap, error)
-	GetAllPublishedNotesVisibleBy(UserId) (NoteMap, error)
+	GetAllPublishedNotesVisibleBy(UserId) (map[int64]NoteMap, error)
 }
 
 type DB struct {
