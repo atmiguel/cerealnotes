@@ -24,6 +24,8 @@ type Datastore interface {
 	StoreNewUser(string, *EmailAddress, string) error
 	AuthenticateUserCredentials(*EmailAddress, string) error
 	GetIdForUserWithEmailAddress(*EmailAddress) (UserId, error)
+	GetUsersNotes(UserId) (NoteMap, error)
+	DeleteNoteById(NoteId) error
 }
 
 type DB struct {
