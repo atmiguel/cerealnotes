@@ -99,7 +99,6 @@ func AuthenticateOrReturnUnauthorized(
 
 func WrapUnauthenticatedEndpoint(env *Environment, handler UnauthenticatedEndpointHandlerType) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		handler(env, responseWriter, request)
 		if err, errCode := handler(env, responseWriter, request); err != nil {
 			http.Error(responseWriter, err.Error(), errCode)
 			return
