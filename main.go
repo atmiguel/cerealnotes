@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
 	"net/http"
-	"os"
+	// "os"
 
 	"github.com/atmiguel/cerealnotes/handlers"
 	"github.com/atmiguel/cerealnotes/models"
@@ -13,42 +13,46 @@ import (
 
 // Get the current listening address
 func determineListenPort() (string, error) {
-	portEnvironmentVariableName := "PORT"
-	port := os.Getenv(portEnvironmentVariableName)
+	// portEnvironmentVariableName := "PORT"
+	// port := os.Getenv(portEnvironmentVariableName)
 
-	if len(port) == 0 {
-		return "", fmt.Errorf(
-			"environment variable %s not set",
-			portEnvironmentVariableName)
-	}
+	// if len(port) == 0 {
+	// 	return "", fmt.Errorf(
+	// 		"environment variable %s not set",
+	// 		portEnvironmentVariableName)
+	// }
 
-	return ":" + port, nil
+	// return ":" + port, nil
+	return ":8080", nil
+
 }
 
 func determineDatabaseUrl() (string, error) {
-	environmentVariableName := "DATABASE_URL"
-	databaseUrl := os.Getenv(environmentVariableName)
+	// environmentVariableName := "DATABASE_URL"
+	// databaseUrl := os.Getenv(environmentVariableName)
 
-	if len(databaseUrl) == 0 {
-		return "", fmt.Errorf(
-			"environment variable %s not set",
-			environmentVariableName)
-	}
+	// if len(databaseUrl) == 0 {
+	// 	return "", fmt.Errorf(
+	// 		"environment variable %s not set",
+	// 		environmentVariableName)
+	// }
 
-	return databaseUrl, nil
+	// return databaseUrl, nil
+	return "postgresql://localhost/cerealnotes?sslmode=disable", nil
 }
 
 func determineTokenSigningKey() ([]byte, error) {
-	tokenSigningKeyVariableName := "TOKEN_SIGNING_KEY"
-	tokenSigningKey := os.Getenv(tokenSigningKeyVariableName)
+	// tokenSigningKeyVariableName := "TOKEN_SIGNING_KEY"
+	// tokenSigningKey := os.Getenv(tokenSigningKeyVariableName)
 
-	if len(tokenSigningKey) == 0 {
-		return nil, fmt.Errorf(
-			"environment variable %s not set",
-			tokenSigningKeyVariableName)
-	}
+	// if len(tokenSigningKey) == 0 {
+	// 	return nil, fmt.Errorf(
+	// 		"environment variable %s not set",
+	// 		tokenSigningKeyVariableName)
+	// }
 
-	return []byte(tokenSigningKey), nil
+	// return []byte(tokenSigningKey), nil
+	return []byte("AllYourBase"), nil
 }
 
 func main() {
