@@ -1,0 +1,26 @@
+version: '3'
+services:
+  db:
+    build: ./docker_db
+    volumes:
+      - ./docker_db/pgdata:/pgdata
+    ports:
+      - "5432"
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - PGDATA=/pgdata
+
+  backend:
+    # environment:
+    #   - GOPATH=/go/src/atmiguel/cerealnotes/
+    build:
+      context: ./
+      args:
+        app_env: ${APP_ENV} 
+    volumes:
+      - .:/go/src/github.com/atmiguel/cerealnotes/
+    ports:
+      - "8080:8080"
+    links:
+      - db

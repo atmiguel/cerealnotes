@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	"log"
 	"net/http"
+	"time"
 	// "os"
 
 	"github.com/atmiguel/cerealnotes/handlers"
@@ -38,7 +39,7 @@ func determineDatabaseUrl() (string, error) {
 	// }
 
 	// return databaseUrl, nil
-	return "postgresql://localhost/cerealnotes?sslmode=disable", nil
+	return "postgresql://docker:docker@db:5432?sslmode=disable", nil
 }
 
 func determineTokenSigningKey() ([]byte, error) {
@@ -66,7 +67,16 @@ func main() {
 			log.Fatal(err)
 		}
 
-		db, err := models.ConnectToDatabase(databaseUrl)
+		var db models.Datastore
+		// wait for the db to come online.
+		for i := 0; i < 10; i++ {
+			db, err = models.ConnectToDatabase(databaseUrl)
+			if err == nil {
+				break
+			}
+
+			time.Sleep(1 * time.Second)
+		}
 
 		if err != nil {
 			log.Fatal(err)

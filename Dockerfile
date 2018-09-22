@@ -8,6 +8,9 @@ ENV APP_ENV $app_env
 
 # install dep
 RUN go get github.com/golang/dep/cmd/dep
+RUN go get github.com/lib/pq
+RUN go get github.com/dgrijalva/jwt-go
+RUN go get golang.org/x/crypto/bcrypt
 
 # it is okay to leave user/GoDoRP as long as you do not want to share code with other libraries
 COPY . /go/src/github.com/atmiguel/cerealnotes
@@ -18,7 +21,6 @@ WORKDIR /go/src/github.com/atmiguel/cerealnotes
 # and finding dependencies
 RUN dep ensure --vendor-only
 
-RUN go build
 
 # if dev setting will use pilu/fresh for code reloading via docker-compose volume sharing with local machine
 # if production setting will build binary
@@ -30,7 +32,6 @@ RUN go build
 #	fresh; \
 #	fi
 
+CMD ["go", "run", "main.go"]
 
-CMD ["./cerealnotes"]
-	
 EXPOSE 8080
