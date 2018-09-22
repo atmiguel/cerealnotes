@@ -85,6 +85,10 @@ func (db *DB) AuthenticateUserCredentials(emailAddress *EmailAddress, password s
 	var storedHashedPassword []byte
 
 	if err := db.execOneResult(sqlQuery, &storedHashedPassword, emailAddress.String()); err != nil {
+		if err == QueryResultContainedNoRowsError {
+			return CredentialsNotAuthorizedError
+		}
+
 		return err
 	}
 
