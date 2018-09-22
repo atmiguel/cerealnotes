@@ -52,3 +52,5 @@ GoDeps/Readme
 
 *.swp
 docker_db/pgdata/
+
+vendor
