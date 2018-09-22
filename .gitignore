@@ -51,4 +51,4 @@ Temporary Items
 GoDeps/Readme
 
 *.swp
-docker_db
+docker_db/pgdata/
