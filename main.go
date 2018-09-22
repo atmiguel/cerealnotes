@@ -66,7 +66,7 @@ func main() {
 
 		var db models.Datastore
 		// wait for the db to come online.
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 30; i++ {
 			db, err = models.ConnectToDatabase(databaseUrl)
 			if err == nil {
 				break

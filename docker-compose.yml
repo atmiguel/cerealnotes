@@ -4,6 +4,7 @@ services:
     build: ./docker_db
     volumes:
       - ./docker_db/pgdata:/pgdata
+      - ./docker_db/migrations:/docker-entrypoint-initdb.d/
     ports:
       - "5432"
     environment:
