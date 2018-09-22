@@ -4,13 +4,13 @@ services:
         image: postgres:9.6
         volumes:
             - ./docker_db/pgdata:/pgdata
+            - ./docker_db/migrations:/docker-entrypoint-initdb.d/
         ports:
             - "5432"
         environment:
             - POSTGRES_USER=docker
             - POSTGRES_PASSWORD=docker
             - PGDATA=/pgdata
-
     backend:
         build:
             context: ./
