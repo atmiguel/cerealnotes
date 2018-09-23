@@ -11,7 +11,7 @@ services:
             - POSTGRES_USER=docker
             - POSTGRES_PASSWORD=docker
             - PGDATA=/pgdata
-    backend:
+    backend_prod:
         build:
             context: ./
         volumes:
