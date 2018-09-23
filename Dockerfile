@@ -3,6 +3,7 @@ WORKDIR /go/src/github.com/atmiguel/cerealnotes
 COPY . .
 RUN go get github.com/golang/dep/cmd/dep
 RUN dep ensure
+
 # Cross compile cerealnotes to work in a minimal alpine image. CGO must be
 # disabled for cross compilation. See https://github.com/golang/go/issues/5104
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cerealnotes

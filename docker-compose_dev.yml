@@ -14,6 +14,7 @@ services:
     backend:
         build:
             context: ./
+            dockerfile: Dockerfile_dev
         volumes:
             - .:/go/src/github.com/atmiguel/cerealnotes/
         ports:
@@ -24,3 +25,4 @@ services:
             - TOKEN_SIGNING_KEY=AllYourBase
         depends_on:
             - db
+        tty: true
