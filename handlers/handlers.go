@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -72,6 +73,9 @@ func AuthenticateOrRedirect(
 			}
 		} else {
 			if err, errCode := authenticatedHandlerFunc(env, responseWriter, request, userId); err != nil {
+				if errCode >= 500 {
+					log.Print(err)
+				}
 				http.Error(responseWriter, err.Error(), errCode)
 				return
 			}
@@ -88,8 +92,12 @@ func AuthenticateOrReturnUnauthorized(
 		if userId, err := getUserIdFromJwtToken(env, request); err != nil {
 			responseWriter.Header().Set("WWW-Authenticate", `Bearer realm="`+request.URL.Path+`"`)
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
+			return
 		} else {
 			if err, errCode := authenticatedHandlerFunc(env, responseWriter, request, userId); err != nil {
+				if errCode >= 500 {
+					log.Print(err)
+				}
 				http.Error(responseWriter, err.Error(), errCode)
 				return
 			}
@@ -100,6 +108,9 @@ func AuthenticateOrReturnUnauthorized(
 func WrapUnauthenticatedEndpoint(env *Environment, handler UnauthenticatedEndpointHandlerType) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		if err, errCode := handler(env, responseWriter, request); err != nil {
+			if errCode >= 500 {
+				log.Print(err)
+			}
 			http.Error(responseWriter, err.Error(), errCode)
 			return
 		}
@@ -547,6 +558,14 @@ func HandleCategoryApiRequest(
 		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
 		noteId := models.NoteId(id)
 
+		_, err = env.Db.GetNoteById(noteId)
+		if err != nil {
+			if err == models.NoNoteFoundError {
+				return err, http.StatusBadRequest
+			}
+			return err, http.StatusInternalServerError
+		}
+
 		type CategoryForm struct {
 			Category string `json:"category"`
 		}
@@ -558,7 +577,6 @@ func HandleCategoryApiRequest(
 		}
 
 		category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
-
 		if err != nil {
 			return err, http.StatusBadRequest
 		}
@@ -607,8 +625,12 @@ func RedirectToPathHandler(
 				http.StatusTemporaryRedirect)
 			return
 		default:
-			err, errcode := respondWithMethodNotAllowed(responseWriter, http.MethodGet)
-			http.Error(responseWriter, err.Error(), errcode)
+			err, errCode := respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+			if errCode >= 500 {
+				log.Print(err)
+			}
+			http.Error(responseWriter, err.Error(), errCode)
+			return
 		}
 	}
 }

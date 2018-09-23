@@ -1,0 +1,2 @@
+(docker-compose --file docker-compose_dev.yml up -d) && docker exec -it cerealnotes_backend_1 bash -c 'go run main.go' && (docker-compose --file docker-compose_dev.yml down)
+# docker exec -it cerealnotes_backend_1 /bin/bash
