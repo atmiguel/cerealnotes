@@ -25,5 +25,5 @@ else
 	docker exec cerealnotes_backend_1 bash -c 'go test ./... && go run main.go';
 fi
 
-echo -e "${GREEN}Quantum dientagiling reactor subfluid, for next beam, sir!${NC}"
+echo -e "${GREEN}Quantum disentangling reactor subfluid, for next beam, sir!${NC}"
 docker-compose --file docker-compose.dev.yml down;
