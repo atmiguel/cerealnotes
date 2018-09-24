@@ -11,10 +11,9 @@
 	* run `dep ensure`
 	* exit bash
 2. prepare test db
-	* run `./beam_me_up_scotty.sh db`
-	* run `\c test` (connect to test database)
-	* copy contents of 0000_createDbs.sql and paste into terminal
-	* exit bash
+	* run `./beam_me_up_scotty.sh bash`
+	* run `psql $DATABASE_URL < /docker-entrypoint-initdb.d/*.sql`
+	* run `psql $DATABASE_URL_TEST < /docker-entrypoint-initdb.d/*.sql`
 3. run `./beam_me_up_scotty.sh` and everything should work
 
 Please note step 1 and step 2 are only necessary the first time you connect set up your test environment

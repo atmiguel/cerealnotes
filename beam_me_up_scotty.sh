@@ -14,7 +14,8 @@ docker-compose --file docker-compose.dev.yml up -d;
 
 if [ "$1" = "db" ]; then
 	echo -e "${GREEN}Beaming you into the system mechanics, sir!${NC}"
-	docker exec -it cerealnotes_db_1 psql -U docker -W docker
+	docker exec -it cerealnotes_db_1 /bin/bash;
+	# docker exec -it cerealnotes_db_1 psql -U docker -W docker
 elif [ "$1" = "bash" ]; then
 	echo -e "${GREEN}Beaming you straight into quantum space, sir!${NC}"
 	docker exec -it cerealnotes_backend_1 /bin/bash;

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/atmiguel/cerealnotes/handlers"
 	"github.com/atmiguel/cerealnotes/models"
@@ -64,17 +63,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		var db models.Datastore
-		// wait for the db to come online.
-		for i := 0; i < 30; i++ {
-			db, err = models.ConnectToDatabase(databaseUrl)
-			if err == nil {
-				break
-			}
-
-			time.Sleep(1 * time.Second)
-		}
-
+		db, err := models.ConnectToDatabase(databaseUrl, 20)
 		if err != nil {
 			log.Fatal(err)
 		}
