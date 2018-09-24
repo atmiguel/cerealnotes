@@ -17,8 +17,7 @@
 	* exit bash
 3. run `./beam_me_up_scotty.sh` and everything should work
 
-Please note step 1 and step 2 are only necciary the first time you connect set up your test environment
+Please note step 1 and step 2 are only necessary the first time you connect set up your test environment
 
 # Bugs
-* dep doesn't work
-* tables ahve not been migrated
+* Running sql migrations is very cumbersome
