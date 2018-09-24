@@ -12,7 +12,8 @@ import (
 	"github.com/atmiguel/cerealnotes/models"
 )
 
-var postgresUrl = "postgresql://localhost/cerealnotes_test?sslmode=disable"
+// var postgresUrl = "postgresql://localhost/cerealnotes_test?sslmode=disable"
+var postgresUrl = "postgresql://docker:docker@db:5432/test?sslmode=disable"
 
 const noteTable = "note"
 const publicationTable = "publication"
@@ -28,7 +29,7 @@ var tables = []string{
 	userTable,
 }
 
-func ClearAllValuesInTable(db *models.DB) {
+func ClearValuesInAllTables(db *models.DB) {
 	for _, val := range tables {
 		if err := ClearValuesInTable(db, val); err != nil {
 			panic(err)

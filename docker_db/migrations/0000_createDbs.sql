@@ -1,3 +1,6 @@
+-- For testing purposes
+CREATE DATABASE test;
+
 -- Types
 CREATE TYPE category_type AS ENUM ('predictions', 'marginalia', 'meta', 'questions');
 
