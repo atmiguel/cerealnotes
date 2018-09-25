@@ -224,7 +224,7 @@ func HandleNoteApiRequest(
 	switch request.Method {
 	case http.MethodGet:
 
-		var notesById noteservice.NoteMap = make(map[models.NoteId]*models.Note, 2)
+		var notesById noteservice.NotesById = make(map[models.NoteId]*models.Note, 2)
 
 		notesById[models.NoteId(1)] = &models.Note{
 			AuthorId:     1,
@@ -286,34 +286,36 @@ func HandleNoteApiRequest(
 	}
 }
 
-func HandleCategoryApiRequest(
+func HandleNoteCateogryApiRequest(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
 ) {
 	switch request.Method {
-	case http.MethodPost:
+	case http.MethodPut:
+
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		noteId := models.NoteId(id)
 
 		type CategoryForm struct {
-			NoteId   int64  `json:"noteId"`
 			Category string `json:"category"`
 		}
 
-		noteForm := new(CategoryForm)
+		categoryForm := new(CategoryForm)
 
-		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+		if err := json.NewDecoder(request.Body).Decode(categoryForm); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
+		category, err := models.DeserializeCategory(strings.ToLower(categoryForm.Category))
 
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if err := noteservice.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
+		if err := noteservice.StoreNewNoteCategoryRelationship(models.NoteId(noteId), category); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -321,7 +323,7 @@ func HandleCategoryApiRequest(
 		responseWriter.WriteHeader(http.StatusCreated)
 
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodPut)
 	}
 
 }
