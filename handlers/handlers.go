@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
-	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -26,10 +26,15 @@ type JwtTokenClaim struct {
 	jwt.StandardClaims
 }
 
-var tokenSigningKey []byte
+type Environment struct {
+	Db              models.Datastore
+	TokenSigningKey []byte
+}
 
-func SetTokenSigningKey(key []byte) {
-	tokenSigningKey = key
+func WrapUnauthenticatedEndpoint(env *Environment, handler UnauthenticatedEndpointHandlerType) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		handler(env, responseWriter, request)
+	}
 }
 
 // UNAUTHENTICATED HANDLERS
@@ -37,12 +42,13 @@ func SetTokenSigningKey(key []byte) {
 // HandleLoginOrSignupPageRequest responds to unauthenticated GET requests with the login or signup page.
 // For authenticated requests, it redirects to the home page.
 func HandleLoginOrSignupPageRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		if _, err := getUserIdFromJwtToken(request); err == nil {
+		if _, err := getUserIdFromJwtToken(env, request); err == nil {
 			http.Redirect(
 				responseWriter,
 				request,
@@ -65,6 +71,7 @@ func HandleLoginOrSignupPageRequest(
 }
 
 func HandleUserApiRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -84,12 +91,12 @@ func HandleUserApiRequest(
 		}
 
 		var statusCode int
-		if err := userservice.StoreNewUser(
+		if err := env.Db.StoreNewUser(
 			signupForm.DisplayName,
 			models.NewEmailAddress(signupForm.EmailAddress),
 			signupForm.Password,
 		); err != nil {
-			if err == userservice.EmailAddressAlreadyInUseError {
+			if err == models.EmailAddressAlreadyInUseError {
 				statusCode = http.StatusConflict
 			} else {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
@@ -103,20 +110,18 @@ func HandleUserApiRequest(
 
 	case http.MethodGet:
 
-		if _, err := getUserIdFromJwtToken(request); err != nil {
+		if _, err := getUserIdFromJwtToken(env, request); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		user1 := models.User{"Adrian"}
-		user2 := models.User{"Evan"}
-
-		usersById := map[models.UserId]models.User{
-			1: user1,
-			2: user2,
+		usersById, err := env.Db.GetAllUsersById()
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		usersByIdJson, err := json.Marshal(usersById)
+		usersByIdJson, err := usersById.ToJson()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -134,6 +139,7 @@ func HandleUserApiRequest(
 // HandleSessionApiRequest responds to POST requests by authenticating and responding with a JWT.
 // It responds to DELETE requests by expiring the client's cookie.
 func HandleSessionApiRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -151,12 +157,12 @@ func HandleSessionApiRequest(
 			return
 		}
 
-		if err := userservice.AuthenticateUserCredentials(
+		if err := env.Db.AuthenticateUserCredentials(
 			models.NewEmailAddress(loginForm.EmailAddress),
 			loginForm.Password,
 		); err != nil {
 			statusCode := http.StatusInternalServerError
-			if err == userservice.CredentialsNotAuthorizedError {
+			if err == models.CredentialsNotAuthorizedError {
 				statusCode = http.StatusUnauthorized
 			}
 			http.Error(responseWriter, err.Error(), statusCode)
@@ -165,13 +171,13 @@ func HandleSessionApiRequest(
 
 		// Set our cookie to have a valid JWT Token as the value
 		{
-			userId, err := userservice.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
+			userId, err := env.Db.GetIdForUserWithEmailAddress(models.NewEmailAddress(loginForm.EmailAddress))
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			token, err := createTokenAsString(userId, credentialTimeoutDuration)
+			token, err := CreateTokenAsString(env, userId, credentialTimeoutDuration)
 			if err != nil {
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
@@ -214,28 +220,63 @@ func HandleSessionApiRequest(
 	}
 }
 
+func HandlePublicationApiRequest(
+	env *Environment,
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodPost:
+		if err := env.Db.PublishNotes(userId); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		responseWriter.WriteHeader(http.StatusCreated)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+	}
+}
+
 func HandleNoteApiRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		note1 := &models.Note{
-			AuthorId:     1,
-			Content:      "This is an example note.",
-			CreationTime: time.Now().Add(-oneWeek).UTC(),
+
+		publishedNotes, err := env.Db.GetAllPublishedNotesVisibleBy(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		note2 := &models.Note{
-			AuthorId:     2,
-			Content:      "What is this site for?",
-			CreationTime: time.Now().Add(-60 * 12).UTC(),
+		myUnpublishedNotes, err := env.Db.GetMyUnpublishedNotes(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		notes := [2]*models.Note{note1, note2}
+		fmt.Println("number of published notes")
+		fmt.Println(len(publishedNotes))
+		fmt.Println("number of unpublished notes")
+		fmt.Println(len(myUnpublishedNotes))
 
-		notesInJson, err := json.Marshal(notes)
+		allNotes := myUnpublishedNotes
+
+		// TODO figure out how to surface the publication number
+
+		// for publicationNumber, noteMap := range publishedNotes {
+		for _, noteMap := range publishedNotes {
+			for id, note := range noteMap {
+				allNotes[id] = note
+			}
+		}
+
+		notesInJson, err := allNotes.ToJson()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -246,22 +287,146 @@ func HandleNoteApiRequest(
 
 		fmt.Fprint(responseWriter, string(notesInJson))
 
+	case http.MethodPost:
+		type NoteForm struct {
+			Content string `json:"content"`
+		}
+
+		noteForm := new(NoteForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if len(strings.TrimSpace(noteForm.Content)) == 0 {
+			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
+			return
+		}
+
+		note := &models.Note{
+			AuthorId:     models.UserId(userId),
+			Content:      noteForm.Content,
+			CreationTime: time.Now().UTC(),
+		}
+
+		noteId, err := env.Db.StoreNewNote(note)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		type NoteResponse struct {
+			NoteId int64 `json:"noteId"`
+		}
+
+		noteString, err := json.Marshal(&NoteResponse{NoteId: int64(noteId)})
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusCreated)
+
+		fmt.Fprint(responseWriter, string(noteString))
+
+	case http.MethodDelete:
+
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		noteId := models.NoteId(id)
+
+		noteMap, err := env.Db.GetUsersNotes(userId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, ok := noteMap[noteId]; !ok {
+			errorString := "No note with that Id written by you was found"
+			http.Error(responseWriter, errorString, http.StatusBadRequest)
+			return
+		}
+
+		err = env.Db.DeleteNoteById(noteId)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusOK)
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost, http.MethodDelete)
 	}
 }
 
+func HandleCategoryApiRequest(
+	env *Environment,
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodPost:
+
+		type CategoryForm struct {
+			NoteId   int64  `json:"noteId"`
+			Category string `json:"category"`
+		}
+
+		noteForm := new(CategoryForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
+
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := env.Db.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusCreated)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+	}
+
+}
+
 type AuthenticatedRequestHandlerType func(
+	*Environment,
 	http.ResponseWriter,
 	*http.Request,
-	models.UserId)
+	models.UserId,
+)
+
+type UnauthenticatedEndpointHandlerType func(
+	*Environment,
+	http.ResponseWriter,
+	*http.Request,
+)
 
 func AuthenticateOrRedirect(
+	env *Environment,
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 	redirectPath string,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		if userId, err := getUserIdFromJwtToken(request); err != nil {
+		if userId, err := getUserIdFromJwtToken(env, request); err != nil {
 			switch request.Method {
 			// If not logged in, redirect to login page
 			case http.MethodGet:
@@ -275,20 +440,22 @@ func AuthenticateOrRedirect(
 				respondWithMethodNotAllowed(responseWriter, http.MethodGet)
 			}
 		} else {
-			authenticatedHandlerFunc(responseWriter, request, userId)
+			authenticatedHandlerFunc(env, responseWriter, request, userId)
 		}
 	}
 }
 
 func AuthenticateOrReturnUnauthorized(
+	env *Environment,
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		if userId, err := getUserIdFromJwtToken(request); err != nil {
-			responseWriter.Header().Set("WWW-Authenticate", "Please log in to see this page")
+
+		if userId, err := getUserIdFromJwtToken(env, request); err != nil {
+			responseWriter.Header().Set("WWW-Authenticate", `Bearer realm="`+request.URL.Path+`"`)
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
-			authenticatedHandlerFunc(responseWriter, request, userId)
+			authenticatedHandlerFunc(env, responseWriter, request, userId)
 		}
 	}
 }
@@ -314,6 +481,7 @@ func RedirectToPathHandler(
 // AUTHENTICATED HANDLERS
 
 func HandleHomePageRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
@@ -333,6 +501,7 @@ func HandleHomePageRequest(
 }
 
 func HandleNotesPageRequest(
+	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,

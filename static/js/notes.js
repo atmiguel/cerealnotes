@@ -22,7 +22,7 @@ const $createDivider = function() {
     return $('<span>', {text: ' - '});
 };
 
-const $createNote = function(note) {
+const $createNote = function(noteId, note) {
     const $author = $createAuthor(note.authorId);
     const $type = $createType(note.type);
     const $creationTime = $createCreationTime(note.creationTime);
@@ -45,11 +45,9 @@ $(function() {
         $.get('/api/note', function(notes) {
             const $notes = $('#notes');
 
-            notes.forEach((note) => {
-                $notes.append(
-                    $createNote(note)
-                );
-            });
+            for (const key of Object.keys(notes)) {
+                $notes.append($createNote(key, notes[key]));
+            }
         });
     });
 });
