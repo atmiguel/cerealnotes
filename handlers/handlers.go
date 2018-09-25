@@ -308,7 +308,7 @@ func HandleNoteCateogryApiRequest(
 			return
 		}
 
-		category, err := models.DeserializeCategory(strings.ToLower(categoryForm.Category))
+		category, err := models.DeserializeCategory(categoryForm.Category)
 
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
