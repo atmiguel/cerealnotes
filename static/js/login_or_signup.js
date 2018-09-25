@@ -132,34 +132,34 @@ $(function() {
     };
 
     attachSubmitClickHandler(signupFormMetadata, (formDataAsJsonString) => {
-        $.post('/api/user', formDataAsJsonString, (responseBody, _, request) => {
-            if (request.status === 201) {
+        $.post('/api/user', formDataAsJsonString, (responseBody, _, $XmlHttpResponse) => {
+            if ($XmlHttpResponse.status === 201) {
                 mui.tabs.activate('login-form');
                 alert('Successfully created user, please sign in');
             } else {
-                alert('Unknown successful status');
+                alert('Unexpected successful status');
             }
-        }).fail((request) => {
-            if (request.status === 409) {
+        }).fail(($XmlHttpResponse) => {
+            if ($XmlHttpResponse.status === 409) {
                 alert('Email address already in use');
             } else {
-                alert('Unknown error');
+                alert('Unexpected error ' + $XmlHttpResponse.responseText);
             }
         });
     });
 
     attachSubmitClickHandler(loginFormMetadata, (formDataAsJsonString) => {
-        $.post('/api/session', formDataAsJsonString, (responseBody, _, request) => {
-            if (request.status === 201) {
+        $.post('/api/session', formDataAsJsonString, (responseBody, _, $XmlHttpResponse) => {
+            if ($XmlHttpResponse.status === 201) {
                 location.reload();
             } else {
                 alert('Error in logging in');
             }
-        }, 'text').fail((request) => {
-            if (request.status === 401) {
+        }, 'text').fail(($XmlHttpResponse) => {
+            if ($XmlHttpResponse.status === 401) {
                 alert('Email address and/or password was incorrect');
             } else {
-                alert('Unknown error');
+                alert('Unexpected error ' + $XmlHttpResponse.responseText);
             }
         });
     });
