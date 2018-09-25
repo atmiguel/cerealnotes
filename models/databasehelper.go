@@ -15,6 +15,8 @@ var QueryResultContainedMultipleRowsError = errors.New("query result unexpectedl
 // QueryResultContainedNoRowsError is returned when a query unexpectedly returns no rows.
 var QueryResultContainedNoRowsError = errors.New("query result unexpectedly contained no rows")
 
+var TooManyRowsAffectedError = errors.New("There were too many rows affected by the query")
+
 func convertPostgresError(err error) error {
 	const uniqueConstraintErrorCode = "23505"
 

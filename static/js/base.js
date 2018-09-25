@@ -18,7 +18,7 @@ $(function() {
     };
   });
 
-  jQuery.prototype.getDOM = function() {
+  jQuery.prototype.getUnderlyingDomElement = function() {
     if (this.length === 1) {
         return this[0];
     }

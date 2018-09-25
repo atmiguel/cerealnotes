@@ -5,16 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
-	"strconv"
-	// "net/url"
-	// "io"
-	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"testing"
 	"time"
 
@@ -126,7 +125,7 @@ func TestAuthenticatedFlow(t *testing.T) {
 				models.NoteId(noteIdAsInt): &models.Note{
 					AuthorId:     models.UserId(userIdAsInt),
 					Content:      content,
-					CreationTime: time.Now(),
+					CreationTime: time.Now().UTC(),
 				},
 			}), nil
 
@@ -154,30 +153,88 @@ func TestAuthenticatedFlow(t *testing.T) {
 		equals(t, http.StatusOK, resp.StatusCode)
 	}
 
-	// Test Add category
+	// Test Category
 	{
 		type CategoryForm struct {
 			NoteId   int64  `json:"noteId"`
 			Category string `json:"category"`
 		}
 
-		metaCategory := models.META
+		// Add category
+		{
+			metaCategory := models.META
 
-		categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: metaCategory.String()}
+			categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: metaCategory.String()}
 
-		mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.Category) error {
-			if int64(noteId) == noteIdAsInt && cat == metaCategory {
-				return nil
+			mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.Category) error {
+				if int64(noteId) == noteIdAsInt && cat == metaCategory {
+					return nil
+				}
+
+				return errors.New("Incorrect Data Arrived")
 			}
 
-			return errors.New("Incorrect Data Arrived")
+			jsonValue, _ := json.Marshal(categoryForm)
+
+			resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+			ok(t, err)
+			equals(t, http.StatusCreated, resp.StatusCode)
+
 		}
 
-		jsonValue, _ := json.Marshal(categoryForm)
+		// Get Cateogry
+		{
 
-		resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
-		ok(t, err)
-		equals(t, http.StatusCreated, resp.StatusCode)
+			mockDb.Func_GetNoteCategory = func(noteId models.NoteId) (models.Category, error) {
+				if int64(noteId) == noteIdAsInt {
+					return models.META, nil
+				}
+
+				return 0, errors.New("Incorrect data")
+			}
+
+			resp, err := client.Get(server.URL + paths.NoteApi + "?id=" + strconv.FormatInt(noteIdAsInt, 10))
+			ok(t, err)
+			equals(t, http.StatusOK, resp.StatusCode)
+
+		}
+
+		// Update cateogry
+		{
+			questionCateogry := models.QUESTIONS
+			categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: questionCateogry.String()}
+			jsonValue, _ := json.Marshal(categoryForm)
+
+			mockDb.Func_UpdateNoteCategory = func(noteId models.NoteId, cat models.Category) error {
+				if int64(noteId) == noteIdAsInt && cat == questionCateogry {
+					return nil
+				}
+
+				return errors.New("Incorrect Data Arrived")
+			}
+
+			resp, err := sendPutRequest(client, server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+			ok(t, err)
+			equals(t, http.StatusOK, resp.StatusCode)
+
+		}
+
+		// Delete category
+		{
+			mockDb.Func_DeleteNoteCategory = func(noteId models.NoteId) error {
+				if int64(noteId) == noteIdAsInt {
+					return nil
+				}
+
+				return errors.New("Incorrect Data Arrived")
+			}
+
+			resp, err := sendDeleteUrl(client, server.URL+paths.CategoryApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
+
+			ok(t, err)
+			equals(t, http.StatusOK, resp.StatusCode)
+
+		}
 	}
 
 	// Test publish notes
@@ -187,9 +244,41 @@ func TestAuthenticatedFlow(t *testing.T) {
 		}
 		// publish new api
 		resp, err := client.Post(server.URL+paths.PublicationApi, "", nil)
-		printBody(resp)
 		ok(t, err)
 		equals(t, http.StatusCreated, resp.StatusCode)
+	}
+
+	// Test edit notes
+	{
+		type NoteUpdateForm struct {
+			NoteId  int64  `json:"id"`
+			Content string `json:"content"`
+		}
+
+		mockDb.Func_GetNoteById = func(models.NoteId) (*models.Note, error) {
+			return &models.Note{
+				AuthorId:     models.UserId(userIdAsInt),
+				Content:      content,
+				CreationTime: time.Now().UTC(),
+			}, nil
+		}
+
+		mockDb.Func_UpdateNoteContent = func(models.NoteId, string) error {
+			return nil
+		}
+
+		noteForm := &NoteUpdateForm{
+			NoteId:  3,
+			Content: "anything else",
+		}
+
+		jsonValue, _ := json.Marshal(noteForm)
+
+		resp, err := sendPutRequest(client, server.URL+paths.NoteApi, "application/json", bytes.NewBuffer(jsonValue))
+
+		ok(t, err)
+		equals(t, http.StatusOK, resp.StatusCode)
+
 	}
 
 	// Delete note
@@ -212,17 +301,24 @@ func TestAuthenticatedFlow(t *testing.T) {
 			return errors.New("Somehow you didn't get the correct error")
 		}
 
-		resp, err := sendDeleteRequest(client, server.URL+paths.NoteApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
+		resp, err := sendDeleteUrl(client, server.URL+paths.NoteApi+"?id="+strconv.FormatInt(noteIdAsInt, 10))
 		ok(t, err)
-		// printBody(resp)
-
 		equals(t, http.StatusOK, resp.StatusCode)
 	}
 
 }
 
-// func sendDeleteRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
-func sendDeleteRequest(client *http.Client, myUrl string) (resp *http.Response, err error) {
+func sendDeleteRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequest("DELETE", myUrl, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+	return client.Do(req)
+}
+func sendDeleteUrl(client *http.Client, myUrl string) (resp *http.Response, err error) {
 
 	req, err := http.NewRequest("DELETE", myUrl, nil)
 
@@ -231,7 +327,17 @@ func sendDeleteRequest(client *http.Client, myUrl string) (resp *http.Response, 
 	}
 
 	return client.Do(req)
+}
 
+func sendPutRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequest("PUT", myUrl, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+	return client.Do(req)
 }
 
 func printBody(resp *http.Response) {
@@ -262,6 +368,11 @@ type DiyMockDataStore struct {
 	Func_GetAllPublishedNotesVisibleBy    func(models.UserId) (map[int64]models.NoteMap, error)
 	Func_PublishNotes                     func(models.UserId) error
 	Func_StoreNewPublication              func(*models.Publication) (models.PublicationId, error)
+	Func_GetNoteById                      func(models.NoteId) (*models.Note, error)
+	Func_UpdateNoteContent                func(models.NoteId, string) error
+	Func_UpdateNoteCategory               func(models.NoteId, models.Category) error
+	Func_DeleteNoteCategory               func(models.NoteId) error
+	Func_GetNoteCategory                  func(models.NoteId) (models.Category, error)
 }
 
 func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, error) {
@@ -310,6 +421,26 @@ func (mock *DiyMockDataStore) PublishNotes(userId models.UserId) error {
 
 func (mock *DiyMockDataStore) StoreNewPublication(publication *models.Publication) (models.PublicationId, error) {
 	return mock.Func_StoreNewPublication(publication)
+}
+
+func (mock *DiyMockDataStore) GetNoteById(noteId models.NoteId) (*models.Note, error) {
+	return mock.Func_GetNoteById(noteId)
+}
+
+func (mock *DiyMockDataStore) UpdateNoteContent(noteId models.NoteId, content string) error {
+	return mock.Func_UpdateNoteContent(noteId, content)
+}
+
+func (mock *DiyMockDataStore) UpdateNoteCategory(noteId models.NoteId, category models.Category) error {
+	return mock.Func_UpdateNoteCategory(noteId, category)
+}
+
+func (mock *DiyMockDataStore) DeleteNoteCategory(noteId models.NoteId) error {
+	return mock.Func_DeleteNoteCategory(noteId)
+}
+
+func (mock *DiyMockDataStore) GetNoteCategory(noteId models.NoteId) (models.Category, error) {
+	return mock.Func_GetNoteCategory(noteId)
 }
 
 // assert fails the test if the condition is false.

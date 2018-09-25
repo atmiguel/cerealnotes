@@ -170,6 +170,46 @@ func (db *DB) getNoteMap(sqlQuery string, args ...interface{}) (NoteMap, error) 
 	return noteMap, nil
 }
 
+func (db *DB) GetNoteById(noteId NoteId) (*Note, error) {
+
+	sqlQuery := `
+		SELECT * FROM note
+		WHERE note.id = ($1)`
+
+	noteMap, err := db.getNoteMap(sqlQuery, int64(noteId))
+	if err != nil {
+		return nil, err
+	}
+
+	note, ok := noteMap[noteId]
+	if !ok {
+		return nil, NoNoteFoundError
+	}
+
+	return note, nil
+}
+
+func (db *DB) UpdateNoteContent(noteId NoteId, content string) error {
+	sqlQuery := `
+		UPDATE note SET content = ($2) 
+		WHERE id = ($1)`
+
+	rowsAffected, err := db.execNoResults(sqlQuery, int64(noteId), content)
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return NoNoteFoundError
+	}
+
+	if rowsAffected > 1 {
+		return TooManyRowsAffectedError
+	}
+
+	return nil
+}
+
 func (db *DB) DeleteNoteById(noteId NoteId) error {
 	sqlQuery := `
 		DELETE FROM note
@@ -185,7 +225,7 @@ func (db *DB) DeleteNoteById(noteId NoteId) error {
 	}
 
 	if num != 1 {
-		return errors.New("somehow more than 1 note was deleted")
+		return TooManyRowsAffectedError
 	}
 
 	return nil
