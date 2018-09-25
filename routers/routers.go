@@ -65,7 +65,6 @@ func DefineRoutes(env *handlers.Environment) http.Handler {
 	mux.handleAuthenticatedPage(env, paths.NotesPage, handlers.HandleNotesPageRequest)
 
 	// api
-
 	mux.handleUnAutheticedRequest(env, paths.UserApi, handlers.HandleUserApiRequest)
 	mux.handleUnAutheticedRequest(env, paths.SessionApi, handlers.HandleSessionApiRequest)
 

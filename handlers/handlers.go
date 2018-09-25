@@ -485,16 +485,26 @@ func HandleCategoryApiRequest(
 		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
 		noteId := models.NoteId(id)
 
+		var categoryString string
+
 		category, err := env.Db.GetNoteCategory(noteId)
 		if err != nil {
-			return err, http.StatusInternalServerError
+			if err == models.QueryResultContainedNoRowsError {
+				// you are trying to a a non set category return the empty string
+				categoryString = ""
+
+			} else {
+				return err, http.StatusInternalServerError
+			}
+		} else {
+			categoryString = category.String()
 		}
 
 		type categoryObj struct {
 			Category string `json:"category"`
 		}
 
-		jsonValue, err := json.Marshal(&categoryObj{Category: category.String()})
+		jsonValue, err := json.Marshal(&categoryObj{Category: categoryString})
 		if err != nil {
 			return err, http.StatusInternalServerError
 		}
