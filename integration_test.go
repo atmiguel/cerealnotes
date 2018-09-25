@@ -202,7 +202,7 @@ func TestAuthenticatedFlow(t *testing.T) {
 		// Update cateogry
 		{
 			questionCateogry := models.QUESTIONS
-			categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: questionCateogry.String()}
+			categoryForm := &CategoryForm{Category: questionCateogry.String()}
 			jsonValue, _ := json.Marshal(categoryForm)
 
 			mockDb.Func_UpdateNoteCategory = func(noteId models.NoteId, cat models.Category) error {
@@ -213,7 +213,7 @@ func TestAuthenticatedFlow(t *testing.T) {
 				return errors.New("Incorrect Data Arrived")
 			}
 
-			resp, err := sendPutRequest(client, server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+			resp, err := sendPutRequest(client, server.URL+paths.CategoryApi+"?id="+strconv.FormatInt(noteIdAsInt, 10), "application/json", bytes.NewBuffer(jsonValue))
 			ok(t, err)
 			equals(t, http.StatusOK, resp.StatusCode)
 
@@ -268,13 +268,12 @@ func TestAuthenticatedFlow(t *testing.T) {
 		}
 
 		noteForm := &NoteUpdateForm{
-			NoteId:  3,
 			Content: "anything else",
 		}
 
 		jsonValue, _ := json.Marshal(noteForm)
 
-		resp, err := sendPutRequest(client, server.URL+paths.NoteApi, "application/json", bytes.NewBuffer(jsonValue))
+		resp, err := sendPutRequest(client, server.URL+paths.NoteApi+"?id="+strconv.FormatInt(3, 10), "application/json", bytes.NewBuffer(jsonValue))
 
 		ok(t, err)
 		equals(t, http.StatusOK, resp.StatusCode)
