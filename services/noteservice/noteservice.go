@@ -36,11 +36,11 @@ func StoreNewNoteCategoryRelationship(
 
 type NotesById map[models.NoteId]*models.Note
 
-func (noteMap NotesById) ToJson() ([]byte, error) {
+func (notesById NotesById) ToJson() ([]byte, error) {
 	// json doesn't support int indexed maps
-	notesByIdString := make(map[string]models.Note, len(noteMap))
+	notesByIdString := make(map[string]models.Note, len(notesById))
 
-	for id, note := range noteMap {
+	for id, note := range notesById {
 		notesByIdString[fmt.Sprint(id)] = *note
 	}
 

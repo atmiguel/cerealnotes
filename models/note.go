@@ -31,7 +31,7 @@ func DeserializeCategory(input string) (Category, error) {
 			return Category(i), nil
 		}
 	}
-	return MARGINALIA, CannotDeserializeCategoryStringError
+	return 0, CannotDeserializeCategoryStringError
 }
 
 func (category Category) String() string {
