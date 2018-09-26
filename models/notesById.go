@@ -5,13 +5,13 @@ import (
 	"fmt"
 )
 
-type NoteMap map[NoteId]*Note
+type NotesById map[NoteId]*Note
 
-func (noteMap NoteMap) ToJson() ([]byte, error) {
+func (notesById NotesById) ToJson() ([]byte, error) {
 	// json doesn't support int indexed maps
-	notesByIdString := make(map[string]Note, len(noteMap))
+	notesByIdString := make(map[string]Note, len(notesById))
 
-	for id, note := range noteMap {
+	for id, note := range notesById {
 		notesByIdString[fmt.Sprint(id)] = *note
 	}
 
