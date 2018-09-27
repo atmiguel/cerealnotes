@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"testing"
 
 	"github.com/atmiguel/cerealnotes/handlers"
@@ -122,13 +125,12 @@ func TestAuthenticatedFlow(t *testing.T) {
 	// Test Add category
 	{
 		type CategoryForm struct {
-			NoteId   int64  `json:"noteId"`
 			Category string `json:"category"`
 		}
 
 		metaCategory := models.META
 
-		categoryForm := &CategoryForm{NoteId: noteIdAsInt, Category: metaCategory.String()}
+		categoryForm := &CategoryForm{Category: metaCategory.String()}
 
 		mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.Category) error {
 			if int64(noteId) == noteIdAsInt && cat == metaCategory {
@@ -140,11 +142,35 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 		jsonValue, _ := json.Marshal(categoryForm)
 
-		resp, err := client.Post(server.URL+paths.CategoryApi, "application/json", bytes.NewBuffer(jsonValue))
+		resp, err := sendPutRequest(client, server.URL+paths.CategoryApi+"?id="+strconv.FormatInt(noteIdAsInt, 10), "application/json", bytes.NewBuffer(jsonValue))
 		ok(t, err)
 		equals(t, http.StatusCreated, resp.StatusCode)
 	}
 
+}
+
+func sendPutRequest(client *http.Client, myUrl string, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequest("PUT", myUrl, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+	return client.Do(req)
+}
+
+func printBody(resp *http.Response) {
+	buf, bodyErr := ioutil.ReadAll(resp.Body)
+	if bodyErr != nil {
+		fmt.Print("bodyErr ", bodyErr.Error())
+		return
+	}
+
+	rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	fmt.Printf("BODY: %q", rdr1)
+	resp.Body = rdr2
 }
 
 // Helpers
