@@ -13,9 +13,7 @@ func ConnectToDatabase(databaseUrl string, retry int) (*DB, error) {
 
 	for attempt := 0; attempt <= retry; attempt++ {
 		tempDb, err = sql.Open("postgres", databaseUrl)
-		if err == nil {
-			break
-		}
+
 		if err = tempDb.Ping(); err == nil {
 			break
 		}
