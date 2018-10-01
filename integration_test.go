@@ -10,9 +10,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
-	"path/filepath"
-	"reflect"
-	"runtime"
 	"strconv"
 	"testing"
 
@@ -20,6 +17,7 @@ import (
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
 	"github.com/atmiguel/cerealnotes/routers"
+	"github.com/atmiguel/cerealnotes/test_util"
 )
 
 func TestLoginOrSignUpPage(t *testing.T) {
@@ -30,8 +28,8 @@ func TestLoginOrSignUpPage(t *testing.T) {
 	defer server.Close()
 
 	resp, err := http.Get(server.URL)
-	ok(t, err)
-	equals(t, http.StatusOK, resp.StatusCode)
+	test_util.Ok(t, err)
+	test_util.Equals(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestAuthenticatedFlow(t *testing.T) {
@@ -44,7 +42,6 @@ func TestAuthenticatedFlow(t *testing.T) {
 	// Create testing client
 	client := &http.Client{}
 	{
-		// jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 		jar, err := cookiejar.New(&cookiejar.Options{})
 
 		if err != nil {
@@ -78,9 +75,9 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 		resp, err := client.Post(server.URL+paths.SessionApi, "application/json", bytes.NewBuffer(userJsonValue))
 
-		ok(t, err)
+		test_util.Ok(t, err)
 
-		equals(t, http.StatusCreated, resp.StatusCode)
+		test_util.Equals(t, http.StatusCreated, resp.StatusCode)
 	}
 
 	// Test Add Note
@@ -96,8 +93,8 @@ func TestAuthenticatedFlow(t *testing.T) {
 		noteJsonValue, _ := json.Marshal(noteValues)
 
 		resp, err := client.Post(server.URL+paths.NoteApi, "application/json", bytes.NewBuffer(noteJsonValue))
-		ok(t, err)
-		equals(t, http.StatusCreated, resp.StatusCode)
+		test_util.Ok(t, err)
+		test_util.Equals(t, http.StatusCreated, resp.StatusCode)
 
 		type NoteResponse struct {
 			NoteId int64 `json:"noteId"`
@@ -106,9 +103,9 @@ func TestAuthenticatedFlow(t *testing.T) {
 		jsonNoteReponse := &NoteResponse{}
 
 		err = json.NewDecoder(resp.Body).Decode(jsonNoteReponse)
-		ok(t, err)
+		test_util.Ok(t, err)
 
-		equals(t, noteIdAsInt, jsonNoteReponse.NoteId)
+		test_util.Equals(t, noteIdAsInt, jsonNoteReponse.NoteId)
 
 		resp.Body.Close()
 	}
@@ -116,8 +113,8 @@ func TestAuthenticatedFlow(t *testing.T) {
 	// Test get notes
 	{
 		resp, err := client.Get(server.URL + paths.NoteApi)
-		ok(t, err)
-		equals(t, http.StatusOK, resp.StatusCode)
+		test_util.Ok(t, err)
+		test_util.Equals(t, http.StatusOK, resp.StatusCode)
 
 		// TODO when we implement a real get notes feature we should enhance this code.
 	}
@@ -143,8 +140,8 @@ func TestAuthenticatedFlow(t *testing.T) {
 		jsonValue, _ := json.Marshal(categoryForm)
 
 		resp, err := sendPutRequest(client, server.URL+paths.CategoryApi+"?id="+strconv.FormatInt(noteIdAsInt, 10), "application/json", bytes.NewBuffer(jsonValue))
-		ok(t, err)
-		equals(t, http.StatusCreated, resp.StatusCode)
+		test_util.Ok(t, err)
+		test_util.Equals(t, http.StatusCreated, resp.StatusCode)
 	}
 
 }
@@ -201,31 +198,4 @@ func (mock *DiyMockDataStore) AuthenticateUserCredentials(email *models.EmailAdd
 
 func (mock *DiyMockDataStore) GetIdForUserWithEmailAddress(email *models.EmailAddress) (models.UserId, error) {
 	return mock.Func_GetIdForUserWithEmailAddress(email)
-}
-
-// assert fails the test if the condition is false.
-func assert(tb testing.TB, condition bool, msg string, v ...interface{}) {
-	if !condition {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d: "+msg+"\033[39m\n\n", append([]interface{}{filepath.Base(file), line}, v...)...)
-		tb.FailNow()
-	}
-}
-
-// ok fails the test if an err is not nil.
-func ok(tb testing.TB, err error) {
-	if err != nil {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d: unexpected error: %s\033[39m\n\n", filepath.Base(file), line, err.Error())
-		tb.FailNow()
-	}
-}
-
-// equals fails the test if exp is not equal to act.
-func equals(tb testing.TB, exp, act interface{}) {
-	if !reflect.DeepEqual(exp, act) {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d:\n\n\texp: %#v\n\n\tgot: %#v\033[39m\n\n", filepath.Base(file), line, exp, act)
-		tb.FailNow()
-	}
 }

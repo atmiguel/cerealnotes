@@ -2,13 +2,11 @@ package handlers_test
 
 import (
 	"fmt"
-	"path/filepath"
-	"reflect"
-	"runtime"
 	"testing"
 
 	"github.com/atmiguel/cerealnotes/handlers"
 	"github.com/atmiguel/cerealnotes/models"
+	"github.com/atmiguel/cerealnotes/test_util"
 )
 
 func TestToken(t *testing.T) {
@@ -24,41 +22,13 @@ func TestToken(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(bob)
+
 	if claims, ok := token.Claims.(*handlers.JwtTokenClaim); ok && token.Valid {
-		if claims.UserId != 32 {
-			fmt.Println("error in token")
-			t.FailNow()
-		}
+		test_util.Equals(t, int64(32), int64(claims.UserId))
+
 		fmt.Printf("%v %v", claims.UserId, claims.StandardClaims.ExpiresAt)
 	} else {
 		fmt.Println("Token claims could not be read")
 		t.FailNow()
-	}
-}
-
-func assert(tb testing.TB, condition bool, msg string, v ...interface{}) {
-	if !condition {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d: "+msg+"\033[39m\n\n", append([]interface{}{filepath.Base(file), line}, v...)...)
-		tb.FailNow()
-	}
-}
-
-// ok fails the test if an err is not nil.
-func ok(tb testing.TB, err error) {
-	if err != nil {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d: unexpected error: %s\033[39m\n\n", filepath.Base(file), line, err.Error())
-		tb.FailNow()
-	}
-}
-
-// equals fails the test if exp is not equal to act.
-func equals(tb testing.TB, exp, act interface{}) {
-	if !reflect.DeepEqual(exp, act) {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d:\n\n\texp: %#v\n\n\tgot: %#v\033[39m\n\n", filepath.Base(file), line, exp, act)
-		tb.FailNow()
 	}
 }
