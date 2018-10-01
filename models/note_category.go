@@ -4,10 +4,10 @@ import (
 	"errors"
 )
 
-type Category int
+type NoteCategory int
 
 const (
-	MARGINALIA Category = iota
+	MARGINALIA NoteCategory = iota
 	META
 	QUESTIONS
 	PREDICTIONS
@@ -20,19 +20,19 @@ var categoryStrings = [...]string{
 	"predictions",
 }
 
-var CannotDeserializeCategoryStringError = errors.New("String does not correspond to a Note Category")
+var CannotDeserializeNoteCategoryStringError = errors.New("String does not correspond to a Note Category")
 var NoteAlreadyContainsCategoryError = errors.New("NoteId already has a category stored for it")
 
-func DeserializeCategory(input string) (Category, error) {
+func DeserializeNoteCategory(input string) (NoteCategory, error) {
 	for i := 0; i < len(categoryStrings); i++ {
 		if input == categoryStrings[i] {
-			return Category(i), nil
+			return NoteCategory(i), nil
 		}
 	}
-	return MARGINALIA, CannotDeserializeCategoryStringError
+	return 0, CannotDeserializeNoteCategoryStringError
 }
 
-func (category Category) String() string {
+func (category NoteCategory) String() string {
 
 	if category < MARGINALIA || category > PREDICTIONS {
 		return "Unknown"
@@ -43,7 +43,7 @@ func (category Category) String() string {
 
 func (db *DB) StoreNewNoteCategoryRelationship(
 	noteId NoteId,
-	category Category,
+	category NoteCategory,
 ) error {
 	sqlQuery := `
 		INSERT INTO note_to_category_relationship (note_id, category)

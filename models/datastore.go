@@ -20,7 +20,7 @@ func ConnectToDatabase(databaseUrl string) (*DB, error) {
 
 type Datastore interface {
 	StoreNewNote(*Note) (NoteId, error)
-	StoreNewNoteCategoryRelationship(NoteId, Category) error
+	StoreNewNoteCategoryRelationship(NoteId, NoteCategory) error
 	StoreNewUser(string, *EmailAddress, string) error
 	AuthenticateUserCredentials(*EmailAddress, string) error
 	GetIdForUserWithEmailAddress(*EmailAddress) (UserId, error)

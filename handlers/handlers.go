@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -230,7 +231,7 @@ func HandleNoteApiRequest(
 	switch request.Method {
 	case http.MethodGet:
 
-		var notesById models.NoteMap = make(map[models.NoteId]*models.Note, 2)
+		var notesById models.NotesById = make(map[models.NoteId]*models.Note, 2)
 
 		notesById[models.NoteId(1)] = &models.Note{
 			AuthorId:     1,
@@ -304,35 +305,37 @@ func HandleNoteApiRequest(
 	}
 }
 
-func HandleCategoryApiRequest(
+func HandleNoteCateogryApiRequest(
 	env *Environment,
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 	userId models.UserId,
 ) {
 	switch request.Method {
-	case http.MethodPost:
+	case http.MethodPut:
 
-		type CategoryForm struct {
-			NoteId   int64  `json:"noteId"`
-			Category string `json:"category"`
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		noteId := models.NoteId(id)
+
+		type NoteCategoryForm struct {
+			NoteCategory string `json:"category"`
 		}
 
-		noteForm := new(CategoryForm)
+		categoryForm := new(NoteCategoryForm)
 
-		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+		if err := json.NewDecoder(request.Body).Decode(categoryForm); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		category, err := models.DeserializeCategory(strings.ToLower(noteForm.Category))
+		category, err := models.DeserializeNoteCategory(categoryForm.NoteCategory)
 
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if err := env.Db.StoreNewNoteCategoryRelationship(models.NoteId(noteForm.NoteId), category); err != nil {
+		if err := env.Db.StoreNewNoteCategoryRelationship(models.NoteId(noteId), category); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -340,7 +343,7 @@ func HandleCategoryApiRequest(
 		responseWriter.WriteHeader(http.StatusCreated)
 
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodPost)
+		respondWithMethodNotAllowed(responseWriter, http.MethodPut)
 	}
 
 }
