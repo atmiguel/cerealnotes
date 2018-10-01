@@ -2,19 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"errors"
-
-	"github.com/lib/pq"
 )
-
-// UniqueConstraintError is returned when a uniqueness constraint is violated during an insert.
-var UniqueConstraintError = errors.New("postgres: unique constraint violation")
-
-// QueryResultContainedMultipleRowsError is returned when a query unexpectedly returns more than one row.
-var QueryResultContainedMultipleRowsError = errors.New("query result unexpectedly contained multiple rows")
-
-// QueryResultContainedNoRowsError is returned when a query unexpectedly returns no rows.
-var QueryResultContainedNoRowsError = errors.New("query result unexpectedly contained no rows")
 
 // ConnectToDatabase also pings the database to ensure a working connection.
 func ConnectToDatabase(databaseUrl string) (*DB, error) {
@@ -40,16 +28,4 @@ type Datastore interface {
 
 type DB struct {
 	*sql.DB
-}
-
-func convertPostgresError(err error) error {
-	const uniqueConstraintErrorCode = "23505"
-
-	if postgresErr, ok := err.(*pq.Error); ok {
-		if postgresErr.Code == uniqueConstraintErrorCode {
-			return UniqueConstraintError
-		}
-	}
-
-	return err
 }

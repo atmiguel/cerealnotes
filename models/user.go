@@ -51,14 +51,12 @@ func (db *DB) StoreNewUser(
 		INSERT INTO app_user (display_name, email_address, password, creation_time)
 		VALUES ($1, $2, $3, $4)`
 
-	rows, err := db.Query(sqlQuery, displayName, emailAddress.String(), hashedPassword, creationTime)
-	if err != nil {
-		return convertPostgresError(err)
-	}
-	defer rows.Close()
+	if _, err := db.execNoResults(sqlQuery, displayName, emailAddress.String(), hashedPassword, creationTime); err != nil {
+		if err == UniqueConstraintError {
+			return EmailAddressAlreadyInUseError
+		}
 
-	if err := rows.Err(); err != nil {
-		return convertPostgresError(err)
+		return err
 	}
 
 	return nil
@@ -69,25 +67,10 @@ func (db *DB) AuthenticateUserCredentials(emailAddress *EmailAddress, password s
 		SELECT password FROM app_user
 		WHERE email_address = $1`
 
-	rows, err := db.Query(sqlQuery, emailAddress.String())
-	if err != nil {
-		return convertPostgresError(err)
-	}
-	defer rows.Close()
-
 	var storedHashedPassword []byte
-	for rows.Next() {
-		if storedHashedPassword != nil {
-			return QueryResultContainedMultipleRowsError
-		}
 
-		if err := rows.Scan(&storedHashedPassword); err != nil {
-			return err
-		}
-	}
-
-	if storedHashedPassword == nil {
-		return QueryResultContainedNoRowsError
+	if err := db.execOneResult(sqlQuery, &storedHashedPassword, emailAddress.String()); err != nil {
+		return err
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
@@ -109,25 +92,12 @@ func (db *DB) GetIdForUserWithEmailAddress(emailAddress *EmailAddress) (UserId, 
 		SELECT id FROM app_user
 		WHERE email_address = $1`
 
-	rows, err := db.Query(sqlQuery, emailAddress.String())
-	if err != nil {
-		return 0, convertPostgresError(err)
-	}
-	defer rows.Close()
-
 	var userId int64
-	for rows.Next() {
-		if userId != 0 {
-			return 0, QueryResultContainedMultipleRowsError
+	if err := db.execOneResult(sqlQuery, &userId, emailAddress.String()); err != nil {
+		if err == QueryResultContainedNoRowsError {
+			return 0, CredentialsNotAuthorizedError
 		}
-
-		if err := rows.Scan(&userId); err != nil {
-			return 0, err
-		}
-	}
-
-	if userId == 0 {
-		return 0, QueryResultContainedNoRowsError
+		return 0, err
 	}
 
 	return UserId(userId), nil
