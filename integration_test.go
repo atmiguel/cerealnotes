@@ -121,16 +121,16 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 	// Test Add category
 	{
-		type CategoryForm struct {
-			Category string `json:"category"`
+		type NoteCategoryForm struct {
+			NoteCategory string `json:"category"`
 		}
 
-		metaCategory := models.META
+		metaNoteCategory := models.META
 
-		categoryForm := &CategoryForm{Category: metaCategory.String()}
+		categoryForm := &NoteCategoryForm{NoteCategory: metaNoteCategory.String()}
 
-		mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.Category) error {
-			if int64(noteId) == noteIdAsInt && cat == metaCategory {
+		mockDb.Func_StoreNewNoteCategoryRelationship = func(noteId models.NoteId, cat models.NoteCategory) error {
+			if int64(noteId) == noteIdAsInt && cat == metaNoteCategory {
 				return nil
 			}
 
@@ -139,7 +139,7 @@ func TestAuthenticatedFlow(t *testing.T) {
 
 		jsonValue, _ := json.Marshal(categoryForm)
 
-		resp, err := sendPutRequest(client, server.URL+paths.CategoryApi+"?id="+strconv.FormatInt(noteIdAsInt, 10), "application/json", bytes.NewBuffer(jsonValue))
+		resp, err := sendPutRequest(client, server.URL+paths.NoteCategoryApi+"?id="+strconv.FormatInt(noteIdAsInt, 10), "application/json", bytes.NewBuffer(jsonValue))
 		test_util.Ok(t, err)
 		test_util.Equals(t, http.StatusCreated, resp.StatusCode)
 	}
@@ -174,7 +174,7 @@ func printBody(resp *http.Response) {
 
 type DiyMockDataStore struct {
 	Func_StoreNewNote                     func(*models.Note) (models.NoteId, error)
-	Func_StoreNewNoteCategoryRelationship func(models.NoteId, models.Category) error
+	Func_StoreNewNoteCategoryRelationship func(models.NoteId, models.NoteCategory) error
 	Func_StoreNewUser                     func(string, *models.EmailAddress, string) error
 	Func_AuthenticateUserCredentials      func(*models.EmailAddress, string) error
 	Func_GetIdForUserWithEmailAddress     func(*models.EmailAddress) (models.UserId, error)
@@ -184,7 +184,7 @@ func (mock *DiyMockDataStore) StoreNewNote(note *models.Note) (models.NoteId, er
 	return mock.Func_StoreNewNote(note)
 }
 
-func (mock *DiyMockDataStore) StoreNewNoteCategoryRelationship(noteId models.NoteId, cat models.Category) error {
+func (mock *DiyMockDataStore) StoreNewNoteCategoryRelationship(noteId models.NoteId, cat models.NoteCategory) error {
 	return mock.Func_StoreNewNoteCategoryRelationship(noteId, cat)
 }
 

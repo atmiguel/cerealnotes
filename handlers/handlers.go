@@ -317,18 +317,18 @@ func HandleNoteCateogryApiRequest(
 		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
 		noteId := models.NoteId(id)
 
-		type CategoryForm struct {
-			Category string `json:"category"`
+		type NoteCategoryForm struct {
+			NoteCategory string `json:"category"`
 		}
 
-		categoryForm := new(CategoryForm)
+		categoryForm := new(NoteCategoryForm)
 
 		if err := json.NewDecoder(request.Body).Decode(categoryForm); err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		category, err := models.DeserializeCategory(categoryForm.Category)
+		category, err := models.DeserializeNoteCategory(categoryForm.NoteCategory)
 
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusBadRequest)

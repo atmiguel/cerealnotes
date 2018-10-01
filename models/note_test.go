@@ -7,7 +7,7 @@ import (
 	"github.com/atmiguel/cerealnotes/test_util"
 )
 
-var deserializationTests = []models.Category{
+var deserializationTests = []models.NoteCategory{
 	models.MARGINALIA,
 	models.META,
 	models.QUESTIONS,
@@ -17,7 +17,7 @@ var deserializationTests = []models.Category{
 func TestDeserialization(t *testing.T) {
 	for _, val := range deserializationTests {
 		t.Run(val.String(), func(t *testing.T) {
-			cat, err := models.DeserializeCategory(val.String())
+			cat, err := models.DeserializeNoteCategory(val.String())
 			test_util.Ok(t, err)
 			test_util.Equals(t, val, cat)
 		})
