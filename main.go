@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/atmiguel/cerealnotes/databaseutil"
 	"github.com/atmiguel/cerealnotes/handlers"
+	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/routers"
 )
 
@@ -53,15 +53,23 @@ func determineTokenSigningKey() ([]byte, error) {
 
 func main() {
 	// Set up db
+
+	env := &handlers.Environment{}
+
 	{
 		databaseUrl, err := determineDatabaseUrl()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := databaseutil.ConnectToDatabase(databaseUrl); err != nil {
+		db, err := models.ConnectToDatabase(databaseUrl)
+
+		if err != nil {
 			log.Fatal(err)
 		}
+
+		env.Db = db
+
 	}
 
 	// Set up token signing key
@@ -70,8 +78,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		handlers.SetTokenSigningKey(tokenSigningKey)
+		env.TokenSigningKey = tokenSigningKey
 	}
 
 	// Start server
@@ -83,7 +90,7 @@ func main() {
 
 		log.Printf("Listening on %s...\n", port)
 
-		if err := http.ListenAndServe(port, routers.DefineRoutes()); err != nil {
+		if err := http.ListenAndServe(port, routers.DefineRoutes(env)); err != nil {
 			log.Fatal(err)
 		}
 	}
