@@ -94,6 +94,59 @@ func GetPasswordForUserWithEmailAddress(emailAddress string) ([]byte, error) {
 	return password, nil
 }
 
+func InsertNewNote(authorId int64, content string, creationTime time.Time) (int64, error) {
+	sqlQuery := `
+		INSERT INTO note (author_id, content, creation_time)
+		VALUES ($1, $2, $3)
+		RETURNING id`
+
+	rows, err := db.Query(sqlQuery, authorId, content, creationTime)
+	if err != nil {
+		return 0, convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	var noteId int64 = 0
+	for rows.Next() {
+
+		if noteId != 0 {
+			return 0, QueryResultContainedMultipleRowsError
+		}
+
+		if err := rows.Scan(&noteId); err != nil {
+			return 0, convertPostgresError(err)
+		}
+	}
+
+	if noteId == 0 {
+		return 0, QueryResultContainedNoRowsError
+	}
+
+	if err := rows.Err(); err != nil {
+		return 0, convertPostgresError(err)
+	}
+
+	return noteId, nil
+}
+
+func InsertNoteCategoryRelationship(noteId int64, category string) error {
+	sqlQuery := `
+		INSERT INTO note_to_category_relationship (note_id, category)
+		VALUES ($1, $2)`
+
+	rows, err := db.Query(sqlQuery, noteId, category)
+	if err != nil {
+		return convertPostgresError(err)
+	}
+	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return convertPostgresError(err)
+	}
+
+	return nil
+}
+
 func GetIdForUserWithEmailAddress(emailAddress string) (int64, error) {
 	sqlQuery := `
 		SELECT id FROM app_user

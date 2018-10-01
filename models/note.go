@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
@@ -22,7 +23,19 @@ var categoryStrings = [...]string{
 	"predictions",
 }
 
+var CannotDeserializeCategoryStringError = errors.New("String does not correspond to a Note Category")
+
+func DeserializeCategory(input string) (Category, error) {
+	for i := 0; i < len(categoryStrings); i++ {
+		if input == categoryStrings[i] {
+			return Category(i), nil
+		}
+	}
+	return 0, CannotDeserializeCategoryStringError
+}
+
 func (category Category) String() string {
+
 	if category < MARGINALIA || category > PREDICTIONS {
 		return "Unknown"
 	}

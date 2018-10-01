@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/atmiguel/cerealnotes/models"
 	"github.com/atmiguel/cerealnotes/paths"
+	"github.com/atmiguel/cerealnotes/services/noteservice"
 	"github.com/atmiguel/cerealnotes/services/userservice"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -221,21 +223,22 @@ func HandleNoteApiRequest(
 ) {
 	switch request.Method {
 	case http.MethodGet:
-		note1 := &models.Note{
+
+		var notesById noteservice.NotesById = make(map[models.NoteId]*models.Note, 2)
+
+		notesById[models.NoteId(1)] = &models.Note{
 			AuthorId:     1,
 			Content:      "This is an example note.",
 			CreationTime: time.Now().Add(-oneWeek).UTC(),
 		}
 
-		note2 := &models.Note{
+		notesById[models.NoteId(2)] = &models.Note{
 			AuthorId:     2,
 			Content:      "What is this site for?",
 			CreationTime: time.Now().Add(-60 * 12).UTC(),
 		}
 
-		notes := [2]*models.Note{note1, note2}
-
-		notesInJson, err := json.Marshal(notes)
+		notesInJson, err := notesById.ToJson()
 		if err != nil {
 			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 			return
@@ -246,9 +249,95 @@ func HandleNoteApiRequest(
 
 		fmt.Fprint(responseWriter, string(notesInJson))
 
+	case http.MethodPost:
+		type NoteForm struct {
+			Content string `json:"content"`
+		}
+
+		noteForm := new(NoteForm)
+
+		if err := json.NewDecoder(request.Body).Decode(noteForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if len(strings.TrimSpace(noteForm.Content)) == 0 {
+			http.Error(responseWriter, "Note content cannot be empty or just whitespace", http.StatusBadRequest)
+			return
+		}
+
+		note := &models.Note{
+			AuthorId:     models.UserId(userId),
+			Content:      noteForm.Content,
+			CreationTime: time.Now().UTC(),
+		}
+
+		noteId, err := noteservice.StoreNewNote(note)
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		type NoteResponse struct {
+			NoteId int64 `json:"noteId"`
+		}
+
+		noteString, err := json.Marshal(&NoteResponse{NoteId: int64(noteId)})
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusCreated)
+
+		fmt.Fprint(responseWriter, string(noteString))
+
 	default:
-		respondWithMethodNotAllowed(responseWriter, http.MethodGet)
+		respondWithMethodNotAllowed(responseWriter, http.MethodGet, http.MethodPost)
 	}
+}
+
+func HandleNoteCateogryApiRequest(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+	userId models.UserId,
+) {
+	switch request.Method {
+	case http.MethodPut:
+
+		id, err := strconv.ParseInt(request.URL.Query().Get("id"), 10, 64)
+		noteId := models.NoteId(id)
+
+		type CategoryForm struct {
+			Category string `json:"category"`
+		}
+
+		categoryForm := new(CategoryForm)
+
+		if err := json.NewDecoder(request.Body).Decode(categoryForm); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		category, err := models.DeserializeCategory(categoryForm.Category)
+
+		if err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := noteservice.StoreNewNoteCategoryRelationship(models.NoteId(noteId), category); err != nil {
+			http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusCreated)
+
+	default:
+		respondWithMethodNotAllowed(responseWriter, http.MethodPut)
+	}
+
 }
 
 type AuthenticatedRequestHandlerType func(
@@ -284,8 +373,9 @@ func AuthenticateOrReturnUnauthorized(
 	authenticatedHandlerFunc AuthenticatedRequestHandlerType,
 ) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
+
 		if userId, err := getUserIdFromJwtToken(request); err != nil {
-			responseWriter.Header().Set("WWW-Authenticate", "Please log in to see this page")
+			responseWriter.Header().Set("WWW-Authenticate", `Bearer realm="`+request.URL.Path+`"`)
 			http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 		} else {
 			authenticatedHandlerFunc(responseWriter, request, userId)
