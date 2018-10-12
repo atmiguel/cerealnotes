@@ -2,16 +2,26 @@ package models
 
 import (
 	"database/sql"
+	"time"
 )
 
 // ConnectToDatabase also pings the database to ensure a working connection.
-func ConnectToDatabase(databaseUrl string) (*DB, error) {
-	tempDb, err := sql.Open("postgres", databaseUrl)
-	if err != nil {
-		return nil, err
+func ConnectToDatabase(databaseUrl string, retry int) (*DB, error) {
+
+	var tempDb *sql.DB
+	var err error
+
+	for attempt := 0; attempt <= retry; attempt++ {
+		tempDb, err = sql.Open("postgres", databaseUrl)
+
+		if err = tempDb.Ping(); err == nil {
+			break
+		}
+
+		time.Sleep(1 * time.Second)
 	}
 
-	if err := tempDb.Ping(); err != nil {
+	if err != nil {
 		return nil, err
 	}
 

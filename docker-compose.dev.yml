@@ -1,0 +1,29 @@
+version: '3'
+services:
+    db:
+        image: postgres:9.6
+        volumes:
+            - ./docker_db/pgdata:/pgdata
+            - ./docker_db/migrations:/docker-entrypoint-initdb.d/
+        ports:
+            - "5432"
+        environment:
+            - POSTGRES_USER=docker
+            - POSTGRES_PASSWORD=docker
+            - PGDATA=/pgdata
+    backend:
+        build:
+            context: ./
+            dockerfile: Dockerfile.dev
+        volumes:
+            - .:/go/src/github.com/atmiguel/cerealnotes/
+        ports:
+            - "8080:8080"
+        environment:
+            - DATABASE_URL=postgresql://docker:docker@db:5432/cerealnotes?sslmode=disable
+            - DATABASE_URL_TEST=postgresql://docker:docker@db:5432/cerealnotes_test?sslmode=disable
+            - PORT=8080
+            - TOKEN_SIGNING_KEY=AllYourBase
+        depends_on:
+            - db
+        tty: true

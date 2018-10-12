@@ -23,6 +23,7 @@ func determineListenPort() (string, error) {
 	}
 
 	return ":" + port, nil
+
 }
 
 func determineDatabaseUrl() (string, error) {
@@ -62,8 +63,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		db, err := models.ConnectToDatabase(databaseUrl)
-
+		db, err := models.ConnectToDatabase(databaseUrl, 20)
 		if err != nil {
 			log.Fatal(err)
 		}

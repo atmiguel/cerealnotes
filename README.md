@@ -1,21 +1,15 @@
 # Installation
-## Locally
-* postgres server installed and running: please refer to `migrations/README.md` for more info
-* heroku cli installed
-	* `brew install heroku`
-* golang installed
-	* `brew install go`
-* godep installed: 
-	* `go get github.com/tools/godep`
+## Local prod like build
+* install docker
+* cd this repo
+* `docker-compose up`
+* Visit `localhost:8080/`
 
-## Heroku
-* heroku instance
-* instance connected to postgres db
+## Local Dev instance
+1. make sure all go depenecies are ready
+	* run `./beam_me_up_scotty.sh bash`
+	* run `dep ensure`
+	* exit bash
+2. run `./beam_me_up_scotty.sh` and everything should work
 
-# Running CerealNotes
-
-Assuming your local environment is setup correctly with Golang standards, you can start your local server with the following commands
-
-1. `cd to this repo`
-2. `go install && heroku local`
-3. Visit `localhost:8080/`
+Please note step 1 is only necessary the first time you connect set up your test environment, or whenever a new package is added

@@ -1,0 +1,5 @@
+FROM golang:1.11.0 AS builder
+WORKDIR /go/src/github.com/atmiguel/cerealnotes
+RUN go get github.com/golang/dep/cmd/dep
+RUN apt-get update
+RUN apt-get install -y postgresql-client

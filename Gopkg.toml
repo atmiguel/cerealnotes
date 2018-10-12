@@ -1,0 +1,14 @@
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# for detailed Gopkg.toml documentation.
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  version = "3.2.0"
+
+[[constraint]]
+  name = "github.com/lib/pq"
+  version = "1.0.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true
